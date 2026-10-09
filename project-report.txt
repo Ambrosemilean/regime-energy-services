@@ -1,0 +1,144 @@
+﻿================ REGIME ENERGY SERVICES - PROJECT REPORT ================
+
+DATE:
+09/23/2026 20:27:44
+
+================ NODE / NPM / GIT =================
+Node:
+v24.13.1
+
+NPM:
+
+
+Git:
+git version 2.53.0.windows.1
+
+================ PACKAGE.JSON =================
+{
+  "name": "regime-energy-services",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.6",
+    "@supabase/supabase-js": "^2.116.0",
+    "next": "16.3.4",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "sharp": "^0.35.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.4",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
+
+
+================ PROJECT FILE TREE =================
+.gitignore AGENTS.md CLAUDE.md eslint.config.mjs image.file next.config.ts next-env.d.ts package.json package-lock.json postcss.config.mjs public\file.svg public\globe.svg public\next.svg public\vercel.svg public\window.svg README.md src\app\admin\admins\admins-manager.tsx src\app\admin\admins\page.tsx src\app\admin\branches\[id]\delete-branch-button.tsx src\app\admin\branches\[id]\edit\edit-branch-form.tsx src\app\admin\branches\[id]\edit\page.tsx src\app\admin\branches\[id]\page.tsx src\app\admin\branches\branches-table.tsx src\app\admin\branches\new\new-branch-form.tsx src\app\admin\branches\new\page.tsx src\app\admin\branches\page.tsx src\app\admin\chat\chat-manager.tsx src\app\admin\chat\page.tsx src\app\admin\company-history\company-history-manager.tsx src\app\admin\company-history\page.tsx src\app\admin\company-media\company-media-manager.tsx src\app\admin\company-media\page.tsx src\app\admin\company-profile\company-profile-form.tsx src\app\admin\company-profile\page.tsx src\app\admin\layout.tsx src\app\admin\login\page.tsx src\app\admin\page.tsx src\app\admin\products\[id]\page.tsx src\app\admin\products\actions\create-product.ts src\app\admin\products\new\new-product-form.tsx src\app\admin\products\new\page.tsx src\app\admin\products\page.tsx src\app\admin\services\[id]\page.tsx src\app\admin\services\actions\create-service.ts src\app\admin\services\new\new-service-form.tsx src\app\admin\services\new\page.tsx src\app\admin\services\page.tsx src\app\admin\site-settings\page.tsx src\app\admin\site-settings\site-settings-form.tsx src\app\api\admin\admins\route.ts src\app\api\admin\branches\[id]\route.ts src\app\api\admin\branches\route.ts src\app\api\admin\company-history\route.ts src\app\api\admin\company-media\route.ts src\app\api\admin\company-profile\route.ts src\app\api\admin\site-settings\route.ts src\app\api\chat\admin\route.ts src\app\api\chat\route.ts src\app\chat\page.tsx src\app\company-history\page.tsx src\app\favicon.ico src\app\globals.css src\app\layout.tsx src\app\page.tsx src\app\products\[slug]\page.tsx src\app\products\page.tsx src\app\services\[slug]\page.tsx src\app\services\page.tsx src\components\admin\AdminSidebar.tsx src\components\chat\chat-panel.tsx src\components\chat\chat-widget.tsx src\components\company-slideshow.tsx src\lib\chat\engine.ts src\lib\supabase\client.ts src\lib\supabase\server.ts src\proxy.ts supabase\migrations\20260220_company_history_site_settings.sql supabase\migrations\20260920_site_settings_missing_columns.sql supabase\migrations\20260921_fix_site_settings_rls.sql supabase\migrations\20260922_chat_assistant.sql tsconfig.json tsconfig.tsbuildinfo
+
+================ NEXT.JS / CONFIG FILES =================
+
+--- next.config ---
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  turbopack: {
+    root: __dirname,
+  },
+  images: {
+    qualities: [75, 85, 90],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+      },
+    ],
+  },
+};
+
+export default nextConfig;
+
+
+--- tsconfig.json ---
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
+
+
+--- postcss.config ---
+const config = {
+  plugins: {
+    "@tailwindcss/postcss": {},
+  },
+};
+
+export default config;
+
+
+--- tailwind config ---
+Not found / may use Tailwind v4
+
+================ ENVIRONMENT VARIABLE NAMES =================
+
+NEXT_PUBLIC_SUPABASE_URL = [HIDDEN] NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = [HIDDEN]
+
+================ SRC STRUCTURE =================
+
+src\app\admin\admins\admins-manager.tsx src\app\admin\admins\page.tsx src\app\admin\branches\[id]\delete-branch-button.tsx src\app\admin\branches\[id]\edit\edit-branch-form.tsx src\app\admin\branches\[id]\edit\page.tsx src\app\admin\branches\[id]\page.tsx src\app\admin\branches\branches-table.tsx src\app\admin\branches\new\new-branch-form.tsx src\app\admin\branches\new\page.tsx src\app\admin\branches\page.tsx src\app\admin\chat\chat-manager.tsx src\app\admin\chat\page.tsx src\app\admin\company-history\company-history-manager.tsx src\app\admin\company-history\page.tsx src\app\admin\company-media\company-media-manager.tsx src\app\admin\company-media\page.tsx src\app\admin\company-profile\company-profile-form.tsx src\app\admin\company-profile\page.tsx src\app\admin\layout.tsx src\app\admin\login\page.tsx src\app\admin\page.tsx src\app\admin\products\[id]\page.tsx src\app\admin\products\actions\create-product.ts src\app\admin\products\new\new-product-form.tsx src\app\admin\products\new\page.tsx src\app\admin\products\page.tsx src\app\admin\services\[id]\page.tsx src\app\admin\services\actions\create-service.ts src\app\admin\services\new\new-service-form.tsx src\app\admin\services\new\page.tsx src\app\admin\services\page.tsx src\app\admin\site-settings\page.tsx src\app\admin\site-settings\site-settings-form.tsx src\app\api\admin\admins\route.ts src\app\api\admin\branches\[id]\route.ts src\app\api\admin\branches\route.ts src\app\api\admin\company-history\route.ts src\app\api\admin\company-media\route.ts src\app\api\admin\company-profile\route.ts src\app\api\admin\site-settings\route.ts src\app\api\chat\admin\route.ts src\app\api\chat\route.ts src\app\chat\page.tsx src\app\company-history\page.tsx src\app\favicon.ico src\app\globals.css src\app\layout.tsx src\app\page.tsx src\app\products\[slug]\page.tsx src\app\products\page.tsx src\app\services\[slug]\page.tsx src\app\services\page.tsx src\components\admin\AdminSidebar.tsx src\components\chat\chat-panel.tsx src\components\chat\chat-widget.tsx src\components\company-slideshow.tsx src\lib\chat\engine.ts src\lib\supabase\client.ts src\lib\supabase\server.ts src\proxy.ts
+
+================ GIT STATUS =================
+
+ M next.config.ts  M package-lock.json  M package.json  M src/app/layout.tsx  M src/app/page.tsx  M tsconfig.json ?? image.file ?? src/app/admin/ ?? src/app/api/ ?? src/app/chat/ ?? src/app/company-history/ ?? src/app/products/ ?? src/app/services/ ?? src/components/ ?? src/lib/ ?? src/proxy.ts ?? supabase/
+
+================ END OF REPORT =================
