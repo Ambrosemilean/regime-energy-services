@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import ChatWidget from "@/components/chat/chat-widget";
+import AnalyticsTracker from "@/components/analytics/analytics-tracker";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,7 +43,29 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({
+  children,
+}: LayoutProps<"/">) {
+  // The admin can hide the public chat assistant via Site Settings.
+  let showChatAssistant = true;
+
+  try {
+    const supabase = await createClient();
+
+    const { data: settings } = await supabase
+      .from("site_settings")
+      .select("show_chat_assistant")
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+
+    if (settings && settings.show_chat_assistant === false) {
+      showChatAssistant = false;
+    }
+  } catch {
+    // Default to showing the widget when settings are unavailable.
+  }
+
   return (
     <html
       lang="en"
@@ -50,7 +73,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         {children}
-        <ChatWidget />
+        <AnalyticsTracker />
+        {showChatAssistant && <ChatWidget />}
       </body>
     </html>
   );

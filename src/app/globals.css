@@ -49,10 +49,54 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11";
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
 }
 
 a {
   text-decoration: none;
+}
+
+/* Every clickable element shifts colour on hover and returns on leave */
+a,
+button,
+[role="button"] {
+  transition:
+    color 200ms ease,
+    background-color 200ms ease,
+    border-color 200ms ease,
+    fill 200ms ease,
+    stroke 200ms ease;
+}
+
+/* Solid blue buttons everywhere: main blue -> darker blue on hover */
+[class*="bg-blue-6"],
+[class*="bg-blue-7"],
+[class*="bg-blue-8"] {
+  transition: background-color 200ms ease;
+}
+
+[class*="bg-blue-6"]:hover:not([disabled]),
+[class*="bg-blue-7"]:hover:not([disabled]),
+[class*="bg-blue-8"]:hover:not([disabled]) {
+  background-color: var(--regime-blue-dark);
+}
+
+/* Text links: main colour -> brand blue on hover */
+main a:not([class*="bg-"]):hover,
+header a:not([class*="bg-"]):hover,
+footer a:not([class*="bg-"]):hover {
+  color: var(--regime-blue);
 }
 
 button,
@@ -240,15 +284,92 @@ a {
 .regime-grid-background {
   background-color: #ffffff;
   background-image:
-    linear-gradient(rgba(7, 86, 166, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(7, 86, 166, 0.035) 1px, transparent 1px);
-  background-size: 32px 32px;
+    radial-gradient(rgba(7, 86, 166, 0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Understated divider used between sections */
+.regime-divider {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--border),
+    transparent
+  );
+}
+
+/* Numbered / badge pill used for steps and stats */
+.regime-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 0.3rem 0.75rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ------------------------------------------------------------------ */
+/* Navigation menu links — subtle, professional hover treatment        */
+/* Smooth transition to the brand accent + a faint text shadow and an  */
+/* animated underline. Keyboard focus keeps a clearly visible outline. */
+/* ------------------------------------------------------------------ */
+
+.nav-link {
+  position: relative;
+  color: var(--muted);
+  text-decoration: none;
+  transition:
+    color 250ms ease,
+    text-shadow 250ms ease;
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  height: 2px;
+  width: 100%;
+  border-radius: 999px;
+  background: var(--regime-blue);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 250ms ease;
+}
+
+.nav-link:hover,
+.nav-link:focus-visible {
+  color: var(--regime-blue);
+  text-shadow: 0 1px 2px rgba(7, 86, 166, 0.18);
+}
+
+.nav-link:hover::after,
+.nav-link:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.nav-link:focus-visible {
+  outline: 2px solid rgba(7, 86, 166, 0.55);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.nav-link:active {
+  color: var(--regime-blue-dark);
 }
 
 /* Focus accessibility */
 :focus-visible {
-  outline: 3px solid rgba(7, 86, 166, 0.35);
-  outline-offset: 3px;
+  outline: 2px solid rgba(7, 86, 166, 0.5);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 /* Reduced motion */
@@ -263,5 +384,16 @@ a {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+}
+/* Chat assistant panel entrance */
+@keyframes chat-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }

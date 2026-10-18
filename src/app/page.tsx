@@ -1,7 +1,8 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import CompanySlideshow from "@/components/company-slideshow";
+import TrackedLink from "@/components/analytics/tracked-link";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -91,65 +92,57 @@ export default async function Home() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border--100 bg-blue/95 shadow-sm backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-blue-900">
-              {company?.company_name || "REGIME ENERGY SERVICES"}
-            </h1>
-
-            {company?.tagline && (
-              <p className="mt-1 text-sm text-gray-500">
-                {company.tagline}
-              </p>
+          <div className="flex min-w-0 items-center gap-3">
+            {company?.logo_url && (
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-white">
+                <Image
+                  src={company.logo_url}
+                  alt={`${company.company_name || "Regime Energy Services"} logo`}
+                  fill
+                  sizes="48px"
+                  priority
+                  className="object-contain"
+                />
+              </div>
             )}
+
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold tracking-tight text-blue-900 sm:text-2xl">
+                {company?.company_name || "REGIME ENERGY SERVICES"}
+              </h1>
+
+              {company?.tagline && (
+                <p className="mt-1 text-sm text-gray-500">{company.tagline}</p>
+              )}
+            </div>
           </div>
+          <nav className="hidden items-center gap-7 md:flex">
+            {[
+              { href: "#about", label: "About" },
+              { href: "#services", label: "Services" },
+              { href: "#products", label: "Products" },
+              { href: "#branches", label: "Branches" },
+              { href: "/company-history", label: "Our History", isLink: true },
+              { href: "#contact", label: "Contact" },
+            ].map((item) => {
+              const className =
+                "nav-link relative rounded text-[13px] font-medium tracking-wide text-slate-600 hover:text-blue-800 hover:[text-shadow:0_1px_2px_rgb(37_99_235/0.18)] focus-visible:text-blue-800";
 
-          <nav className="hidden items-center gap-8 md:flex">
-            <a
-              href="#about"
-              className="text-sm font-medium text-gray-700 hover:text-blue-700"
-            >
-              About
-            </a>
-
-            <a
-              href="#services"
-              className="text-sm font-medium text-gray-700 hover:text-blue-700"
-            >
-              Services
-            </a>
-
-            <a
-              href="#products"
-              className="text-sm font-medium text-gray-700 hover:text-blue-700"
-            >
-              Products
-            </a>
-
-            <a
-              href="#branches"
-              className="text-sm font-medium text-gray-700 hover:text-blue-700"
-            >
-              Branches
-            </a>
-
-            <Link
-              href="/company-history"
-              className="text-sm font-medium text-gray-700 hover:text-blue-700"
-            >
-              Our History
-            </Link>
-
-            <a
-              href="#contact"
-              className="text-sm font-medium text-gray-700 hover:text-blue-700"
-            >
-              Contact
-            </a>
+              return item.isLink ? (
+                <Link key={item.href} href={item.href} className={className}>
+                  {item.label}
+                </Link>
+              ) : (
+                <a key={item.href} href={item.href} className={className}>
+                  {item.label}
+                </a>
+              );
+            })}
           </nav>
 
           <a
             href="#contact"
-            className="rounded-lg bg-blue-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-800"
+            className="rounded-lg bg-blue-700 px-7 py-3 text-sm font-bold text-white transition hover:bg-blue-800"
           >
             Contact Us
           </a>
@@ -322,7 +315,7 @@ export default async function Home() {
                     ) : (
                       <div className="flex h-48 w-full items-center justify-center bg-blue-50">
                         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-xl font-bold text-blue-700 shadow-sm">
-                          ✓
+                          âœ“
                         </div>
                       </div>
                     )}
@@ -339,7 +332,7 @@ export default async function Home() {
                       </p>
 
                       <span className="mt-5 inline-block text-sm font-semibold text-blue-700">
-                        Learn More →
+                        Learn More â†’
                       </span>
                     </div>
                   </Link>
@@ -482,7 +475,7 @@ export default async function Home() {
                         </p>
 
                         <span className="mt-5 inline-block text-sm font-semibold text-blue-700">
-                          View Product →
+                          View Product â†’
                         </span>
                       </div>
                     </Link>
@@ -509,7 +502,7 @@ export default async function Home() {
                 href="/products"
                 className="mt-5 inline-block font-semibold text-blue-700 hover:text-blue-800"
               >
-                Explore Products →
+                Explore Products â†’
               </Link>
             </div>
           )}
@@ -611,37 +604,40 @@ export default async function Home() {
 
                         <div className="mt-6 flex flex-wrap gap-3">
                           {branch.phone && (
-                            <a
+                            <TrackedLink
                               href={`tel:${branch.phone}`}
+                              event="phone_click"
+                              label={branch.name}
+                              target=""
                               className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
                             >
                               Call Branch
-                            </a>
+                            </TrackedLink>
                           )}
 
                           {branch.whatsapp && (
-                            <a
+                            <TrackedLink
                               href={`https://wa.me/${branch.whatsapp.replace(
                                 /\D/g,
                                 ""
                               )}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                              event="whatsapp_click"
+                              label={branch.name}
                               className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
                             >
                               WhatsApp
-                            </a>
+                            </TrackedLink>
                           )}
 
                           {branch.google_maps_url && (
-                            <a
+                            <TrackedLink
                               href={branch.google_maps_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                              event="maps_click"
+                              label={branch.name}
                               className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50"
                             >
                               Open in Google Maps
-                            </a>
+                            </TrackedLink>
                           )}
                         </div>
                       </div>
@@ -772,7 +768,7 @@ export default async function Home() {
                   href="/company-history"
                   className="mt-3 inline-block text-sm font-semibold text-gray-300 hover:text-white"
                 >
-                  Our History →
+                  Our History â†’
                 </Link>
               )}
             </div>
@@ -844,7 +840,7 @@ export default async function Home() {
           </div>
 
           <p className="mt-8 border-t border-gray-800 pt-6 text-sm text-gray-500">
-            © {new Date().getFullYear()} Regime Energy Services.
+            Â© {new Date().getFullYear()} Regime Energy Services.
             All rights reserved.
           </p>
         </div>

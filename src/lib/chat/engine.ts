@@ -23,6 +23,57 @@ const CRITICAL_KEYWORDS = [
   "injur",
 ];
 
+// ------------------------------------------------------------------
+// Pricing / cost matter detection — always refer to WhatsApp support.
+// Prices change often, so the bot never quotes them directly.
+// ------------------------------------------------------------------
+
+const PRICE_KEYWORDS = [
+  "price",
+  "prices",
+  "pricing",
+  "cost",
+  "costs",
+  "how much",
+  "hw much",
+  "rate",
+  "rates",
+  "charge",
+  "charges",
+  "fee",
+  "fees",
+  "amount",
+  "discount",
+  "discounts",
+  "promo",
+  "promotion",
+  "cheaper",
+  "expensive",
+  "naira",
+  "#",
+  "₦",
+  "naira sign",
+  "howmuch",
+  "much is",
+  "much for",
+  "much do you sell",
+  "selling price",
+  "refill price",
+  "kg price",
+];
+
+export function detectPriceQuestion(message: string): string | null {
+  const text = message.toLowerCase();
+
+  for (const keyword of PRICE_KEYWORDS) {
+    if (text.includes(keyword)) {
+      return keyword;
+    }
+  }
+
+  return null;
+}
+
 export function detectCritical(message: string): string | null {
   const text = message.toLowerCase();
 
@@ -341,6 +392,24 @@ export async function generateReply(
       reply: `⚠️ ${answer}`,
       escalated: true,
       escalationReason: `Safety-critical keyword detected: "${critical}"`,
+      learned: false,
+    };
+  }
+
+  // --------------------------------------------------------------
+  // 2b. Pricing / cost questions → refer to WhatsApp support
+  // --------------------------------------------------------------
+
+  const priceKeyword = detectPriceQuestion(message);
+
+  if (priceKeyword) {
+    return {
+      reply:
+        `💰 For the current price of any product or service, our customer service team is the best place to ask — ` +
+        `prices are updated regularly and they'll give you an accurate, up-to-date quote right away.\n\n` +
+        `Please chat with us on WhatsApp using the button below. 🙏`,
+      escalated: true,
+      escalationReason: `Pricing question detected: "${priceKeyword}"`,
       learned: false,
     };
   }

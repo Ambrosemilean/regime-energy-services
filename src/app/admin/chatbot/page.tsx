@@ -1,15 +1,26 @@
 import { createClient } from "@/lib/supabase/server";
+import ChatAssistantToggle from "./chat-assistant-toggle";
 
 export default async function ChatbotAdminPage() {
   const supabase = await createClient();
 
-  const { data: knowledge, error } = await supabase
-    .from("chatbot_knowledge")
-    .select(
-      "id, title, question, answer, category, keywords, priority, is_active, created_at"
-    )
-    .order("priority", { ascending: false })
-    .order("created_at", { ascending: false });
+  const [knowledgeRes, settingsRes] = await Promise.all([
+    supabase
+      .from("chatbot_knowledge")
+      .select(
+        "id, title, question, answer, category, keywords, priority, is_active, created_at"
+      )
+      .order("priority", { ascending: false })
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("site_settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const { data: knowledge, error } = knowledgeRes;
+  const settings = settingsRes.data;
 
   if (error) {
     return (
@@ -49,6 +60,13 @@ export default async function ChatbotAdminPage() {
             Manage the approved information the Regime chat assistant can use
             when answering customers.
           </p>
+        </div>
+
+        <div className="mb-8">
+          <ChatAssistantToggle
+            initialVisible={settings?.show_chat_assistant ?? true}
+            settings={settings}
+          />
         </div>
 
         {knowledge && knowledge.length > 0 ? (

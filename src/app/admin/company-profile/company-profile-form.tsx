@@ -1,8 +1,7 @@
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-
+import { createClient } from "@/lib/supabase/client";
 type CompanyProfile = {
   id: string;
   company_name: string;
@@ -20,14 +19,12 @@ type CompanyProfile = {
   main_image_url: string | null;
   is_active: boolean;
 };
-
 export default function CompanyProfileForm({
   profile,
 }: {
   profile: CompanyProfile | null;
 }) {
   const router = useRouter();
-
   const [companyName, setCompanyName] = useState(
     profile?.company_name || ""
   );
@@ -48,27 +45,71 @@ export default function CompanyProfileForm({
   const [whatsapp, setWhatsapp] = useState(profile?.whatsapp || "");
   const [address, setAddress] = useState(profile?.address || "");
   const [logoUrl, setLogoUrl] = useState(profile?.logo_url || "");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState(profile?.logo_url || "");
+
   const [mainImageUrl, setMainImageUrl] = useState(
     profile?.main_image_url || ""
   );
   const [isActive, setIsActive] = useState(
     profile?.is_active ?? true
   );
-
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  async function uploadCompanyLogo(): Promise<string> {
+    if (!logoFile) {
+      return logoUrl;
+    }
+
+    const allowedTypes = ["image/png", "image/jpeg", "image/webp"];
+
+    if (!allowedTypes.includes(logoFile.type)) {
+      throw new Error("Please select a PNG, JPG, or WebP image.");
+    }
+
+    if (logoFile.size > 2 * 1024 * 1024) {
+      throw new Error("The logo must be 2 MB or smaller.");
+    }
+
+    const extension = logoFile.name.split(".").pop()?.toLowerCase();
+
+    if (!extension || !["png", "jpg", "jpeg", "webp"].includes(extension)) {
+      throw new Error("The logo file extension is not supported.");
+    }
+
+    const supabase = createClient();
+    const filePath = `company-logo-${Date.now()}.${extension}`;
+
+    const { data, error } = await supabase.storage
+      .from("company-logo")
+      .upload(filePath, logoFile, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: logoFile.type,
+      });
+
+    if (error) {
+      throw new Error(`Logo upload failed: ${error.message}`);
+    }
+
+    const { data: publicData } = supabase.storage
+      .from("company-logo")
+      .getPublicUrl(data.path);
+
+    return publicData.publicUrl;
+  }
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
-
     setSaving(true);
     setError("");
     setSuccess("");
-
     try {
+      const savedLogoUrl = await uploadCompanyLogo();
+
       const response = await fetch(
         "/api/admin/company-profile",
         {
@@ -88,23 +129,21 @@ export default function CompanyProfileForm({
             email,
             whatsapp,
             address,
-            logo_url: logoUrl,
+            logo_url: savedLogoUrl,
             main_image_url: mainImageUrl,
             is_active: isActive,
           }),
         }
       );
-
       const result = await response.json();
-
       if (!response.ok) {
         throw new Error(
           result.error || "Failed to save company profile."
         );
       }
-
+      setLogoUrl(savedLogoUrl);
+      setLogoFile(null);
       setSuccess("Company profile saved successfully.");
-
       router.refresh();
     } catch (err) {
       setError(
@@ -116,7 +155,6 @@ export default function CompanyProfileForm({
       setSaving(false);
     }
   }
-
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Basic Information */}
@@ -124,20 +162,17 @@ export default function CompanyProfileForm({
         <h2 className="text-xl font-semibold text-gray-900">
           Basic Information
         </h2>
-
         <p className="mt-1 text-sm text-gray-500">
           Main information about Regime Energy Services.
         </p>
-
         <div className="mt-6 space-y-5">
           <div>
             <label
               htmlFor="company_name"
               className="mb-2 block text-sm font-medium text-gray-700"
             >
-              Company Name *
+              Company Name \*
             </label>
-
             <input
               id="company_name"
               type="text"
@@ -150,7 +185,6 @@ export default function CompanyProfileForm({
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
-
           <div>
             <label
               htmlFor="tagline"
@@ -158,7 +192,6 @@ export default function CompanyProfileForm({
             >
               Tagline
             </label>
-
             <input
               id="tagline"
               type="text"
@@ -170,7 +203,6 @@ export default function CompanyProfileForm({
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
-
           <div>
             <label
               htmlFor="short_description"
@@ -178,7 +210,6 @@ export default function CompanyProfileForm({
             >
               Short Description
             </label>
-
             <textarea
               id="short_description"
               value={shortDescription}
@@ -190,7 +221,6 @@ export default function CompanyProfileForm({
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
-
           <div>
             <label
               htmlFor="full_description"
@@ -198,7 +228,6 @@ export default function CompanyProfileForm({
             >
               Full Company Description
             </label>
-
             <textarea
               id="full_description"
               value={fullDescription}
@@ -212,13 +241,11 @@ export default function CompanyProfileForm({
           </div>
         </div>
       </div>
-
       {/* Mission, Vision & Values */}
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-gray-900">
           Mission, Vision & Core Values
         </h2>
-
         <div className="mt-6 space-y-5">
           <div>
             <label
@@ -227,7 +254,6 @@ export default function CompanyProfileForm({
             >
               Mission
             </label>
-
             <textarea
               id="mission"
               value={mission}
@@ -239,7 +265,6 @@ export default function CompanyProfileForm({
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
-
           <div>
             <label
               htmlFor="vision"
@@ -247,7 +272,6 @@ export default function CompanyProfileForm({
             >
               Vision
             </label>
-
             <textarea
               id="vision"
               value={vision}
@@ -259,7 +283,6 @@ export default function CompanyProfileForm({
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
-
           <div>
             <label
               htmlFor="core_values"
@@ -267,7 +290,6 @@ export default function CompanyProfileForm({
             >
               Core Values
             </label>
-
             <textarea
               id="core_values"
               value={coreValues}
@@ -281,13 +303,11 @@ export default function CompanyProfileForm({
           </div>
         </div>
       </div>
-
       {/* Contact Information */}
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-gray-900">
           Contact Information
         </h2>
-
         <div className="mt-6 grid gap-5 md:grid-cols-2">
           <div>
             <label
@@ -296,7 +316,6 @@ export default function CompanyProfileForm({
             >
               Phone
             </label>
-
             <input
               id="phone"
               type="text"
@@ -308,7 +327,6 @@ export default function CompanyProfileForm({
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
-
           <div>
             <label
               htmlFor="whatsapp"
@@ -316,7 +334,6 @@ export default function CompanyProfileForm({
             >
               WhatsApp
             </label>
-
             <input
               id="whatsapp"
               type="text"
@@ -328,7 +345,6 @@ export default function CompanyProfileForm({
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
-
           <div>
             <label
               htmlFor="email"
@@ -336,7 +352,6 @@ export default function CompanyProfileForm({
             >
               Email
             </label>
-
             <input
               id="email"
               type="email"
@@ -348,7 +363,6 @@ export default function CompanyProfileForm({
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
-
           <div>
             <label
               htmlFor="address"
@@ -356,7 +370,6 @@ export default function CompanyProfileForm({
             >
               Address
             </label>
-
             <input
               id="address"
               type="text"
@@ -370,37 +383,62 @@ export default function CompanyProfileForm({
           </div>
         </div>
       </div>
-
       {/* Media */}
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-gray-900">
           Company Media
         </h2>
-
         <p className="mt-1 text-sm text-gray-500">
           For now, these fields accept image URLs. We can connect them
           to Supabase Storage later.
         </p>
-
         <div className="mt-6 space-y-5">
           <div>
             <label
-              htmlFor="logo_url"
+              htmlFor="logo_file"
               className="mb-2 block text-sm font-medium text-gray-700"
             >
-              Logo URL
+              Company Logo
             </label>
 
+            {logoPreview && (
+              <div className="mb-4">
+                <p className="mb-2 text-sm text-gray-500">Logo preview</p>
+                <div className="flex h-32 w-48 items-center justify-center rounded-lg border border-gray-200 bg-white p-3">
+                  <img
+                    src={logoPreview}
+                    alt="Company logo preview"
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
+              </div>
+            )}
+
             <input
-              id="logo_url"
-              type="url"
-              value={logoUrl}
-              onChange={(event) =>
-                setLogoUrl(event.target.value)
-              }
-              placeholder="https://..."
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              id="logo_file"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+
+                if (!file) return;
+
+                if (file.size > 2 * 1024 * 1024) {
+                  setError("The logo must be 2 MB or smaller.");
+                  event.target.value = "";
+                  return;
+                }
+
+                setError("");
+                setLogoFile(file);
+                setLogoPreview(URL.createObjectURL(file));
+              }}
+              className="block w-full rounded-lg border border-gray-300 px-4 py-3 text-sm"
             />
+
+            <p className="mt-2 text-xs text-gray-500">
+              PNG, JPG, or WebP. Maximum file size: 2 MB.
+            </p>
           </div>
 
           <div>
@@ -410,7 +448,6 @@ export default function CompanyProfileForm({
             >
               Main Company Image URL
             </label>
-
             <input
               id="main_image_url"
               type="url"
@@ -418,13 +455,12 @@ export default function CompanyProfileForm({
               onChange={(event) =>
                 setMainImageUrl(event.target.value)
               }
-              placeholder="https://..."
+              placeholder="https\://..."
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
         </div>
       </div>
-
       {/* Status */}
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between gap-4">
@@ -432,13 +468,11 @@ export default function CompanyProfileForm({
             <h2 className="text-lg font-semibold text-gray-900">
               Website Status
             </h2>
-
             <p className="mt-1 text-sm text-gray-500">
               Control whether this company profile is active on the
               website.
             </p>
           </div>
-
           <label className="flex cursor-pointer items-center gap-3">
             <input
               type="checkbox"
@@ -448,27 +482,23 @@ export default function CompanyProfileForm({
               }
               className="h-5 w-5 rounded border-gray-300"
             />
-
             <span className="text-sm font-medium text-gray-700">
               Active
             </span>
           </label>
         </div>
       </div>
-
       {/* Messages */}
       {error && (
         <div className="rounded-lg bg-red-50 p-4 text-sm text-red-700">
           {error}
         </div>
       )}
-
       {success && (
         <div className="rounded-lg bg-green-50 p-4 text-sm text-green-700">
           {success}
         </div>
       )}
-
       {/* Save */}
       <div className="flex justify-end">
         <button

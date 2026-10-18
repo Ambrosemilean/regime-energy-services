@@ -44,6 +44,7 @@ async function getAuthorizedSupabase() {
 }
 
 type SiteSettingsValues = {
+  site_name: string;
   facebook_url: string | null;
   instagram_url: string | null;
   twitter_url: string | null;
@@ -53,10 +54,12 @@ type SiteSettingsValues = {
   meta_title: string | null;
   meta_description: string | null;
   show_company_history_link: boolean;
+  show_chat_assistant: boolean;
 };
 
 function buildValues(body: Record<string, unknown>): SiteSettingsValues {
   const values: SiteSettingsValues = {
+    site_name: "REGIME ENERGY SERVICES",
     facebook_url: null,
     instagram_url: null,
     twitter_url: null,
@@ -66,6 +69,7 @@ function buildValues(body: Record<string, unknown>): SiteSettingsValues {
     meta_title: null,
     meta_description: null,
     show_company_history_link: true,
+    show_chat_assistant: true,
   };
 
   for (const field of URL_FIELDS) {
@@ -78,9 +82,17 @@ function buildValues(body: Record<string, unknown>): SiteSettingsValues {
     values[field] = body[field]?.toString().trim() || null;
   }
 
+  values.site_name =
+    body.site_name?.toString().trim() || "REGIME ENERGY SERVICES";
+
   values.show_company_history_link =
     typeof body.show_company_history_link === "boolean"
       ? body.show_company_history_link
+      : true;
+
+  values.show_chat_assistant =
+    typeof body.show_chat_assistant === "boolean"
+      ? body.show_chat_assistant
       : true;
 
   return values;

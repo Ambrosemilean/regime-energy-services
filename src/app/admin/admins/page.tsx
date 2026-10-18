@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import AdminsManager from "./admins-manager";
 
 export default async function AdminManagementPage() {
@@ -38,10 +39,35 @@ export default async function AdminManagementPage() {
     );
   }
 
-  const { data: admins, error } = await supabase
-    .from("profiles")
-    .select("id, full_name, role, is_active, created_at")
-    .order("created_at", { ascending: true });
+  // The service-role key may not be configured (e.g. local dev).
+  // Fall back to showing profiles without emails instead of crashing.
+  let authUsers: { users: { id: string; email?: string | null }[] } | null =
+    null;
+  let configError = false;
+
+  try {
+    authUsers = (await createAdminClient().auth.admin.listUsers()).data;
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      err.message.includes("environment variables")
+    ) {
+      configError = true;
+    } else {
+      throw err;
+    }
+  }
+
+  const [{ data: admins, error }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, full_name, role, is_active, created_at")
+      .order("created_at", { ascending: true }),
+  ]);
+
+  const emailById = new Map(
+    (authUsers?.users ?? []).map((u) => [u.id, u.email ?? null])
+  );
 
   return (
     <div className="space-y-6">
@@ -55,11 +81,21 @@ export default async function AdminManagementPage() {
         </h1>
 
         <p className="mt-2 text-gray-600">
-          Manage administrator roles and access. New admin accounts
-          are created by adding a user in the Supabase Dashboard
-          (Authentication → Users), then their profile appears here.
+          Manage administrator accounts: create new admins, assign
+          roles, enable or disable access, and remove accounts.
+          Passwords are stored securely by Supabase Auth.
         </p>
       </div>
+
+      {configError && (
+        <div className="rounded-xl bg-amber-50 p-5 text-sm text-amber-800">
+          <p className="font-semibold">Supabase secret key not configured</p>
+          <p className="mt-1">
+            Add <code>SUPABASE_SECRET_KEY</code> to <code>.env.local</code> to
+            load admin emails and enable adding/removing administrators.
+          </p>
+        </div>
+      )}
 
       {error && (
         <div className="rounded-xl border-red-200 bg-red-50 p-5 text-sm text-red-700">
@@ -69,7 +105,11 @@ export default async function AdminManagementPage() {
 
       <AdminsManager
         admins={admins ?? []}
+        emailById={Object.fromEntries(emailById)}
         currentUserId={user.id}
+        superAdminCount={(admins ?? []).filter(
+          (a) => a.role === "super_admin" && a.is_active
+        ).length}
       />
     </div>
   );

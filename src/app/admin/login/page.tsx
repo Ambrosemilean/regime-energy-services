@@ -3,7 +3,6 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-
 export default function AdminLoginPage() {
   const router = useRouter();
 
@@ -29,6 +28,27 @@ export default function AdminLoginPage() {
       setErrorMessage("Invalid email or password.");
       setLoading(false);
       return;
+    }
+
+    // The account may be authenticated but deactivated — check the
+    // profile's is_active flag and reject the session immediately.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_active")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile || !profile.is_active) {
+        await supabase.auth.signOut();
+        setErrorMessage("This account has been deactivated.");
+        setLoading(false);
+        return;
+      }
     }
 
     router.push("/admin");

@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import TrackedLink from "@/components/analytics/tracked-link";
+import TrackedBranchView from "@/components/analytics/tracked-branch-view";
 
 export const metadata = {
   title: "Our Branches | Regime Energy Services",
@@ -39,6 +41,8 @@ export default async function BranchesPage() {
 
   return (
     <main className="min-h-screen bg-white">
+      {/* Analytics: record this branch page visit */}
+      <TrackedBranchView />
       {/* Header */}
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
@@ -170,12 +174,15 @@ export default async function BranchesPage() {
                             Phone
                           </p>
 
-                          <a
+                          <TrackedLink
                             href={`tel:${phoneNumber}`}
+                            event="phone_click"
+                            label={branch.name}
+                            target="_self"
                             className="mt-1 inline-block font-medium text-blue-700 hover:underline"
                           >
                             {branch.phone}
-                          </a>
+                          </TrackedLink>
                         </div>
                       )}
 
@@ -199,34 +206,37 @@ export default async function BranchesPage() {
                     {/* Actions */}
                     <div className="mt-7 flex flex-wrap gap-3">
                       {whatsappNumber && (
-                        <a
+                        <TrackedLink
                           href={`https://wa.me/${whatsappNumber}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          event="whatsapp_click"
+                          label={branch.name}
                           className="rounded-lg bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
                         >
                           WhatsApp
-                        </a>
+                        </TrackedLink>
                       )}
 
                       {branch.phone && (
-                        <a
+                        <TrackedLink
                           href={`tel:${phoneNumber}`}
+                          event="phone_click"
+                          label={branch.name}
+                          target="_self"
                           className="rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
                         >
                           Call Branch
-                        </a>
+                        </TrackedLink>
                       )}
 
                       {branch.google_maps_url && (
-                        <a
+                        <TrackedLink
                           href={branch.google_maps_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          event="maps_click"
+                          label={branch.name}
                           className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
                         >
                           Get Directions
-                        </a>
+                        </TrackedLink>
                       )}
                     </div>
 

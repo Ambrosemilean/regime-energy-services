@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import TrackedView from "@/components/analytics/tracked-view";
+import TrackedLink from "@/components/analytics/tracked-link";
 
 type ServicePageProps = {
   params: Promise<{
@@ -56,6 +58,9 @@ export default async function ServiceDetailsPage({
 
   return (
     <main className="min-h-screen bg-white">
+      {/* Analytics: record this service view */}
+      <TrackedView event="service_view" label={service.name} />
+
       {/* Header */}
       <section className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
@@ -163,14 +168,14 @@ export default async function ServiceDetailsPage({
               </p>
 
               {whatsappNumber ? (
-                <a
+                <TrackedLink
                   href={`https://wa.me/${whatsappNumber}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  event="whatsapp_click"
+                  label={service.name}
                   className="mt-5 inline-flex rounded-lg bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
                 >
                   Enquire on WhatsApp
-                </a>
+                </TrackedLink>
               ) : (
                 <p className="mt-5 text-sm font-medium text-gray-500">
                   WhatsApp contact is currently unavailable.

@@ -20,16 +20,28 @@ const ROLES = [
 
 export default function AdminsManager({
   admins,
+  emailById,
   currentUserId,
+  superAdminCount,
 }: {
   admins: AdminProfile[];
+  emailById: Record<string, string | null>;
   currentUserId: string;
+  superAdminCount: number;
 }) {
   const router = useRouter();
 
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Add admin form state
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("viewer");
+  const [adding, setAdding] = useState(false);
 
   async function updateAdmin(
     id: string,
@@ -65,6 +77,85 @@ export default function AdminsManager({
     }
   }
 
+  async function addAdmin(event: React.FormEvent) {
+    event.preventDefault();
+    setAdding(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch("/api/admin/admins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password, role }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.error || "Failed to create administrator."
+        );
+      }
+
+      setSuccess(`Administrator "${username}" created.`);
+      setUsername("");
+      setEmail("");
+      setPassword("");
+      setRole("viewer");
+      setShowAddForm(false);
+      router.refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Something went wrong."
+      );
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function removeAdmin(admin: AdminProfile) {
+    const label =
+      admin.full_name || emailById[admin.id] || "this administrator";
+
+    if (
+      !window.confirm(
+        `Remove ${label}? This revokes their login access permanently.`
+      )
+    ) {
+      return;
+    }
+
+    setSavingId(admin.id);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch("/api/admin/admins", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: admin.id }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.error || "Failed to remove administrator."
+        );
+      }
+
+      setSuccess("Administrator removed.");
+      router.refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Something went wrong."
+      );
+    } finally {
+      setSavingId(null);
+    }
+  }
+
   return (
     <div className="space-y-4">
       {error && (
@@ -84,12 +175,104 @@ export default function AdminsManager({
           Administrators ({admins.length})
         </h2>
 
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Administrators ({admins.length})
+          </h2>
+
+          <button
+            type="button"
+            onClick={() => setShowAddForm((v) => !v)}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            {showAddForm ? "Cancel" : "+ Add Admin"}
+          </button>
+        </div>
+
+        {showAddForm && (
+          <form
+            onSubmit={addAdmin}
+            className="mt-5 grid gap-4 rounded-xl border border-gray-200 bg-gray-50 p-5 sm:grid-cols-2"
+          >
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Username
+              </label>
+              <input
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Password (min. 8 characters)
+              </label>
+              <input
+                type="password"
+                required
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Role
+              </label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              >
+                {ROLES.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="sm:col-span-2">
+              <button
+                type="submit"
+                disabled={adding}
+                className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {adding ? "Creating…" : "Create Admin"}
+              </button>
+            </div>
+          </form>
+        )}
+
         <div className="mt-5 overflow-x-auto">
-          <table className="w-full min-w-[700px] text-left">
+          <table className="w-full min-w-[820px] text-left">
             <thead>
               <tr className="border-b border-gray-200">
                 <th className="px-4 py-3 text-xs font-semibold uppercase text-gray-500">
                   Admin
+                </th>
+
+                <th className="px-4 py-3 text-xs font-semibold uppercase text-gray-500">
+                  Email
                 </th>
 
                 <th className="px-4 py-3 text-xs font-semibold uppercase text-gray-500">
@@ -109,6 +292,12 @@ export default function AdminsManager({
             <tbody>
               {admins.map((admin) => {
                 const isSelf = admin.id === currentUserId;
+                // Narrow nullable DB column for the disabled prop.
+                const adminIsActive = admin.is_active === true;
+                const isLastSuperAdmin =
+                  admin.role === "super_admin" &&
+                  adminIsActive &&
+                  superAdminCount <= 1;
                 const busy = savingId === admin.id;
 
                 return (
@@ -128,10 +317,14 @@ export default function AdminsManager({
                       </p>
                     </td>
 
+                    <td className="px-4 py-4 text-sm text-gray-600">
+                      {emailById[admin.id] || "—"}
+                    </td>
+
                     <td className="px-4 py-4">
                       <select
                         value={admin.role || "viewer"}
-                        disabled={isSelf || busy}
+                        disabled={isSelf || busy || isLastSuperAdmin}
                         onChange={(event) =>
                           updateAdmin(admin.id, {
                             role: event.target.value,
@@ -162,10 +355,10 @@ export default function AdminsManager({
                     <td className="px-4 py-4">
                       <button
                         type="button"
-                        disabled={isSelf || busy}
+                        disabled={isSelf || busy || isLastSuperAdmin}
                         onClick={() =>
                           updateAdmin(admin.id, {
-                            is_active: !admin.is_active,
+                            is_active: !adminIsActive,
                           })
                         }
                         className={`rounded-lg border px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${
@@ -177,6 +370,20 @@ export default function AdminsManager({
                         {admin.is_active
                           ? "Disable"
                           : "Enable"}
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={isSelf || busy || isLastSuperAdmin}
+                        title={
+                          isLastSuperAdmin
+                            ? "Cannot remove the last active Super Admin"
+                            : undefined
+                        }
+                        onClick={() => removeAdmin(admin)}
+                        className="rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {busy ? "…" : "Remove"}
                       </button>
                     </td>
                   </tr>

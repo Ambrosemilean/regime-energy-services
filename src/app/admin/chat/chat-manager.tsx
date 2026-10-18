@@ -285,7 +285,8 @@ export default function ChatManager() {
   // ==============================================================
 
   useEffect(() => {
-    loadKnowledge();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch
+    void loadKnowledge();
   }, []);
 
   // ==============================================================
@@ -590,7 +591,7 @@ export default function ChatManager() {
         </h1>
 
         <p className="mt-1 text-sm text-gray-600">
-          Manage Regi's knowledge,
+          Manage Regi&apos;s knowledge,
           unanswered questions and
           customer conversations.
         </p>

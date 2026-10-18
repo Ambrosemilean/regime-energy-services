@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 type SiteSettings = {
   id: string;
+  site_name: string | null;
   facebook_url: string | null;
   instagram_url: string | null;
   twitter_url: string | null;
@@ -14,6 +15,7 @@ type SiteSettings = {
   meta_title: string | null;
   meta_description: string | null;
   show_company_history_link: boolean;
+  show_chat_assistant: boolean | null;
 };
 
 export default function SiteSettingsForm({
@@ -23,6 +25,9 @@ export default function SiteSettingsForm({
 }) {
   const router = useRouter();
 
+  const [siteName, setSiteName] = useState(
+    settings?.site_name || ""
+  );
   const [facebookUrl, setFacebookUrl] = useState(
     settings?.facebook_url || ""
   );
@@ -50,6 +55,9 @@ export default function SiteSettingsForm({
   const [showHistoryLink, setShowHistoryLink] = useState(
     settings?.show_company_history_link ?? true
   );
+  const [showChatAssistant, setShowChatAssistant] = useState(
+    settings?.show_chat_assistant ?? true
+  );
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -69,6 +77,7 @@ export default function SiteSettingsForm({
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          site_name: siteName,
           facebook_url: facebookUrl,
           instagram_url: instagramUrl,
           twitter_url: twitterUrl,
@@ -78,6 +87,7 @@ export default function SiteSettingsForm({
           meta_title: metaTitle,
           meta_description: metaDescription,
           show_company_history_link: showHistoryLink,
+          show_chat_assistant: showChatAssistant,
         }),
       });
 
@@ -107,6 +117,30 @@ export default function SiteSettingsForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      {/* General */}
+      <div className="rounded-xl border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-semibold text-gray-900">
+          General
+        </h2>
+
+        <div className="mt-6 space-y-5">
+          <div>
+            <label htmlFor="site_name" className="mb-2 block text-sm font-medium text-gray-700">
+              Site Name
+            </label>
+
+            <input
+              id="site_name"
+              type="text"
+              value={siteName}
+              onChange={(event) => setSiteName(event.target.value)}
+              placeholder="REGIME ENERGY SERVICES"
+              className={inputClass}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Social media */}
       <div className="rounded-xl border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-gray-900">
@@ -262,6 +296,22 @@ export default function SiteSettingsForm({
 
             <span className="text-sm font-medium text-gray-700">
               Show &quot;Our History&quot; link in the website footer
+            </span>
+          </label>
+
+          <label className="flex cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              checked={showChatAssistant}
+              onChange={(event) =>
+                setShowChatAssistant(event.target.checked)
+              }
+              className="h-5 w-5 rounded border-gray-300"
+            />
+
+            <span className="text-sm font-medium text-gray-700">
+              Show chat assistant (Regi) on the website — uncheck to hide it
+              from visitors
             </span>
           </label>
         </div>
