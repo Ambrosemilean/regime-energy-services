@@ -61,7 +61,7 @@ export default async function AdminManagementPage() {
   const [{ data: admins, error }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, full_name, role, is_active, created_at")
+      .select("id, full_name, role, is_active, phone, created_at")
       .order("created_at", { ascending: true }),
   ]);
 

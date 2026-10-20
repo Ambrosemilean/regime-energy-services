@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { normalizePhone } from "@/lib/phone";
 
 const VALID_ROLES = [
   "super_admin",
@@ -70,6 +71,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid role." }, { status: 400 });
     }
 
+    const phone = normalizePhone(body.phone);
+
+    if (body.phone !== undefined && body.phone !== null && body.phone !== "" && !phone) {
+      return NextResponse.json(
+        { error: "Phone number is not valid. Use 7–15 digits, optionally starting with +." },
+        { status: 400 }
+      );
+    }
+
     const adminClient = createAdminClient();
 
     // 1. Create the auth user (Supabase Auth manages the password)
@@ -93,13 +103,14 @@ export async function POST(request: Request) {
 
     // 2. Create the matching profile row
     const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .insert({
-        id: created.user.id,
-        full_name: username,
-        role,
-        is_active: true,
-      })
+    .from("profiles")
+    .insert({
+      id: created.user.id,
+      full_name: username,
+      role,
+      is_active: true,
+      phone,
+    })
       .select("id, full_name, role, is_active")
       .single();
 
@@ -143,11 +154,14 @@ export async function DELETE(request: Request) {
       data: { user: currentUser },
     } = await supabase.auth.getUser();
 
-    if (!body.id || typeof body.id !== "string") {
+    const targetId =
+      typeof body.id === "string" && body.id ? body.id : null;
+
+    if (!targetId) {
       return NextResponse.json({ error: "Admin id is required." }, { status: 400 });
     }
 
-    if (currentUser && currentUser.id === body.id) {
+    if (currentUser && currentUser.id === targetId) {
       return NextResponse.json(
         { error: "You cannot remove your own account." },
         { status: 400 }
@@ -158,7 +172,7 @@ export async function DELETE(request: Request) {
 
     // 1. Revoke access — delete the Supabase Auth user
     const { error: deleteAuthError } =
-      await adminClient.auth.admin.deleteUser(body.id);
+      await adminClient.auth.admin.deleteUser(targetId);
 
     if (deleteAuthError) {
       return NextResponse.json(
@@ -172,7 +186,7 @@ export async function DELETE(request: Request) {
     const { error: deleteProfileError } = await adminClient
       .from("profiles")
       .delete()
-      .eq("id", body.id);
+      .eq("id", targetId);
 
     if (deleteProfileError) {
       return NextResponse.json(
@@ -208,22 +222,37 @@ export async function PATCH(request: Request) {
 
     const body = await request.json();
 
+    const targetId =
+      typeof body.id === "string" && body.id
+        ? body.id
+        : null;
+
+    if (!targetId) {
+      return NextResponse.json(
+        { error: "Admin id is required." },
+        { status: 400 }
+      );
+    }
+
     const {
       data: { user: currentUser },
     } = await supabase.auth.getUser();
 
     // Prevent a super admin from locking themselves out
-    if (currentUser && currentUser.id === body.id) {
+    if (currentUser && currentUser.id === targetId) {
       return NextResponse.json(
         { error: "You cannot modify your own account here." },
         { status: 400 }
       );
     }
 
-    const updates: Record<string, string | boolean> = {};
+    const updates: Record<string, string | boolean | null> = {};
 
     if (body.role !== undefined) {
-      if (!VALID_ROLES.includes(body.role)) {
+      if (
+        typeof body.role !== "string" ||
+        !VALID_ROLES.includes(body.role)
+      ) {
         return NextResponse.json(
           { error: "Invalid role." },
           { status: 400 }
@@ -237,7 +266,73 @@ export async function PATCH(request: Request) {
       updates.is_active = Boolean(body.is_active);
     }
 
+    if (body.full_name !== undefined) {
+      const fullName =
+        typeof body.full_name === "string"
+          ? body.full_name.trim().slice(0, 120)
+          : "";
+
+      if (!fullName) {
+        return NextResponse.json(
+          { error: "Name cannot be empty." },
+          { status: 400 }
+        );
+      }
+
+      updates.full_name = fullName;
+    }
+
+    if (body.phone !== undefined) {
+      const phone = normalizePhone(body.phone);
+
+      if (body.phone !== null && body.phone !== "" && !phone) {
+        return NextResponse.json(
+          { error: "Phone number is not valid. Use 7–15 digits, optionally starting with +." },
+          { status: 400 }
+        );
+      }
+
+      // null / "" clears the number; a normalised value sets it.
+      updates.phone = phone;
+    }
+
+    // Password changes go through the Supabase Auth admin API
+    // (service-role key, server-side only) so the hash never
+    // touches the database or the client.
+    if (body.password !== undefined) {
+      if (
+        typeof body.password !== "string" ||
+        body.password.length < 8 ||
+        body.password.length > 72
+      ) {
+        return NextResponse.json(
+          { error: "Password must be between 8 and 72 characters." },
+          { status: 400 }
+        );
+      }
+
+      const adminClient = createAdminClient();
+
+      const { error: passwordError } =
+        await adminClient.auth.admin.updateUserById(targetId, {
+          password: body.password,
+        });
+
+      if (passwordError) {
+        return NextResponse.json(
+          {
+            error: `Failed to update password: ${passwordError.message}`,
+          },
+          { status: 500 }
+        );
+      }
+    }
+
     if (Object.keys(updates).length === 0) {
+      if (body.password !== undefined) {
+        return NextResponse.json({ success: true });
+      }
+
       return NextResponse.json(
         { error: "Nothing to update." },
         { status: 400 }
@@ -247,8 +342,8 @@ export async function PATCH(request: Request) {
     const { data, error } = await supabase
       .from("profiles")
       .update(updates)
-      .eq("id", body.id)
-      .select("id, full_name, role, is_active")
+      .eq("id", targetId)
+      .select("id, full_name, role, is_active, phone")
       .single();
 
     if (error) {

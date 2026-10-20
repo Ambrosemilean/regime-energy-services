@@ -18,6 +18,7 @@ export default async function BranchesPage() {
     .select(`
       id,
       name,
+      slug,
       address,
       phone,
       whatsapp,
@@ -116,10 +117,15 @@ export default async function BranchesPage() {
                 ? `https://www.google.com/maps?q=${branch.latitude},${branch.longitude}&z=15&output=embed`
                 : null;
 
+              const branchHref =
+                branch.slug || branch.id
+                  ? `/branches/${branch.slug || branch.id}`
+                  : null;
+
               return (
                 <article
                   key={branch.id}
-                  className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:shadow-lg"
+                  className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:shadow-lg"
                 >
                   {/* Image */}
                   {branch.image_url ? (
@@ -146,7 +152,18 @@ export default async function BranchesPage() {
                     </p>
 
                     <h2 className="mt-2 text-2xl font-bold text-gray-900">
-                      {branch.name}
+                      {branchHref ? (
+                        <Link
+                          href={branchHref}
+                          className="absolute inset-0 z-10 flex items-start justify-end p-4 opacity-0 focus:opacity-100"
+                          aria-label={`View details for ${branch.name}`}
+                        >
+                          <span className="sr-only">
+                            View {branch.name} details
+                          </span>
+                        </Link>
+                      ) : null}
+                      <span className="relative z-0">{branch.name}</span>
                     </h2>
 
                     {branch.description && (
@@ -179,7 +196,7 @@ export default async function BranchesPage() {
                             event="phone_click"
                             label={branch.name}
                             target="_self"
-                            className="mt-1 inline-block font-medium text-blue-700 hover:underline"
+                            className="relative z-20 mt-1 inline-block font-medium text-blue-700 hover:underline"
                           >
                             {branch.phone}
                           </TrackedLink>
@@ -195,7 +212,7 @@ export default async function BranchesPage() {
 
                           <a
                             href={`mailto:${branch.email}`}
-                            className="mt-1 inline-block font-medium text-blue-700 hover:underline"
+                            className="relative z-20 mt-1 inline-block font-medium text-blue-700 hover:underline"
                           >
                             {branch.email}
                           </a>
@@ -204,7 +221,7 @@ export default async function BranchesPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="mt-7 flex flex-wrap gap-3">
+                    <div className="relative z-20 mt-7 flex flex-wrap gap-3">
                       {whatsappNumber && (
                         <TrackedLink
                           href={`https://wa.me/${whatsappNumber}`}
@@ -242,7 +259,7 @@ export default async function BranchesPage() {
 
                     {/* Google Map */}
                     {mapUrl && (
-                      <div className="mt-6 overflow-hidden rounded-xl border border-gray-200">
+                      <div className="relative z-20 mt-6 overflow-hidden rounded-xl border border-gray-200">
                         <iframe
                           title={`${branch.name} location map`}
                           src={mapUrl}
@@ -261,6 +278,12 @@ export default async function BranchesPage() {
                         Map location is not currently available for this
                         branch.
                       </div>
+                    )}
+
+                    {branchHref && (
+                      <span className="mt-6 inline-block text-sm font-semibold text-blue-700 group-hover:underline">
+                        View Branch Details →
+                      </span>
                     )}
                   </div>
                 </article>
