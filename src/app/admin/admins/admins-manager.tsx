@@ -8,6 +8,7 @@ type AdminProfile = {
   full_name: string | null;
   role: string | null;
   is_active: boolean | null;
+  phone: string | null;
   created_at: string | null;
 };
 
@@ -39,9 +40,82 @@ export default function AdminsManager({
   const [showAddForm, setShowAddForm] = useState(false);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("viewer");
   const [adding, setAdding] = useState(false);
+
+  // Edit modal state
+  const [editingAdmin, setEditingAdmin] = useState<AdminProfile | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editPassword, setEditPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  function openEditModal(admin: AdminProfile) {
+    setEditingAdmin(admin);
+    setEditName(admin.full_name || "");
+    setEditPhone(admin.phone || "");
+    setEditPassword("");
+    setError("");
+    setSuccess("");
+  }
+
+  function closeEditModal() {
+    setEditingAdmin(null);
+    setEditName("");
+    setEditPhone("");
+    setEditPassword("");
+  }
+
+  async function saveEdit(event: React.FormEvent) {
+    event.preventDefault();
+
+    if (!editingAdmin) return;
+
+    const updates: {
+      full_name?: string;
+      phone?: string | null;
+      password?: string;
+    } = {
+      full_name: editName.trim(),
+      phone: editPhone.trim() === "" ? null : editPhone.trim(),
+    };
+
+    if (editPassword) {
+      updates.password = editPassword;
+    }
+
+    setSaving(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch("/api/admin/admins", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingAdmin.id, ...updates }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.error || "Failed to save administrator details."
+        );
+      }
+
+      setSuccess("Administrator credentials saved.");
+      closeEditModal();
+      router.refresh();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Something went wrong."
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function updateAdmin(
     id: string,
@@ -87,7 +161,7 @@ export default function AdminsManager({
       const response = await fetch("/api/admin/admins", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password, role }),
+        body: JSON.stringify({ username, email, phone, password, role }),
       });
 
       const result = await response.json();
@@ -101,6 +175,7 @@ export default function AdminsManager({
       setSuccess(`Administrator "${username}" created.`);
       setUsername("");
       setEmail("");
+      setPhone("");
       setPassword("");
       setRole("viewer");
       setShowAddForm(false);
@@ -222,6 +297,19 @@ export default function AdminsManager({
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
+                Phone (optional — can be used to log in)
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                placeholder="e.g. +2348031234567"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
                 Password (min. 8 characters)
               </label>
               <input
@@ -276,6 +364,10 @@ export default function AdminsManager({
                 </th>
 
                 <th className="px-4 py-3 text-xs font-semibold uppercase text-gray-500">
+                  Phone
+                </th>
+
+                <th className="px-4 py-3 text-xs font-semibold uppercase text-gray-500">
                   Role
                 </th>
 
@@ -321,6 +413,10 @@ export default function AdminsManager({
                       {emailById[admin.id] || "—"}
                     </td>
 
+                    <td className="px-4 py-4 text-sm text-gray-600">
+                      {admin.phone || "—"}
+                    </td>
+
                     <td className="px-4 py-4">
                       <select
                         value={admin.role || "viewer"}
@@ -353,6 +449,15 @@ export default function AdminsManager({
                     </td>
 
                     <td className="px-4 py-4">
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => openEditModal(admin)}
+                        className="mr-2 rounded-lg border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Edit
+                      </button>
+
                       <button
                         type="button"
                         disabled={isSelf || busy || isLastSuperAdmin}
@@ -393,6 +498,102 @@ export default function AdminsManager({
           </table>
         </div>
       </div>
+
+      {editingAdmin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Edit Administrator
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {emailById[editingAdmin.id] || "Update credentials"}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeEditModal}
+                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={saveEdit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Full name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Phone (leave empty to remove)
+                </label>
+                <input
+                  type="tel"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  placeholder="e.g. +2348031234567"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  The admin can log in with this phone number and their
+                  password.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  New password (leave empty to keep current)
+                </label>
+                <input
+                  type="password"
+                  minLength={8}
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  autoComplete="new-password"
+                />
+              </div>
+
+              {error && (
+                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {saving ? "Saving…" : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

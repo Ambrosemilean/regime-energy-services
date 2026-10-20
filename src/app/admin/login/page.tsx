@@ -3,10 +3,11 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { looksLikePhone } from "@/lib/phone";
 export default function AdminLoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,6 +19,37 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     const supabase = createClient();
+
+    // The login field accepts an email address or a phone number.
+    // Phone numbers are resolved to the admin's auth email server-side
+    // (only for active admins), then signed in with the password.
+    let email = identifier.trim().toLowerCase();
+
+    if (looksLikePhone(identifier)) {
+      try {
+        const lookupResponse = await fetch("/api/admin/login/lookup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identifier }),
+        });
+
+        const lookupResult = await lookupResponse.json().catch(() => ({}));
+
+        if (!lookupResponse.ok || !lookupResult.email) {
+          setErrorMessage(
+            lookupResult.error || "Invalid login credentials."
+          );
+          setLoading(false);
+          return;
+        }
+
+        email = lookupResult.email;
+      } catch {
+        setErrorMessage("Something went wrong. Please try again.");
+        setLoading(false);
+        return;
+      }
+    }
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -71,21 +103,21 @@ export default function AdminLoginPage() {
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
             <label
-              htmlFor="email"
+              htmlFor="identifier"
               className="mb-2 block text-sm font-medium text-gray-700"
             >
-              Email
+              Email or Phone
             </label>
 
             <input
-              id="email"
-              type="email"
+              id="identifier"
+              type="text"
               required
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="username"
+              value={identifier}
+              onChange={(event) => setIdentifier(event.target.value)}
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-600"
-              placeholder="Enter your email"
+              placeholder="Enter your email or phone number"
             />
           </div>
 

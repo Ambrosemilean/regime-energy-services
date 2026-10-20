@@ -62,6 +62,7 @@ export default async function Home() {
       `
       id,
       name,
+      slug,
       address,
       phone,
       whatsapp,
@@ -315,7 +316,7 @@ export default async function Home() {
                     ) : (
                       <div className="flex h-48 w-full items-center justify-center bg-blue-50">
                         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-xl font-bold text-blue-700 shadow-sm">
-                          âœ“
+                          ✓
                         </div>
                       </div>
                     )}
@@ -331,8 +332,8 @@ export default async function Home() {
                           "Professional and dependable service from Regime Energy Services."}
                       </p>
 
-                      <span className="mt-5 inline-block text-sm font-semibold text-blue-700">
-                        Learn More â†’
+                      <span className="mt-5 inline-block text-sm font-semibold text-blue-700 group-hover:underline">
+                        Learn More →
                       </span>
                     </div>
                   </Link>
@@ -474,8 +475,8 @@ export default async function Home() {
                             "Quality LPG product available from Regime Energy Services."}
                         </p>
 
-                        <span className="mt-5 inline-block text-sm font-semibold text-blue-700">
-                          View Product â†’
+                        <span className="mt-5 inline-block text-sm font-semibold text-blue-700 group-hover:underline">
+                          View Product →
                         </span>
                       </div>
                     </Link>
@@ -502,7 +503,7 @@ export default async function Home() {
                 href="/products"
                 className="mt-5 inline-block font-semibold text-blue-700 hover:text-blue-800"
               >
-                Explore Products â†’
+                Explore Products →
               </Link>
             </div>
           )}
@@ -540,10 +541,14 @@ export default async function Home() {
                       ? `https://www.google.com/maps?q=${branch.latitude},${branch.longitude}&z=15&output=embed`
                       : null;
 
+                  const branchHref = `/branches/${
+                    branch.slug || branch.id
+                  }`;
+
                   return (
                     <div
                       key={branch.id}
-                      className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+                      className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
                     >
                       {branch.image_url ? (
                         <div className="relative h-56 w-full overflow-hidden bg-gray-100">
@@ -566,7 +571,18 @@ export default async function Home() {
 
                       <div className="p-7">
                         <h3 className="text-xl font-bold text-gray-900">
-                          {branch.name}
+                          {branchHref ? (
+                            <Link
+                              href={branchHref}
+                              className="absolute inset-0 z-10"
+                              aria-label={`View details for ${branch.name}`}
+                            >
+                              <span className="sr-only">
+                                View {branch.name} details
+                              </span>
+                            </Link>
+                          ) : null}
+                          <span className="relative z-0">{branch.name}</span>
                         </h3>
 
                         {branch.description && (
@@ -589,7 +605,7 @@ export default async function Home() {
 
                         {/* Google Map */}
                         {mapUrl && (
-                          <div className="mt-6 overflow-hidden rounded-xl border border-gray-200">
+                          <div className="relative z-20 mt-6 overflow-hidden rounded-xl border border-gray-200">
                             <iframe
                               title={`${branch.name} location map`}
                               src={mapUrl}
@@ -602,7 +618,7 @@ export default async function Home() {
                           </div>
                         )}
 
-                        <div className="mt-6 flex flex-wrap gap-3">
+                        <div className="relative z-20 mt-6 flex flex-wrap gap-3">
                           {branch.phone && (
                             <TrackedLink
                               href={`tel:${branch.phone}`}
@@ -768,7 +784,7 @@ export default async function Home() {
                   href="/company-history"
                   className="mt-3 inline-block text-sm font-semibold text-gray-300 hover:text-white"
                 >
-                  Our History â†’
+                  Our History →
                 </Link>
               )}
             </div>
@@ -840,7 +856,7 @@ export default async function Home() {
           </div>
 
           <p className="mt-8 border-t border-gray-800 pt-6 text-sm text-gray-500">
-            Â© {new Date().getFullYear()} Regime Energy Services.
+            © {new Date().getFullYear()} Regime Energy Services.
             All rights reserved.
           </p>
         </div>
