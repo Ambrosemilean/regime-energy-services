@@ -59,13 +59,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const emailMask = challenge.email_address.replace(/^(.{2}).*?(@.*)$/, "$1***$2");
-  const phoneMask = challenge.phone_number.replace(/^(\+\d{0,3})\d*(\d{3})$/, "$1****$2");
-
   return NextResponse.json({
     challengeId: challenge.id,
-    emailHint: emailMask,
-    phoneHint: phoneMask,
+    emailHint: challenge.email_address,
+    phoneHint: challenge.phone_number,
     expiresInMinutes: 10,
   });
 }
