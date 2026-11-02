@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import CompanySlideshow from "@/components/company-slideshow";
+import SiteMobileMenu from "@/components/site-mobile-menu";
 import TrackedLink from "@/components/analytics/tracked-link";
 
 export default async function Home() {
@@ -91,11 +92,11 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-white">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border--100 bg-blue/95 shadow-sm backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-          <div className="flex min-w-0 items-center gap-3">
+      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:gap-4 sm:px-6 sm:py-5">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             {company?.logo_url && (
-              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-white">
+              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white sm:h-12 sm:w-12">
                 <Image
                   src={company.logo_url}
                   alt={`${company.company_name || "Regime Energy Services"} logo`}
@@ -108,12 +109,14 @@ export default async function Home() {
             )}
 
             <div className="min-w-0">
-              <h1 className="text-xl font-bold tracking-tight text-blue-900 sm:text-2xl">
+              <h1 className="truncate text-base font-bold tracking-tight text-blue-900 sm:text-xl md:text-2xl">
                 {company?.company_name || "REGIME ENERGY SERVICES"}
               </h1>
 
               {company?.tagline && (
-                <p className="mt-1 text-sm text-gray-500">{company.tagline}</p>
+                <p className="hidden truncate text-sm text-gray-500 sm:block">
+                  {company.tagline}
+                </p>
               )}
             </div>
           </div>
@@ -143,10 +146,12 @@ export default async function Home() {
 
           <a
             href="#contact"
-            className="rounded-lg bg-blue-700 px-7 py-3 text-sm font-bold text-white transition hover:bg-blue-800"
+            className="hidden shrink-0 rounded-lg bg-blue-700 px-7 py-3 text-sm font-bold text-white transition hover:bg-blue-800 md:inline-flex"
           >
             Contact Us
           </a>
+
+          <SiteMobileMenu />
         </div>
       </header>
 
@@ -154,13 +159,13 @@ export default async function Home() {
       {media && media.length > 0 ? (
         <CompanySlideshow media={media} />
       ) : (
-        <section className="bg-blue-900 px-6 py-28 text-white">
+        <section className="bg-blue-900 px-4 py-20 text-white sm:px-6 md:py-28">
           <div className="mx-auto max-w-7xl">
-            <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-yellow-400">
+            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-yellow-400 sm:text-sm">
               Regime Energy Services
             </p>
 
-            <h2 className="max-w-4xl text-4xl font-bold leading-tight md:text-6xl">
+            <h2 className="max-w-4xl text-3xl font-bold leading-tight sm:text-4xl md:text-6xl">
               Reliable LPG Energy Solutions for Homes and Businesses
             </h2>
 
@@ -173,14 +178,14 @@ export default async function Home() {
       )}
 
       {/* Hero Introduction */}
-      <section className="px-6 py-16 md:py-20">
+      <section className="px-4 py-12 sm:px-6 md:py-20">
         <div className="mx-auto max-w-7xl">
           <div className="max-w-3xl">
             <p className="text-sm font-bold uppercase tracking-widest text-red-600">
               Regime Energy Services
             </p>
 
-            <h2 className="mt-3 text-3xl font-bold text-gray-900 md:text-5xl">
+            <h2 className="mt-3 text-2xl font-bold text-gray-900 sm:text-3xl md:text-5xl">
               Powering everyday life with dependable LPG solutions.
             </h2>
 
@@ -190,31 +195,31 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="mt-10 flex flex-wrap gap-4">
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
             <a
               href="#services"
-              className="rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white hover:bg-blue-800"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white hover:bg-blue-800"
             >
               Our Services
             </a>
 
             <a
               href="#products"
-              className="rounded-lg border border-gray-300 px-6 py-3 font-semibold text-gray-800 hover:bg-gray-50"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-gray-300 px-6 py-3 font-semibold text-gray-800 hover:bg-gray-50"
             >
               View Products
             </a>
 
             <a
               href="#branches"
-              className="rounded-lg border border-blue-700 px-6 py-3 font-semibold text-blue-700 hover:bg-blue-50"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-blue-700 px-6 py-3 font-semibold text-blue-700 hover:bg-blue-50"
             >
               Find a Branch
             </a>
 
             <a
               href="#contact"
-              className="rounded-lg border border-red-600 px-6 py-3 font-semibold text-red-600 hover:bg-red-50"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-red-600 px-6 py-3 font-semibold text-red-600 hover:bg-red-50"
             >
               Contact Regime
             </a>

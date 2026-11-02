@@ -25,6 +25,7 @@ export default function AdminSidebar() {
 
   const [companyName, setCompanyName] = useState("REGIME GAS");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -70,7 +71,46 @@ export default function AdminSidebar() {
   }
 
   return (
-    <aside className="fixed inset-y-0 left-0 flex w-64 flex-col bg-slate-900 text-slate-200">
+    <>
+      {/* Mobile top bar with menu toggle — hidden on lg and up */}
+      <div className="fixed inset-x-0 top-0 z-40 flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-3 text-slate-200 lg:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileOpen((value) => !value)}
+          aria-expanded={mobileOpen}
+          aria-controls="admin-sidebar"
+          aria-label={mobileOpen ? "Close admin menu" : "Open admin menu"}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-slate-200 transition hover:bg-slate-800"
+        >
+          {mobileOpen ? (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+          )}
+        </button>
+
+        <span className="truncate text-sm font-semibold text-white">{companyName}</span>
+      </div>
+
+      {/* Backdrop for the mobile drawer */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        id="admin-sidebar"
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-slate-900 text-slate-200 transition-transform duration-200 lg:translate-x-0 ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
       {/* Logo / Header */}
       <div className="border-b border-slate-800 p-5">
         <Link href="/admin" className="flex items-center gap-3">
@@ -114,6 +154,7 @@ export default function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setMobileOpen(false)}
               className={`group relative block rounded-md px-3 py-2.5 text-sm transition ${
                 active
                   ? "bg-slate-800 font-medium text-white"
@@ -146,6 +187,7 @@ export default function AdminSidebar() {
           Logout
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
