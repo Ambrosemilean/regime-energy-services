@@ -1,15 +1,51 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import TrackedView from "@/components/analytics/tracked-view";
 import TrackedLink from "@/components/analytics/tracked-link";
+import { buildMetadata } from "@/lib/seo";
 
 type ServicePageProps = {
   params: Promise<{
     slug: string;
   }>;
 };
+
+export async function generateMetadata({
+  params,
+}: ServicePageProps): Promise<Metadata> {
+  const { slug } = await params;
+
+  const supabase = await createClient();
+
+  const { data: service } = await supabase
+    .from("services")
+    .select("name, slug, short_description, description, image_url")
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (!service) {
+    return buildMetadata({
+      title: "Service Not Found",
+      description:
+        "The service you are looking for is not available on this website.",
+      path: `/services/${slug}`,
+    });
+  }
+
+  return buildMetadata({
+    title: `${service.name} — Regime Energy Services`,
+    description:
+      service.short_description ||
+      service.description ||
+      `Learn more about the ${service.name} service from Regime Energy Services.`,
+    path: `/services/${service.slug}`,
+    ogImage: service.image_url,
+  });
+}
 
 export default async function ServiceDetailsPage({
   params,
@@ -169,7 +205,9 @@ export default async function ServiceDetailsPage({
 
               {whatsappNumber ? (
                 <TrackedLink
-                  href={`https://wa.me/${whatsappNumber}`}
+                  href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+                    `Hello Regime Energy Services, I would like to enquire about your ${service.name} service.`
+                  )}`}
                   event="whatsapp_click"
                   label={service.name}
                   className="mt-5 inline-flex rounded-lg bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"

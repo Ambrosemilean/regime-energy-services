@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import CompanySlideshow from "@/components/company-slideshow";
 import SiteMobileMenu from "@/components/site-mobile-menu";
 import TrackedLink from "@/components/analytics/tracked-link";
+import { getCompanyWhatsAppLink } from "@/components/whatsapp-actions";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -89,6 +90,16 @@ export default async function Home() {
     .limit(1)
     .maybeSingle();
 
+  // Conversion actions — WhatsApp enquiries with pre-filled messages.
+  const [orderHref, deliveryHref] = await Promise.all([
+    getCompanyWhatsAppLink(
+      "Hello Regime Energy Services, I would like to order gas."
+    ),
+    getCompanyWhatsAppLink(
+      "Hello Regime Energy Services, I would like to request a gas delivery.\n\nMy location:\nCylinder size:"
+    ),
+  ]);
+
   return (
     <main className="min-h-screen bg-white">
       {/* Header */}
@@ -144,14 +155,18 @@ export default async function Home() {
             })}
           </nav>
 
-          <a
-            href="#contact"
-            className="hidden shrink-0 rounded-lg bg-blue-700 px-7 py-3 text-sm font-bold text-white transition hover:bg-blue-800 md:inline-flex"
-          >
-            Contact Us
-          </a>
+          {orderHref && (
+            <TrackedLink
+              href={orderHref}
+              event="whatsapp_click"
+              label="header_order_gas"
+              className="hidden shrink-0 rounded-lg bg-green-600 px-7 py-3 text-sm font-bold text-white transition hover:bg-green-700 md:inline-flex"
+            >
+              Order Gas
+            </TrackedLink>
+          )}
 
-          <SiteMobileMenu />
+          <SiteMobileMenu whatsappHref={orderHref} />
         </div>
       </header>
 
@@ -196,33 +211,41 @@ export default async function Home() {
           </div>
 
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
-            <a
-              href="#services"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white hover:bg-blue-800"
-            >
-              Our Services
-            </a>
+            {orderHref && (
+              <TrackedLink
+                href={orderHref}
+                event="whatsapp_click"
+                label="hero_order_gas"
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700"
+              >
+                Order Gas
+              </TrackedLink>
+            )}
 
-            <a
-              href="#products"
+            {deliveryHref && (
+              <TrackedLink
+                href={deliveryHref}
+                event="whatsapp_click"
+                label="hero_request_delivery"
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white hover:bg-blue-800"
+              >
+                Request Delivery
+              </TrackedLink>
+            )}
+
+            <Link
+              href="/products"
               className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-gray-300 px-6 py-3 font-semibold text-gray-800 hover:bg-gray-50"
             >
               View Products
-            </a>
+            </Link>
 
-            <a
-              href="#branches"
+            <Link
+              href="/branches"
               className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-blue-700 px-6 py-3 font-semibold text-blue-700 hover:bg-blue-50"
             >
               Find a Branch
-            </a>
-
-            <a
-              href="#contact"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-red-600 px-6 py-3 font-semibold text-red-600 hover:bg-red-50"
-            >
-              Contact Regime
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -641,12 +664,14 @@ export default async function Home() {
                               href={`https://wa.me/${branch.whatsapp.replace(
                                 /\D/g,
                                 ""
+                              )}?text=${encodeURIComponent(
+                                `Hello ${branch.name} branch, I would like to order gas.`
                               )}`}
                               event="whatsapp_click"
                               label={branch.name}
                               className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
                             >
-                              WhatsApp
+                              Order Gas
                             </TrackedLink>
                           )}
 
@@ -756,6 +781,8 @@ export default async function Home() {
                     href={`https://wa.me/${company.whatsapp.replace(
                       /\D/g,
                       ""
+                    )}?text=${encodeURIComponent(
+                      "Hello Regime Energy Services, I would like to make an enquiry."
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"

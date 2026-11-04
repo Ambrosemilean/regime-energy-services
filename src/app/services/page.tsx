@@ -1,11 +1,15 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import { buildMetadata } from "@/lib/seo";
+import QuickActions from "@/components/whatsapp-actions";
 
-export const metadata = {
-  title: "Our Services — Regime Energy Services",
+export const metadata = buildMetadata({
+  title: "Our Services — LPG Supply, Delivery & Repairs",
   description:
-    "Explore the range of LPG supply, distribution and energy services available from Regime Energy Services.",
-};
+    "LPG supply, home and commercial gas delivery, haulage, cooker and burner repairs, and gas equipment services from Regime Energy Services in Owerri.",
+  path: "/services",
+});
 
 type ServicesPageProps = {
   searchParams: Promise<{
@@ -53,19 +57,37 @@ export default async function ServicesListPage({
       {/* Header */}
       <section className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-          <Link
-            href="/"
-            className="truncate text-base font-bold text-blue-700 sm:text-xl"
-          >
-            Regime Energy Services
-          </Link>
+          <div className="flex min-w-0 items-center gap-3">
+            <Link
+              href="/"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-700 text-xs font-extrabold tracking-tight text-white"
+              aria-label="Regime Energy Services home"
+            >
+              RG
+            </Link>
+            <Link
+              href="/"
+              className="truncate text-base font-bold text-blue-900 sm:text-xl"
+            >
+              Regime Energy Services
+            </Link>
+          </div>
 
-          <Link
-            href="/"
-            className="inline-flex min-h-[40px] shrink-0 items-center self-start text-sm font-medium text-gray-700 hover:text-blue-700 sm:self-auto"
-          >
-            ← Back to Home
-          </Link>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-5">
+            <nav aria-label="Site navigation" className="hidden items-center gap-5 md:flex">
+              <Link href="/products" className="text-sm font-medium text-gray-600 hover:text-blue-700">Products</Link>
+              <Link href="/services" className="text-sm font-semibold text-blue-700 underline decoration-2 underline-offset-4">Services</Link>
+              <Link href="/branches" className="text-sm font-medium text-gray-600 hover:text-blue-700">Branches</Link>
+              <Link href="/company-history" className="text-sm font-medium text-gray-600 hover:text-blue-700">Our History</Link>
+            </nav>
+
+            <Link
+              href="/"
+              className="inline-flex min-h-[44px] shrink-0 items-center self-start rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:self-auto"
+            >
+              ← Back to Home
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -83,6 +105,10 @@ export default async function ServicesListPage({
           Explore the range of services available from Regime
           Energy Services.
         </p>
+
+        <div className="mt-8">
+          <QuickActions />
+        </div>
       </section>
 
       {/* Service Search */}
@@ -181,11 +207,13 @@ export default async function ServicesListPage({
               >
                 <div className="relative h-52 w-full overflow-hidden bg-gray-50">
                   {service.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={service.image_url}
                       alt={service.name}
-                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      fill
+                      quality={85}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="object-cover transition duration-300 group-hover:scale-105"
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center bg-blue-50">

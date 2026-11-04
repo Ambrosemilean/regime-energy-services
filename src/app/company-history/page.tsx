@@ -1,20 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { buildMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Our History — Regime Energy Services",
+export const metadata = buildMetadata({
+  title: "Our History — Company Story & Milestones",
   description:
-    "Discover the story, growth, and milestones of Regime Energy Services.",
-};
+    "Discover the story, growth and milestones of Regime Energy Services in the LPG and energy services industry.",
+  path: "/company-history",
+});
 
-type Milestone = {
-  id: string;
-  year: string;
-  title: string;
-  description: string | null;
-  display_order: number;
-};
+
 
 export default async function CompanyHistoryPage() {
   const supabase = await createClient();

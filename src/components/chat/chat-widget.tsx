@@ -239,7 +239,9 @@ export default function ChatWidget() {
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-label={open ? "Close chat assistant" : "Open chat assistant"}
-        className="fixed bottom-5 right-5 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-xl shadow-blue-900/30 ring-1 ring-white/20 transition-all duration-200 hover:scale-110 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-blue-300/50"
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        className="fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-xl shadow-blue-900/30 ring-1 ring-white/20 transition-all duration-200 hover:scale-110 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-blue-300/50 sm:bottom-5 sm:right-5"
       >
         {open ? (
           <svg
@@ -269,7 +271,11 @@ export default function ChatWidget() {
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-24 right-5 z-50 flex h-[min(32rem,calc(100vh-8rem))] w-[min(24rem,calc(100vw-2.5rem))] animate-[chat-in_0.2s_ease-out] flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl shadow-gray-900/20">
+        <div
+          role="dialog"
+          aria-label="Regi chat assistant"
+          className="fixed bottom-20 right-3 z-50 flex h-[min(32rem,calc(100vh-7rem))] w-[min(24rem,calc(100vw-1.5rem))] animate-[chat-in_0.2s_ease-out] flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-2xl shadow-gray-900/20 sm:bottom-24 sm:right-5 sm:w-96"
+        >
           {/* Fixed header */}
           <div className="flex shrink-0 items-center gap-3 bg-gradient-to-r from-blue-700 via-blue-700 to-blue-600 px-4 py-3 text-white">
             <RegiAvatar className="ring-2 ring-white/30" />
@@ -380,13 +386,14 @@ export default function ChatWidget() {
               onChange={(event) => setInput(event.target.value)}
               placeholder="Ask about gas, delivery, safety…"
               aria-label="Your message"
-              className="min-w-0 flex-1 rounded-full border border-gray-300 bg-gray-50 px-4 py-2 text-sm outline-none transition focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-100"
+              autoComplete="off"
+              className="min-h-[44px] min-w-0 flex-1 rounded-full border border-gray-300 bg-gray-50 px-4 py-2 text-base outline-none transition focus:border-blue-600 focus:bg-white focus:ring-2 focus:ring-blue-100 sm:text-sm"
             />
 
             <button
               type="submit"
               disabled={sending || !input.trim()}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow transition hover:from-blue-500 hover:to-blue-600 disabled:opacity-40"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow transition hover:from-blue-500 hover:to-blue-600 disabled:opacity-40"
               aria-label="Send message"
             >
               <svg

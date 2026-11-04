@@ -82,26 +82,6 @@ export default function CompanySlideshow({
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-black/30" />
 
-        {/* Image Information */}
-        {(currentImage.title ||
-          currentImage.description) && (
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent px-6 pb-12 pt-24 md:px-12 md:pb-16">
-            <div className="mx-auto max-w-7xl">
-              {currentImage.title && (
-                <h2 className="text-2xl font-bold text-white md:text-4xl">
-                  {currentImage.title}
-                </h2>
-              )}
-
-              {currentImage.description && (
-                <p className="mt-3 max-w-2xl text-sm text-white/90 md:text-lg">
-                  {currentImage.description}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Previous Button */}
         {activeMedia.length > 1 && (
           <button

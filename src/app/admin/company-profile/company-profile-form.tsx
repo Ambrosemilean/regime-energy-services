@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 type CompanyProfile = {
   id: string;
   company_name: string;
@@ -405,9 +406,12 @@ export default function CompanyProfileForm({
               <div className="mb-4">
                 <p className="mb-2 text-sm text-gray-500">Logo preview</p>
                 <div className="flex h-32 w-48 items-center justify-center rounded-lg border border-gray-200 bg-white p-3">
-                  <img
+                  <Image
                     src={logoPreview}
                     alt="Company logo preview"
+                    width={192}
+                    height={128}
+                    unoptimized
                     className="max-h-full max-w-full object-contain"
                   />
                 </div>

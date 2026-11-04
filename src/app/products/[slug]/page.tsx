@@ -1,15 +1,62 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import TrackedView from "@/components/analytics/tracked-view";
 import TrackedLink from "@/components/analytics/tracked-link";
+import { buildMetadata } from "@/lib/seo";
 
 type ProductPageProps = {
   params: Promise<{
     slug: string;
   }>;
 };
+
+export async function generateMetadata({
+  params,
+}: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params;
+
+  const supabase = await createClient();
+
+  const { data: product } = await supabase
+    .from("products")
+    .select(
+      `name, slug, short_description, description, product_images (image_url, is_primary, display_order)`
+    )
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (!product) {
+    return buildMetadata({
+      title: "Product Not Found",
+      description:
+        "The product you are looking for is not available on this website.",
+      path: `/products/${slug}`,
+    });
+  }
+
+  const images = Array.isArray(product.product_images)
+    ? [...product.product_images].sort(
+        (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
+      )
+    : [];
+
+  const primary =
+    images.find((image) => image.is_primary === true) ?? images[0];
+
+  return buildMetadata({
+    title: `${product.name} — LPG Products`,
+    description:
+      product.short_description ||
+      product.description ||
+      `Learn more about ${product.name}, available from Regime Energy Services.`,
+    path: `/products/${product.slug}`,
+    ogImage: primary?.image_url ?? null,
+  });
+}
 
 type ProductImage = {
   id: string;
@@ -324,7 +371,11 @@ export default async function ProductDetailsPage({
 
               {whatsappNumber ? (
                 <TrackedLink
-                  href={`https://wa.me/${whatsappNumber}`}
+                  href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+                    `Hello Regime Energy Services, I would like to enquire about: ${product.name}${
+                      product.size_capacity ? ` (${product.size_capacity})` : ""
+                    }`
+                  )}`}
                   event="whatsapp_click"
                   label={product.name}
                   className="mt-5 inline-flex rounded-lg bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"

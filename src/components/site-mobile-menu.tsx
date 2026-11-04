@@ -4,15 +4,19 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 const NAV_ITEMS = [
-  { href: "#about", label: "About" },
-  { href: "#services", label: "Services" },
-  { href: "#products", label: "Products" },
-  { href: "#branches", label: "Branches" },
+  { href: "/products", label: "Products", isLink: true },
+  { href: "/services", label: "Services", isLink: true },
+  { href: "/branches", label: "Branches", isLink: true },
   { href: "/company-history", label: "Our History", isLink: true },
+  { href: "#about", label: "About" },
   { href: "#contact", label: "Contact" },
 ];
 
-export default function SiteMobileMenu() {
+export default function SiteMobileMenu({
+  whatsappHref,
+}: {
+  whatsappHref?: string | null;
+}) {
   const [open, setOpen] = useState(false);
 
   // Close the menu if the viewport grows to desktop size.
@@ -106,13 +110,25 @@ export default function SiteMobileMenu() {
           </ul>
 
           <div className="border-t border-gray-100 px-4 py-4">
-            <a
-              href="#contact"
-              onClick={() => setOpen(false)}
-              className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-blue-700 px-5 text-base font-bold text-white transition hover:bg-blue-800"
-            >
-              Contact Us
-            </a>
+            {whatsappHref ? (
+              <a
+                href={whatsappHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-green-600 px-5 text-base font-bold text-white transition hover:bg-green-700"
+              >
+                Order Gas on WhatsApp
+              </a>
+            ) : (
+              <a
+                href="#contact"
+                onClick={() => setOpen(false)}
+                className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-blue-700 px-5 text-base font-bold text-white transition hover:bg-blue-800"
+              >
+                Contact Us
+              </a>
+            )}
           </div>
         </nav>
       )}

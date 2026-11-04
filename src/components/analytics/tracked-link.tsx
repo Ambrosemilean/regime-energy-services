@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import type { ReactNode } from "react";
 import { trackEvent } from "./analytics-tracker";
 
@@ -11,6 +13,28 @@ type TrackedLinkProps = {
   children: ReactNode;
   target?: string;
 };
+
+/**
+ * Wraps a Link for internal pages so the click can be tracked while
+ * still getting Next.js client-side navigation.
+ */
+export function TrackedPageLink({
+  href,
+  event,
+  label,
+  className,
+  children,
+}: TrackedLinkProps & { href: string }) {
+  return (
+    <Link
+      href={href}
+      onClick={() => trackEvent(event, label)}
+      className={className}
+    >
+      {children}
+    </Link>
+  );
+}
 
 /**
  * Client-side wrapper around an <a> tag so that click tracking

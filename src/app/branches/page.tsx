@@ -1,14 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { buildMetadata } from "@/lib/seo";
+import QuickActions from "@/components/whatsapp-actions";
 import TrackedLink from "@/components/analytics/tracked-link";
 import TrackedBranchView from "@/components/analytics/tracked-branch-view";
 
-export const metadata = {
-  title: "Our Branches | Regime Energy Services",
+export const metadata = buildMetadata({
+  title: "Our Branches — Gas Plants in Owerri",
   description:
-    "Explore Regime Energy Services branch locations, contact details, and services across Owerri, Imo State.",
-};
+    "Find Regime Energy Services branch locations in Owerri, Imo State. Call, WhatsApp or get directions to your nearest Regime Gas branch.",
+  path: "/branches",
+});
 
 export default async function BranchesPage() {
   const supabase = await createClient();
@@ -47,19 +50,37 @@ export default async function BranchesPage() {
       {/* Header */}
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-          <Link
-            href="/"
-            className="truncate text-base font-bold text-blue-700 sm:text-xl"
-          >
-            Regime Energy Services
-          </Link>
+          <div className="flex min-w-0 items-center gap-3">
+            <Link
+              href="/"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-700 text-xs font-extrabold tracking-tight text-white"
+              aria-label="Regime Energy Services home"
+            >
+              RG
+            </Link>
+            <Link
+              href="/"
+              className="truncate text-base font-bold text-blue-900 sm:text-xl"
+            >
+              Regime Energy Services
+            </Link>
+          </div>
 
-          <Link
-            href="/"
-            className="inline-flex min-h-[40px] shrink-0 items-center self-start text-sm font-medium text-gray-700 transition hover:text-blue-700 sm:self-auto"
-          >
-            ← Back Home
-          </Link>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-5">
+            <nav aria-label="Site navigation" className="hidden items-center gap-5 md:flex">
+              <Link href="/products" className="text-sm font-medium text-gray-600 hover:text-blue-700">Products</Link>
+              <Link href="/services" className="text-sm font-medium text-gray-600 hover:text-blue-700">Services</Link>
+              <Link href="/branches" className="text-sm font-semibold text-blue-700 underline decoration-2 underline-offset-4">Branches</Link>
+              <Link href="/company-history" className="text-sm font-medium text-gray-600 hover:text-blue-700">Our History</Link>
+            </nav>
+
+            <Link
+              href="/"
+              className="inline-flex min-h-[44px] shrink-0 items-center self-start rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:self-auto"
+            >
+              ← Back to Home
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -78,6 +99,10 @@ export default async function BranchesPage() {
             Visit a Regime Energy Services location for LPG products,
             gas services, customer support, and other energy solutions.
           </p>
+
+          <div className="mt-8">
+            <QuickActions current="branches" />
+          </div>
         </div>
       </section>
 
@@ -224,12 +249,14 @@ export default async function BranchesPage() {
                     <div className="relative z-20 mt-7 flex flex-wrap gap-3">
                       {whatsappNumber && (
                         <TrackedLink
-                          href={`https://wa.me/${whatsappNumber}`}
+                          href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+                            `Hello ${branch.name} branch, I would like to order gas.`
+                          )}`}
                           event="whatsapp_click"
                           label={branch.name}
                           className="rounded-lg bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
                         >
-                          WhatsApp
+                          Order Gas on WhatsApp
                         </TrackedLink>
                       )}
 

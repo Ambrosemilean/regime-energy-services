@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import TrackedView from "@/components/analytics/tracked-view";
 import TrackedLink from "@/components/analytics/tracked-link";
+import { buildMetadata } from "@/lib/seo";
 
 type BranchPageProps = {
   params: Promise<{
@@ -65,12 +66,14 @@ export async function generateMetadata({
     };
   }
 
-  return {
-    title: `${branch.name} | Regime Energy Services`,
+  return buildMetadata({
+    title: `${branch.name} — Regime Energy Services Branch`,
     description:
       branch.description ||
       `Contact and location details for the ${branch.name} branch of Regime Energy Services.`,
-  };
+    path: `/branches/${branch.slug}`,
+    ogImage: branch.image_url,
+  });
 }
 
 export default async function BranchDetailsPage({
@@ -244,12 +247,14 @@ export default async function BranchDetailsPage({
             <div className="mt-8 flex flex-wrap gap-3">
               {whatsappNumber && (
                 <TrackedLink
-                  href={`https://wa.me/${whatsappNumber}`}
+                  href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+                    `Hello ${branch.name} branch, I would like to order gas.`
+                  )}`}
                   event="whatsapp_click"
                   label={branch.name}
                   className="rounded-lg bg-green-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
                 >
-                  WhatsApp
+                  Order Gas on WhatsApp
                 </TrackedLink>
               )}
 

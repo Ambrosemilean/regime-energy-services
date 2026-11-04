@@ -3,6 +3,14 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import ChatWidget from "@/components/chat/chat-widget";
 import AnalyticsTracker from "@/components/analytics/analytics-tracker";
+import { FloatingWhatsAppButton } from "@/components/whatsapp-actions";
+import {
+  SITE_URL,
+  SITE_NAME,
+  DEFAULT_TITLE,
+  DEFAULT_DESCRIPTION,
+  organizationJsonLd,
+} from "@/lib/seo";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,6 +24,25 @@ const geistMono = Geist_Mono({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
+  const base: Metadata = {
+    metadataBase: new URL(SITE_URL),
+    title: {
+      default: DEFAULT_TITLE,
+      template: `%s | ${SITE_NAME}`,
+    },
+    description: DEFAULT_DESCRIPTION,
+    applicationName: SITE_NAME,
+    openGraph: {
+      siteName: SITE_NAME,
+      type: "website",
+      locale: "en_NG",
+      url: SITE_URL,
+    },
+    twitter: {
+      card: "summary_large_image",
+    },
+  };
+
   try {
     const supabase = await createClient();
 
@@ -28,24 +55,27 @@ export async function generateMetadata(): Promise<Metadata> {
 
     if (settings?.meta_title || settings?.meta_description) {
       return {
-        title: settings.meta_title || undefined,
-        description: settings.meta_description || undefined,
+        ...base,
+        title: {
+          default: settings.meta_title || DEFAULT_TITLE,
+          template: `%s | ${SITE_NAME}`,
+        },
+        description: settings.meta_description || DEFAULT_DESCRIPTION,
       };
     }
   } catch {
     // Fall back to default metadata when settings are unavailable.
   }
 
-  return {
-    title: "Regime Energy Services — Reliable LPG Solutions",
-    description:
-      "Safe, reliable and efficient LPG supply, distribution, delivery and related energy services.",
-  };
+  return base;
 }
 
 export default async function RootLayout({
   children,
 }: LayoutProps<"/">) {
+  // Organization structured data, built only from admin-managed fields.
+  let jsonLd: object | null = null;
+
   // The admin can hide the public chat assistant via Site Settings.
   let showChatAssistant = true;
 
@@ -58,6 +88,19 @@ export default async function RootLayout({
       .eq("is_active", true)
       .limit(1)
       .maybeSingle();
+
+    const { data: company } = await supabase
+      .from("company_profile")
+      .select(
+        "company_name, short_description, description, phone, email, address, logo_url"
+      )
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+
+    if (company) {
+      jsonLd = organizationJsonLd(company);
+    }
 
     if (settings && settings.show_chat_assistant === false) {
       showChatAssistant = false;
@@ -72,8 +115,15 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {jsonLd && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          />
+        )}
         {children}
         <AnalyticsTracker />
+        <FloatingWhatsAppButton />
         {showChatAssistant && <ChatWidget />}
       </body>
     </html>
