@@ -7,7 +7,9 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin", "/api"],
+        // Do not disclose the admin URL in robots.txt (it advertises
+        // the panel to scanners). Public pages remain fully crawlable.
+        disallow: ["/api"],
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,
