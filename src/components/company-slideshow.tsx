@@ -15,8 +15,11 @@ type CompanyMedia = {
 
 export default function CompanySlideshow({
   media,
+  children,
 }: {
   media: CompanyMedia[];
+  /** Optional content rendered over the slides (e.g. hero copy + CTAs). */
+  children?: React.ReactNode;
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -79,8 +82,15 @@ export default function CompanySlideshow({
           className="object-cover"
         />
 
-        {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/30" />
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-900/55 to-slate-900/20" />
+
+        {/* Hero overlay content (homepage headline + actions) */}
+        {children && (
+          <div className="absolute inset-0 flex items-center">
+            <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">{children}</div>
+          </div>
+        )}
 
         {/* Previous Button */}
         {activeMedia.length > 1 && (

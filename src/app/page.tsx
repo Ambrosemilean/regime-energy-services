@@ -1,97 +1,148 @@
-﻿import Image from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import CompanySlideshow from "@/components/company-slideshow";
-import SiteMobileMenu from "@/components/site-mobile-menu";
+import BranchWorldMap from "@/components/branch-world-map";
+import SiteHeader from "@/components/site-header";
+import SiteFooter from "@/components/site-footer";
 import TrackedLink from "@/components/analytics/tracked-link";
-import { getCompanyWhatsAppLink } from "@/components/whatsapp-actions";
+import {
+  getCompanyWhatsAppLink,
+} from "@/components/whatsapp-actions";
+
+/**
+ * Homepage — redesigned corporate layout for Regime Energy Services.
+ *
+ * All company content remains dynamic from Supabase (company profile,
+ * media, services, products, branches, site settings). Only presentation
+ * is defined here; the approved brand copy below is static page content.
+ */
+
+type ServiceRow = {
+  id: string;
+  name: string;
+  slug: string;
+  short_description: string | null;
+  description: string | null;
+  image_url: string | null;
+  service_category: string | null;
+  display_order: number | null;
+};
+
+type ProductRow = {
+  id: string;
+  name: string;
+  slug: string;
+  short_description: string | null;
+  description: string | null;
+  display_order: number | null;
+  product_images: {
+    image_url: string;
+    alt_text: string | null;
+    is_primary: boolean | null;
+    display_order: number | null;
+  }[];
+};
+
+type BranchRow = {
+  id: string;
+  name: string;
+  slug: string;
+  address: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  email: string | null;
+  google_maps_url: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  image_url: string | null;
+  description: string | null;
+  display_order: number | null;
+};
+
+/** Presentation-only service commitments (approved homepage copy). */
+const TRUST_COMMITMENTS = [
+  {
+    title: "Accurate Dispensing",
+    text: "Every refill is measured with calibrated equipment — 1kg is always 1kg.",
+  },
+  {
+    title: "Safe Handling",
+    text: "Trained staff, certified cylinders and disciplined LPG handling, storage and transport.",
+  },
+  {
+    title: "Home and Business Delivery",
+    text: "Swift delivery to homes and businesses across Egbu, Owerri Municipal and Owerri North.",
+  },
+] as const;
+
+const CUSTOMER_CATEGORIES = [
+  { label: "Residential", text: "Household refills and cylinder accessories." },
+  { label: "Commercial", text: "Restaurants, hotels, bakeries and schools." },
+  { label: "Industrial", text: "Bulk supply for factories and industry." },
+] as const;
+
+/**
+ * Mission / vision cards. Admin-written copy is preferred when present.
+ */
 
 export default async function Home() {
   const supabase = await createClient();
 
-  const { data: company } = await supabase
-    .from("company_profile")
-    .select("*")
-    .eq("is_active", true)
-    .limit(1)
-    .maybeSingle();
-
-  const { data: media } = await supabase
-    .from("company_media")
-    .select("*")
-    .eq("is_active", true)
-    .order("display_order", { ascending: true })
-    .order("created_at", { ascending: true });
-
-  // Load active services from Supabase
-  const { data: services } = await supabase
-    .from("services")
-    .select(
-      "id, name, slug, short_description, description, image_url, is_active, display_order"
-    )
-    .eq("is_active", true)
-    .order("display_order", { ascending: true })
-    .order("created_at", { ascending: true });
-
-  // Load active products from Supabase
-  const { data: products } = await supabase
-    .from("products")
-    .select(
-      `
-      id,
-      name,
-      slug,
-      short_description,
-      description,
-      is_active,
-      display_order,
-      product_images (
-        image_url,
-        alt_text,
-        is_primary,
-        display_order
+  const [
+    { data: company },
+    { data: media },
+    { data: services },
+    { data: products },
+    { data: branches },
+    { data: settings },
+    orderHref,
+    deliveryHref,
+  ] = await Promise.all([
+    supabase
+      .from("company_profile")
+      .select("*")
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("company_media")
+      .select("*")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("services")
+      .select(
+        "id, name, slug, short_description, description, image_url, service_category, is_active, display_order"
       )
-    `
-    )
-    .eq("is_active", true)
-    .order("display_order", { ascending: true })
-    .order("created_at", { ascending: true });
-
-  // Load active branches from Supabase
-  const { data: branches } = await supabase
-    .from("branches")
-    .select(
-      `
-      id,
-      name,
-      slug,
-      address,
-      phone,
-      whatsapp,
-      email,
-      google_maps_url,
-      latitude,
-      longitude,
-      image_url,
-      description,
-      is_active,
-      display_order
-    `
-    )
-    .eq("is_active", true)
-    .order("display_order", { ascending: true })
-    .order("created_at", { ascending: true });
-
-  // Load global site settings
-  const { data: siteSettings } = await supabase
-    .from("site_settings")
-    .select("*")
-    .eq("is_active", true)
-    .limit(1)
-    .maybeSingle();
-
-  // Conversion actions — WhatsApp enquiries with pre-filled messages.
-  const [orderHref, deliveryHref] = await Promise.all([
+      .eq("is_active", true)
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("products")
+      .select(
+        `id, name, slug, short_description, description, is_active, display_order,
+        product_images (image_url, alt_text, is_primary, display_order)`
+      )
+      .eq("is_active", true)
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("branches")
+      .select(
+        `id, name, slug, address, phone, whatsapp, email, google_maps_url,
+        latitude, longitude, image_url, description, is_active, display_order`
+      )
+      .eq("is_active", true)
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("site_settings")
+      .select("show_branch_map")
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle(),
     getCompanyWhatsAppLink(
       "Hello Regime Energy Services, I would like to order gas."
     ),
@@ -100,799 +151,836 @@ export default async function Home() {
     ),
   ]);
 
-  return (
-    <main className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:gap-4 sm:px-6 sm:py-5">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            {company?.logo_url && (
-              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white sm:h-12 sm:w-12">
-                <Image
-                  src={company.logo_url}
-                  alt={`${company.company_name || "Regime Energy Services"} logo`}
-                  fill
-                  sizes="48px"
-                  priority
-                  className="object-contain"
-                />
-              </div>
-            )}
+  const serviceList = (services ?? []) as ServiceRow[];
+  const productList = (products ?? []) as ProductRow[];
+  const branchList = (branches ?? []) as BranchRow[];
 
-            <div className="min-w-0">
-              <h1 className="truncate text-base font-bold tracking-tight text-blue-900 sm:text-xl md:text-2xl">
-                {company?.company_name || "REGIME ENERGY SERVICES"}
+  // The interactive branch map can be switched off from the admin
+  // dashboard (Site Settings → "Show the branch map on the homepage").
+  const showBranchMap = settings?.show_branch_map !== false;
+
+  // The admin uploads a weighbridge photo via Company Media with a file
+  // name/title containing "weighbridge". It is shown in the featured
+  // weighbridge section instead of the hero slideshow.
+  const weighbridgeMedia =
+    media?.find((item) =>
+      [item.title, item.alt_text]
+        .filter(Boolean)
+        .some((value) =>
+          (value as string).toLowerCase().includes("weighbridge")
+        )
+    ) ?? null;
+
+  const heroMedia = weighbridgeMedia
+    ? media!.filter((item) => item.id !== weighbridgeMedia.id)
+    : (media ?? []);
+
+  const phoneHref = company?.phone ? `tel:${company.phone}` : null;
+  const callHref = phoneHref ?? (company?.phone ? `tel:${company.phone}` : null);
+  const phoneDisplay = company?.phone || "08021295401";
+
+  return (
+    <div className="flex min-h-screen flex-col bg-white">
+      <SiteHeader currentPath="/" />
+
+      <main className="flex-1">
+        {/* ---------------------------------------------------------- */}
+        {/* Hero — real company imagery with headline overlay          */}
+        {/* ---------------------------------------------------------- */}
+        {heroMedia.length > 0 ? (
+          <CompanySlideshow media={heroMedia}>
+            <div className="max-w-3xl py-16 md:py-24">
+              <span className="regime-accent-chip bg-white/95">
+                Since 2013 · Owerri, Imo State
+              </span>
+
+              <h1 className="mt-5 text-4xl font-bold leading-tight text-white sm:text-5xl md:text-6xl">
+                Powering Everyday Life With Dependable LPG
               </h1>
 
-              {company?.tagline && (
-                <p className="hidden truncate text-sm text-gray-500 sm:block">
-                  {company.tagline}
-                </p>
-              )}
-            </div>
-          </div>
-          <nav className="hidden items-center gap-7 md:flex">
-            {[
-              { href: "#about", label: "About" },
-              { href: "#services", label: "Services" },
-              { href: "#products", label: "Products" },
-              { href: "#branches", label: "Branches" },
-              { href: "/company-history", label: "Our History", isLink: true },
-              { href: "#contact", label: "Contact" },
-            ].map((item) => {
-              const className =
-                "nav-link relative rounded text-[13px] font-medium tracking-wide text-slate-600 hover:text-blue-800 hover:[text-shadow:0_1px_2px_rgb(37_99_235/0.18)] focus-visible:text-blue-800";
+              <p className="mt-5 max-w-2xl text-base leading-8 text-slate-200 sm:text-lg">
+                Regime Energy Services is a downstream energy company
+                supplying LPG to homes, businesses and industries, with safe
+                handling and accurate dispensing every time.
+              </p>
 
-              return item.isLink ? (
-                <Link key={item.href} href={item.href} className={className}>
-                  {item.label}
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="#about"
+                  className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-regime-blue px-7 py-3 font-bold text-white transition hover:bg-regime-blue-dark"
+                >
+                  Discover More
                 </Link>
-              ) : (
-                <a key={item.href} href={item.href} className={className}>
-                  {item.label}
-                </a>
-              );
-            })}
-          </nav>
 
-          {orderHref && (
-            <TrackedLink
-              href={orderHref}
-              event="whatsapp_click"
-              label="header_order_gas"
-              className="hidden shrink-0 rounded-lg bg-green-600 px-7 py-3 text-sm font-bold text-white transition hover:bg-green-700 md:inline-flex"
-            >
-              Order Gas
-            </TrackedLink>
-          )}
-
-          <SiteMobileMenu whatsappHref={orderHref} />
-        </div>
-      </header>
-
-      {/* Hero Slideshow */}
-      {media && media.length > 0 ? (
-        <CompanySlideshow media={media} />
-      ) : (
-        <section className="bg-blue-900 px-4 py-20 text-white sm:px-6 md:py-28">
-          <div className="mx-auto max-w-7xl">
-            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-yellow-400 sm:text-sm">
-              Regime Energy Services
-            </p>
-
-            <h2 className="max-w-4xl text-3xl font-bold leading-tight sm:text-4xl md:text-6xl">
-              Reliable LPG Energy Solutions for Homes and Businesses
-            </h2>
-
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-blue-100">
-              Safe, reliable and efficient LPG supply, distribution,
-              delivery and related energy services.
-            </p>
-          </div>
-        </section>
-      )}
-
-      {/* Hero Introduction */}
-      <section className="px-4 py-12 sm:px-6 md:py-20">
-        <div className="mx-auto max-w-7xl">
-          <div className="max-w-3xl">
-            <p className="text-sm font-bold uppercase tracking-widest text-red-600">
-              Regime Energy Services
-            </p>
-
-            <h2 className="mt-3 text-2xl font-bold text-gray-900 sm:text-3xl md:text-5xl">
-              Powering everyday life with dependable LPG solutions.
-            </h2>
-
-            <p className="mt-6 text-lg leading-8 text-gray-600">
-              {company?.short_description ||
-                "Regime Energy Services provides LPG supply, distribution, delivery and related energy services for residential, commercial and industrial customers."}
-            </p>
-          </div>
-
-          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
-            {orderHref && (
-              <TrackedLink
-                href={orderHref}
-                event="whatsapp_click"
-                label="hero_order_gas"
-                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700"
-              >
-                Order Gas
-              </TrackedLink>
-            )}
-
-            {deliveryHref && (
-              <TrackedLink
-                href={deliveryHref}
-                event="whatsapp_click"
-                label="hero_request_delivery"
-                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white hover:bg-blue-800"
-              >
-                Request Delivery
-              </TrackedLink>
-            )}
-
-            <Link
-              href="/products"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-gray-300 px-6 py-3 font-semibold text-gray-800 hover:bg-gray-50"
-            >
-              View Products
-            </Link>
-
-            <Link
-              href="/branches"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-blue-700 px-6 py-3 font-semibold text-blue-700 hover:bg-blue-50"
-            >
-              Find a Branch
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* About */}
-      <section id="about" className="bg-gray-50 px-6 py-20">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-12 md:grid-cols-2">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-widest text-blue-700">
-                About Regime
-              </p>
-
-              <h2 className="mt-3 text-3xl font-bold text-gray-900">
-                Built around safe and dependable energy service
-              </h2>
-            </div>
-
-            <div>
-              <p className="text-lg leading-8 text-gray-600">
-                {company?.full_description ||
-                  company?.short_description ||
-                  "Regime Energy Services is focused on dependable LPG supply, distribution and customer-focused energy services."}
-              </p>
-            </div>
-          </div>
-
-          {(company?.mission || company?.vision) && (
-            <div className="mt-14 grid gap-6 md:grid-cols-2">
-              {company?.mission && (
-                <div className="rounded-2xl bg-white p-8 shadow-sm">
-                  <h3 className="text-xl font-bold text-blue-900">
-                    Our Mission
-                  </h3>
-
-                  <p className="mt-4 leading-7 text-gray-600">
-                    {company.mission}
-                  </p>
-                </div>
-              )}
-
-              {company?.vision && (
-                <div className="rounded-2xl bg-white p-8 shadow-sm">
-                  <h3 className="text-xl font-bold text-red-700">
-                    Our Vision
-                  </h3>
-
-                  <p className="mt-4 leading-7 text-gray-600">
-                    {company.vision}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Services Preview */}
-      <section id="services" className="px-6 py-20">
-        <div className="mx-auto max-w-7xl">
-          <div className="max-w-2xl">
-            <p className="text-sm font-bold uppercase tracking-widest text-red-600">
-              What We Do
-            </p>
-
-            <h2 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">
-              Energy and support services
-            </h2>
-
-            <p className="mt-4 leading-7 text-gray-600">
-              Explore the range of services available from Regime
-              Energy Services.
-            </p>
-          </div>
-
-          {services && services.length > 0 ? (
-            <>
-              <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {services.slice(0, 4).map((service) => (
-                  <Link
-                    key={service.id}
-                    href={`/services/${service.slug}`}
-                    className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                {deliveryHref && (
+                  <TrackedLink
+                    href={deliveryHref}
+                    event="whatsapp_click"
+                    label="hero_request_delivery"
+                    className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-lg bg-regime-red px-7 py-3 font-bold text-white transition hover:bg-red-700"
                   >
-                    {service.image_url ? (
-                      <div className="relative h-48 w-full overflow-hidden bg-gray-100">
-                        <Image
-                          src={service.image_url}
-                          alt={service.name}
-                          fill
-                          quality={85}
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                          className="object-cover transition duration-300 group-hover:scale-105"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex h-48 w-full items-center justify-center bg-blue-50">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-xl font-bold text-blue-700 shadow-sm">
-                          ✓
-                        </div>
-                      </div>
-                    )}
+                    Request Delivery
+                  </TrackedLink>
+                )}
+              </div>
+            </div>
+          </CompanySlideshow>
+        ) : (
+          <section className="bg-regime-blue-dark px-4 py-20 text-white sm:px-6 md:py-28">
+            <div className="mx-auto max-w-7xl">
+              <span className="regime-accent-chip bg-white/95">
+                Since 2013 · Owerri, Imo State
+              </span>
 
-                    <div className="p-7">
-                      <h3 className="font-bold text-gray-900 group-hover:text-blue-700">
-                        {service.name}
-                      </h3>
+              <h1 className="mt-5 max-w-4xl text-4xl font-bold leading-tight sm:text-5xl md:text-6xl">
+                Powering Everyday Life With Dependable LPG
+              </h1>
 
-                      <p className="mt-3 text-sm leading-6 text-gray-600">
-                        {service.short_description ||
-                          service.description ||
-                          "Professional and dependable service from Regime Energy Services."}
+              <p className="mt-5 max-w-2xl text-lg leading-8 text-blue-100">
+                Regime Energy Services is a downstream energy company
+                supplying LPG to homes, businesses and industries, with safe
+                handling and accurate dispensing every time.
+              </p>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="#about"
+                  className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-white px-7 py-3 font-bold text-regime-blue-dark transition hover:bg-blue-50"
+                >
+                  Discover More
+                </Link>
+
+                {deliveryHref && (
+                  <TrackedLink
+                    href={deliveryHref}
+                    event="whatsapp_click"
+                    label="hero_request_delivery"
+                    className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-regime-red px-7 py-3 font-bold text-white transition hover:bg-red-700"
+                  >
+                    Request Delivery
+                  </TrackedLink>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ---------------------------------------------------------- */}
+        {/* Trust indicators — marquee ticker + customer categories */}
+        <section className="border-b border-gray-100 bg-white px-0 py-10 sm:py-12">
+          {/* Marquee ticker of service commitments (duplicated for a seamless
+              loop; hidden from screen readers as a duplicate) */}
+          <div className="regime-marquee" aria-label="Our service commitments">
+            <div className="regime-marquee-track">
+              {[0, 1].map((copy) => (
+                <div
+                  key={copy}
+                  aria-hidden={copy === 1}
+                  className="flex shrink-0 items-center gap-10 pr-10"
+                >
+                  {TRUST_COMMITMENTS.map((item) => (
+                    <span
+                      key={item.title}
+                      className="flex items-center gap-2.5 whitespace-nowrap text-sm font-semibold text-gray-800"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-regime-green/15 text-xs font-bold text-regime-green-dark"
+                      >
+                        ✓
+                      </span>
+
+                      <span className="font-bold text-gray-900">
+                        {item.title}
+                      </span>
+
+                      <span className="hidden text-gray-500 md:inline">
+                        — {item.text}
+                      </span>
+
+                      <span
+                        aria-hidden="true"
+                        className="ml-6 h-1.5 w-1.5 rounded-full bg-regime-red"
+                      />
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+            <div className="mx-auto max-w-7xl">
+              <div className="border-t border-gray-100 pt-10">
+                <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+                <h2 className="max-w-md text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+                  Trusted by homes, businesses and industries across Owerri.
+                </h2>
+
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {CUSTOMER_CATEGORIES.map((category) => (
+                    <div
+                      key={category.label}
+                      className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4"
+                    >
+                      <p className="text-sm font-bold text-regime-blue">
+                        {category.label}
                       </p>
 
-                      <span className="mt-5 inline-block text-sm font-semibold text-blue-700 group-hover:underline">
-                        Learn More →
-                      </span>
+                      <p className="mt-1 text-xs leading-5 text-gray-600">
+                        {category.text}
+                      </p>
                     </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------------- */}
+        {/* Location + statistics                                       */}
+        {/* ---------------------------------------------------------- */}
+        <section className="px-4 py-12 sm:px-6 md:py-14">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid items-center gap-10 lg:grid-cols-2">
+              <div>
+                <p className="regime-eyebrow">Where We Operate</p>
+
+                <h2 className="regime-heading text-3xl sm:text-4xl">
+                  We Serve Owerri And Beyond
+                </h2>
+
+                <p className="regime-lead mt-4 max-w-xl [text-align:justify]">
+                <strong>Two branches</strong> keep LPG close to you: our Main
+                Branch at <strong>Egbeada Junction, Irete</strong>, and our
+                Egbu Branch on Egbu Road, with delivery across Egbu, Owerri
+                Municipal and Owerri North.
+              </p>
+
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <Link
+                    href="/branches"
+                    className="regime-button-primary"
+                  >
+                    Find a Branch
                   </Link>
-                ))}
+
+                  {orderHref && (
+                    <TrackedLink
+                      href={orderHref}
+                      event="whatsapp_click"
+                      label="locations_order_gas"
+                      className="regime-button-secondary"
+                    >
+                      Order Gas
+                    </TrackedLink>
+                  )}
+                </div>
               </div>
 
-              {services.length > 4 && (
-                <div className="mt-10 text-center">
+              {/* Statistics — branch count is live; the rest is approved
+                  company copy (no stats table exists in the database). */}
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="regime-card p-6">
+                  <p className="regime-stat-number">13+</p>
+
+                  <p className="mt-2 text-sm font-semibold text-gray-900">
+                    Years of Experience
+                  </p>
+
+                  <p className="mt-1 text-xs text-gray-500">
+                    Serving since 2013
+                  </p>
+                </div>
+
+                <div className="regime-card p-6">
+                  <p className="regime-stat-number">{branchList.length || 2}</p>
+
+                  <p className="mt-2 text-sm font-semibold text-gray-900">
+                    Branches in Owerri
+                  </p>
+
+                  <p className="mt-1 text-xs text-gray-500">
+                    Egbeada Junction &amp; Egbu Road
+                  </p>
+                </div>
+
+                <div className="regime-card p-6">
+                  <p className="regime-stat-number">4</p>
+
+                  <p className="mt-2 text-sm font-semibold text-gray-900">
+                    Refill Sizes
+                  </p>
+
+                  <p className="mt-1 text-xs text-gray-500">
+                    3kg, 6kg, 12.5kg and 50kg
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------------- */}
+        {/* About                                                       */}
+        {/* ---------------------------------------------------------- */}
+        <section id="about" className="bg-gray-50 px-4 py-12 sm:px-6 md:py-14">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid items-center gap-10 lg:grid-cols-2">
+              <div className="regime-image overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
+                {media && media.length > 0 ? (
+                  <div className="relative aspect-[4/3] w-full">
+                    <Image
+                      src={
+                        weighbridgeMedia?.image_url ??
+                        media[0].image_url
+                      }
+                      alt={
+                        media[0].alt_text ||
+                        media[0].title ||
+                        "Regime Energy Services operations"
+                      }
+                      fill
+                      quality={85}
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex aspect-[4/3] w-full items-center justify-center bg-regime-blue/5">
+                    <p className="text-lg font-bold text-regime-blue">
+                      Regime Energy Services
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <p className="regime-eyebrow">About Regime</p>
+
+                <h2 className="regime-heading text-3xl sm:text-4xl">
+                  Providing Affordable and Reliable Energy
+                </h2>
+
+                <p className="regime-lead mt-4 [text-align:justify]">
+                  <strong>Since 2013</strong>, Regime Energy Services Limited
+                  has made LPG more accessible through dependable distribution
+                  and supply — serving households, commercial establishments
+                  and industry with <strong>reliability, transparency,
+                  professionalism and safety</strong>.
+                </p>
+
+                <ul className="mt-7 space-y-4">
+                  {[
+                    "Accurately measured LPG refills",
+                    "Safe handling, storage and transport",
+                    "Easy ordering and delivery on WhatsApp",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-3">
+                      <span
+                        aria-hidden="true"
+                        className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-regime-green/15 text-[11px] font-bold text-regime-green-dark"
+                      >
+                        ✓
+                      </span>
+
+                      <span className="text-sm font-medium text-gray-800">
+                        {item}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-9">
                   <Link
-                    href="/services"
-                    className="inline-block rounded-lg border border-blue-700 px-7 py-3 font-semibold text-blue-700 transition hover:bg-blue-700 hover:text-white"
+                    href="/company-history"
+                    className="regime-button-primary"
                   >
-                    View All Services
+                    Read More
                   </Link>
                 </div>
-              )}
-            </>
-          ) : (
-            <div className="mt-10 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center">
-              <p className="text-gray-600">
-                Our services will be displayed here.
-              </p>
+              </div>
             </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
 
-      {/* Weighbridge */}
-      <section className="bg-blue-900 px-6 py-20 text-white">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid items-center gap-10 md:grid-cols-2">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-widest text-yellow-400">
-                Featured Service
-              </p>
+        {/* ---------------------------------------------------------- */}
+        {/* Safety / Mission / Vision                                   */}
+        {/* ---------------------------------------------------------- */}
+        <section className="px-4 py-12 sm:px-6 md:py-14">
+          <div className="mx-auto max-w-7xl">
+            <div className="max-w-3xl">
+              <p className="regime-eyebrow">Safety First</p>
 
-              <h2 className="mt-3 text-3xl font-bold md:text-4xl">
-                Weighbridge Services
+              <h2 className="regime-heading text-2xl sm:text-3xl">
+                Safe, Dependable Energy for Every Home and Business
               </h2>
 
-              <p className="mt-5 max-w-xl leading-8 text-blue-100">
-                Accurate weighing services for vehicles and loads,
-                supported by Regime Energy Services.
-              </p>
-
-              <a
-                href="#contact"
-                className="mt-8 inline-block rounded-lg bg-yellow-400 px-6 py-3 font-bold text-gray-900 hover:bg-yellow-300"
-              >
-                Enquire About Weighbridge
-              </a>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-white/10 p-8">
-              <p className="text-4xl font-bold">1kg = 1kg</p>
-
-              <p className="mt-3 text-blue-100">
-                Accurate dispensing and dependable measurement are
-                part of our service commitment.
+              <p className="regime-lead mt-4 text-justify">
+                Responsible LPG handling, storage, transport and accurate
+                dispensing — every kilogram we sell is measured honestly.
               </p>
             </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              {[
+                {
+                  title: "Our Mission",
+                  text:
+                    company?.mission ||
+                    "To deliver safe, reliable and accessible LPG solutions to homes, businesses and industries.",
+                  accent: "border-l-regime-blue bg-regime-blue",
+                  letter: "M",
+                },
+                {
+                  title: "Our Vision",
+                  text:
+                    company?.vision ||
+                    "To be a trusted name in Nigeria's downstream LPG industry.",
+                  accent: "border-l-regime-red bg-regime-red",
+                  letter: "V",
+                },
+              ].map((card) => (
+                <div key={card.title} className="regime-mvp-card">
+                  <span
+                    aria-hidden="true"
+                    className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${card.accent}`}
+                  >
+                    {card.letter}
+                  </span>
+
+                  <div className="min-w-0">
+                    <h3 className="text-base font-extrabold tracking-tight text-gray-900">
+                      {card.title}
+                    </h3>
+
+                    <p className="mt-1.5 text-sm font-semibold leading-7 text-gray-700 text-justify">
+                      {card.text}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Products */}
-      <section id="products" className="bg-gray-50 px-6 py-20">
-        <div className="mx-auto max-w-7xl">
-          <div className="text-center">
-            <p className="text-sm font-bold uppercase tracking-widest text-blue-700">
-              Products
-            </p>
+        {/* ---------------------------------------------------------- */}
+        {/* Services                                                    */}
+        {/* ---------------------------------------------------------- */}
+        <section
+          id="services"
+          className="bg-gray-50 px-4 py-16 sm:px-6 md:py-20"
+        >
+          <div className="mx-auto max-w-7xl">
+            <div className="max-w-2xl">
+              <p className="regime-eyebrow">What We Do</p>
 
-            <h2 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">
-              LPG products and accessories
-            </h2>
+              <h2 className="regime-heading text-3xl sm:text-4xl">
+                Energy and Support Services
+              </h2>
 
-            <p className="mx-auto mt-4 max-w-2xl leading-7 text-gray-600">
-              Explore cylinders, regulators, valves, burners, cookers,
-              hoses and other LPG accessories available from Regime.
-            </p>
-          </div>
+              <p className="regime-lead mt-4">
+                From a single household refill to bulk supply for industry —
+                everything you need to cook, trade and operate on LPG.
+              </p>
+            </div>
 
-          {products && products.length > 0 ? (
-            <>
-              <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {products.map((product) => {
-                  const productImages = Array.isArray(
-                    product.product_images
-                  )
-                    ? [...product.product_images].sort(
-                        (a, b) =>
-                          (a.display_order ?? 0) -
-                          (b.display_order ?? 0)
-                      )
-                    : [];
-
-                  const primaryProductImage =
-                    productImages.find(
-                      (image) => image.is_primary === true
-                    ) ?? productImages[0];
-
-                  return (
+            {serviceList.length > 0 ? (
+              <>
+                <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {serviceList.map((service) => (
                     <Link
-                      key={product.id}
-                      href={`/products/${product.slug}`}
-                      className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                      key={service.id}
+                      href={`/services/${service.slug}`}
+                      className="regime-card group flex flex-col overflow-hidden"
                     >
-                      {primaryProductImage ? (
-                        <div className="relative h-52 w-full overflow-hidden bg-gray-100">
+                      {service.image_url ? (
+                        <div className="relative h-48 w-full overflow-hidden bg-gray-100">
                           <Image
-                            src={primaryProductImage.image_url}
-                            alt={
-                              primaryProductImage.alt_text ||
-                              product.name
-                            }
+                            src={service.image_url}
+                            alt={service.name}
                             fill
                             quality={85}
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             className="object-cover transition duration-300 group-hover:scale-105"
                           />
                         </div>
                       ) : (
-                        <div className="flex h-52 w-full items-center justify-center bg-blue-50">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-xl font-bold text-blue-700 shadow-sm">
-                            LPG
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="p-6">
-                        <h3 className="font-bold text-gray-900 group-hover:text-blue-700">
-                          {product.name}
-                        </h3>
-
-                        <p className="mt-3 text-sm leading-6 text-gray-600">
-                          {product.short_description ||
-                            product.description ||
-                            "Quality LPG product available from Regime Energy Services."}
-                        </p>
-
-                        <span className="mt-5 inline-block text-sm font-semibold text-blue-700 group-hover:underline">
-                          View Product →
-                        </span>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-
-              <div className="mt-10 text-center">
-                <Link
-                  href="/products"
-                  className="inline-block rounded-lg bg-blue-700 px-7 py-3 font-semibold text-white transition hover:bg-blue-800"
-                >
-                  View All Products
-                </Link>
-              </div>
-            </>
-          ) : (
-            <div className="mt-10 rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center">
-              <p className="text-gray-600">
-                Our LPG products and accessories will be displayed here.
-              </p>
-
-              <Link
-                href="/products"
-                className="mt-5 inline-block font-semibold text-blue-700 hover:text-blue-800"
-              >
-                Explore Products →
-              </Link>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Branches */}
-      <section id="branches" className="px-6 py-20">
-        <div className="mx-auto max-w-7xl">
-          <div className="text-center">
-            <p className="text-sm font-bold uppercase tracking-widest text-red-600">
-              Our Locations
-            </p>
-
-            <h2 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">
-              Find a Regime branch near you
-            </h2>
-
-            <p className="mx-auto mt-4 max-w-2xl leading-7 text-gray-600">
-              Visit any of our active branch locations for LPG products,
-              services, enquiries and customer support.
-            </p>
-          </div>
-
-          {branches && branches.length > 0 ? (
-            <>
-              <div className="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                {branches.slice(0, 6).map((branch) => {
-                  const hasCoordinates =
-                    branch.latitude !== null &&
-                    branch.longitude !== null;
-
-                  const mapUrl =
-                    hasCoordinates
-                      ? `https://www.google.com/maps?q=${branch.latitude},${branch.longitude}&z=15&output=embed`
-                      : null;
-
-                  const branchHref = `/branches/${
-                    branch.slug || branch.id
-                  }`;
-
-                  return (
-                    <div
-                      key={branch.id}
-                      className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-                    >
-                      {branch.image_url ? (
-                        <div className="relative h-56 w-full overflow-hidden bg-gray-100">
-                          <Image
-                            src={branch.image_url}
-                            alt={branch.name}
-                            fill
-                            quality={85}
-                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            className="object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex h-56 w-full items-center justify-center bg-blue-50">
-                          <span className="text-lg font-bold text-blue-700">
-                            Regime Branch
+                        <div className="flex h-48 w-full items-center justify-center bg-regime-blue/5">
+                          <span className="text-sm font-bold uppercase tracking-widest text-regime-blue">
+                            {service.service_category || "Service"}
                           </span>
                         </div>
                       )}
 
-                      <div className="p-7">
-                        <h3 className="text-xl font-bold text-gray-900">
-                          {branchHref ? (
-                            <Link
-                              href={branchHref}
-                              className="absolute inset-0 z-10"
-                              aria-label={`View details for ${branch.name}`}
-                            >
-                              <span className="sr-only">
-                                View {branch.name} details
-                              </span>
-                            </Link>
-                          ) : null}
-                          <span className="relative z-0">{branch.name}</span>
+                      <div className="flex flex-1 flex-col p-6">
+                        <h3 className="font-bold text-gray-900 group-hover:text-regime-blue">
+                          {service.name}
                         </h3>
 
-                        {branch.description && (
-                          <p className="mt-3 text-sm leading-6 text-gray-600">
-                            {branch.description}
-                          </p>
-                        )}
+                        <p className="mt-3 flex-1 text-sm leading-6 text-gray-600">
+                          {service.short_description ||
+                            service.description ||
+                            "Professional and dependable service from Regime Energy Services."}
+                        </p>
 
-                        {branch.address && (
-                          <div className="mt-5">
-                            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
-                              Address
-                            </p>
-
-                            <p className="mt-1 text-sm leading-6 text-gray-800">
-                              {branch.address}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Google Map */}
-                        {mapUrl && (
-                          <div className="relative z-20 mt-6 overflow-hidden rounded-xl border border-gray-200">
-                            <iframe
-                              title={`${branch.name} location map`}
-                              src={mapUrl}
-                              width="100%"
-                              height="260"
-                              loading="lazy"
-                              referrerPolicy="no-referrer-when-downgrade"
-                              className="block w-full border-0"
-                            />
-                          </div>
-                        )}
-
-                        <div className="relative z-20 mt-6 flex flex-wrap gap-3">
-                          {branch.phone && (
-                            <TrackedLink
-                              href={`tel:${branch.phone}`}
-                              event="phone_click"
-                              label={branch.name}
-                              target=""
-                              className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
-                            >
-                              Call Branch
-                            </TrackedLink>
-                          )}
-
-                          {branch.whatsapp && (
-                            <TrackedLink
-                              href={`https://wa.me/${branch.whatsapp.replace(
-                                /\D/g,
-                                ""
-                              )}?text=${encodeURIComponent(
-                                `Hello ${branch.name} branch, I would like to order gas.`
-                              )}`}
-                              event="whatsapp_click"
-                              label={branch.name}
-                              className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"
-                            >
-                              Order Gas
-                            </TrackedLink>
-                          )}
-
-                          {branch.google_maps_url && (
-                            <TrackedLink
-                              href={branch.google_maps_url}
-                              event="maps_click"
-                              label={branch.name}
-                              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50"
-                            >
-                              Open in Google Maps
-                            </TrackedLink>
-                          )}
-                        </div>
+                        <span className="mt-5 inline-block text-sm font-bold text-regime-blue group-hover:underline">
+                          Learn More →
+                        </span>
                       </div>
-                    </div>
-                  );
-                })}
+                    </Link>
+                  ))}
+                </div>
+
+                <div className="mt-10 text-center">
+                  <Link href="/services" className="regime-button-secondary">
+                    View All Services
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <div className="mt-10 rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center">
+                <p className="text-gray-600">
+                  Our services will be displayed here.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------------- */}
+        {/* Featured weighbridge                                        */}
+        {/* ---------------------------------------------------------- */}
+        <section className="bg-regime-blue-dark px-4 py-12 text-white sm:px-6 md:py-14">
+          <div className="mx-auto max-w-7xl">
+            <div className="grid items-center gap-10 md:grid-cols-2">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-regime-green">
+                  Featured Service
+                </p>
+
+                <h2 className="mt-3 text-3xl font-bold md:text-4xl">
+                  Weighbridge Services
+                </h2>
+
+                <p className="mt-5 max-w-xl text-base leading-8 text-blue-100">
+                  Accurate weighing for vehicles and loads, backed by the
+                  same commitment to measurement that goes into every
+                  cylinder we fill.
+                </p>
+
+                <a
+                  href="#contact"
+                  className="mt-8 inline-flex min-h-[48px] items-center justify-center rounded-lg bg-regime-red px-7 py-3 font-bold text-white transition hover:bg-red-700"
+                >
+                  Enquire About Weighbridge
+                </a>
               </div>
 
-              {branches.length > 6 && (
+              <div className="overflow-hidden rounded-2xl border border-white/15">
+                {weighbridgeMedia ? (
+                  <div className="relative aspect-[16/10] w-full">
+                    <Image
+                      src={weighbridgeMedia.image_url}
+                      alt={
+                        weighbridgeMedia.alt_text ||
+                        weighbridgeMedia.title ||
+                        "Regime weighbridge operations"
+                      }
+                      fill
+                      quality={85}
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex aspect-[16/10] w-full items-center justify-center bg-white/10 p-8 text-center">
+                    <div>
+                      <p className="text-5xl font-bold tracking-tight text-regime-green">
+                        1kg = 1kg
+                      </p>
+
+                      <p className="mt-4 text-blue-100">
+                        Accurate dispensing and dependable measurement are
+                        part of every service commitment we make.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------------- */}
+        {/* Products                                                    */}
+        {/* ---------------------------------------------------------- */}
+        <section id="products" className="px-4 py-12 sm:px-6 md:py-14">
+          <div className="mx-auto max-w-7xl">
+            <div className="text-center">
+              <p className="regime-eyebrow justify-center">Products</p>
+
+              <h2 className="regime-heading text-3xl sm:text-4xl">
+                LPG Products and Accessories
+              </h2>
+
+              <p className="regime-lead mx-auto mt-5 max-w-2xl">
+                Cylinders, regulators, valves, burners, cookers, hoses and
+                fittings — quality LPG equipment from our branches in
+                Owerri.
+              </p>
+            </div>
+
+            {productList.length > 0 ? (
+              <>
+                <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                  {productList.slice(0, 8).map((product) => {
+                    const productImages = Array.isArray(product.product_images)
+                      ? [...product.product_images].sort(
+                        (a, b) =>
+                          (a.display_order ?? 0) - (b.display_order ?? 0)
+                      )
+                      : [];
+
+                    const primaryProductImage =
+                      productImages.find((image) => image.is_primary === true) ??
+                      productImages[0];
+
+                    return (
+                      <Link
+                        key={product.id}
+                        href={`/products/${product.slug}`}
+                        className="regime-card group flex flex-col overflow-hidden"
+                      >
+                        {primaryProductImage ? (
+                          <div className="relative h-52 w-full overflow-hidden bg-gray-100">
+                            <Image
+                              src={primaryProductImage.image_url}
+                              alt={
+                                primaryProductImage.alt_text || product.name
+                              }
+                              fill
+                              quality={85}
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                              className="object-cover transition duration-300 group-hover:scale-105"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex h-52 w-full items-center justify-center bg-regime-blue/5">
+                            <span className="text-sm font-bold uppercase tracking-widest text-regime-blue">
+                              LPG
+                            </span>
+                          </div>
+                        )}
+
+                        <div className="flex flex-1 flex-col p-6">
+                          <h3 className="font-bold text-gray-900 group-hover:text-regime-blue">
+                            {product.name}
+                          </h3>
+
+                          <p className="mt-3 flex-1 text-sm leading-6 text-gray-600">
+                            {product.short_description ||
+                              product.description ||
+                              "Quality LPG product available from Regime Energy Services."}
+                          </p>
+
+                          <span className="mt-5 inline-block text-sm font-bold text-regime-blue group-hover:underline">
+                            View Product →
+                          </span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+
                 <div className="mt-10 text-center">
+                  <Link href="/products" className="regime-button-primary">
+                    View All Products
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <div className="mt-10 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center">
+                <p className="text-gray-600">
+                  Our LPG products and accessories will be displayed here.
+                </p>
+
+                <Link
+                  href="/products"
+                  className="mt-5 inline-block font-semibold text-regime-blue hover:underline"
+                >
+                  Explore Products →
+                </Link>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------------- */}
+        {/* Branches                                                    */}
+        {/* ---------------------------------------------------------- */}
+        <section id="branches" className="bg-gray-50 py-12 md:py-14">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="text-center">
+              <p className="regime-eyebrow justify-center">Our Locations</p>
+
+              <h2 className="regime-heading text-3xl sm:text-4xl">
+                Find a Regime Branch Near You
+              </h2>
+
+              <p className="regime-lead mx-auto mt-5 max-w-2xl">
+                Visit a branch for LPG products, refills, enquiries and
+                customer support.
+              </p>
+            </div>
+
+            {branchList.length > 0 ? (
+              showBranchMap ? (
+                <div className="mt-8 text-center">
                   <Link
                     href="/branches"
-                    className="inline-block rounded-lg border border-blue-700 px-7 py-3 font-semibold text-blue-700 transition hover:bg-blue-700 hover:text-white"
+                    className="regime-button-secondary"
                   >
                     View All Branches
                   </Link>
                 </div>
-              )}
-            </>
-          ) : (
-            <div className="mt-10 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center">
-              <p className="text-gray-600">
-                Our branch locations will be displayed here.
-              </p>
+              ) : (
+                <div className="mt-8 text-center">
+                  <Link href="/branches" className="regime-button-primary">
+                    View All Branches
+                  </Link>
+                </div>
+              )
+            ) : (
+              <div className="mt-10 rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center">
+                <p className="text-gray-600">
+                  Our branch locations will be displayed here.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Interactive world map — clicking a branch pin reveals that
+              branch's full details below. It renders outside the content
+              column so it stretches edge-to-edge across the full page
+              width. Can be hidden from Site Settings in the admin
+              dashboard. */}
+          {branchList.length > 0 && showBranchMap && (
+            <div className="mt-10">
+              <BranchWorldMap branches={branchList} />
             </div>
           )}
-        </div>
-      </section>
+        </section>
 
-      {/* Contact */}
-      <section id="contact" className="bg-gray-50 px-6 py-20">
-        <div className="mx-auto max-w-7xl">
-          <div className="rounded-3xl bg-white p-8 shadow-sm md:p-12">
-            <div className="grid gap-10 md:grid-cols-2">
-              <div>
-                <p className="text-sm font-bold uppercase tracking-widest text-red-600">
-                  Contact Regime
-                </p>
+        {/* ---------------------------------------------------------- */}
+        {/* Contact + WhatsApp enquiry                                  */}
+        {/* ---------------------------------------------------------- */}
+        <section id="contact" className="px-4 py-12 sm:px-6 md:py-14">
+          <div className="mx-auto max-w-7xl">
+            <div className="regime-card p-8 md:p-12">
+              <div className="grid gap-10 md:grid-cols-2">
+                <div>
+                  <p className="regime-eyebrow">Contact Regime</p>
 
-                <h2 className="mt-3 text-3xl font-bold text-gray-900">
-                  Let&apos;s help with your energy needs
-                </h2>
+                  <h2 className="regime-heading text-3xl">
+                    Let&apos;s Help With Your Energy Needs
+                  </h2>
 
-                <p className="mt-5 leading-7 text-gray-600">
-                  Contact Regime Energy Services for LPG supply,
-                  delivery, services and enquiries.
-                </p>
-              </div>
+                  <p className="regime-lead mt-5">
+                    Reach out for LPG supply, delivery, services and
+                    enquiries. We reply fastest on WhatsApp.
+                  </p>
 
-              <div className="space-y-5">
-                {company?.phone && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">
-                      Phone
-                    </p>
+                  <dl className="mt-8 space-y-5">
+                    {company?.phone && (
+                      <div>
+                        <dt className="text-xs font-bold uppercase tracking-widest text-gray-500">
+                          Phone
+                        </dt>
 
-                    <a
-                      href={`tel:${company.phone}`}
-                      className="mt-1 block font-semibold text-blue-700"
-                    >
-                      {company.phone}
-                    </a>
-                  </div>
-                )}
+                        <dd>
+                          <a
+                            href={`tel:${company.phone}`}
+                            className="mt-1 block font-semibold text-regime-blue hover:underline"
+                          >
+                            {company.phone}
+                          </a>
+                        </dd>
+                      </div>
+                    )}
 
-                {company?.email && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">
-                      Email
-                    </p>
+                    {company?.email && (
+                      <div>
+                        <dt className="text-xs font-bold uppercase tracking-widest text-gray-500">
+                          Email
+                        </dt>
 
-                    <a
-                      href={`mailto:${company.email}`}
-                      className="mt-1 block font-semibold text-blue-700"
-                    >
-                      {company.email}
-                    </a>
-                  </div>
-                )}
+                        <dd>
+                          <a
+                            href={`mailto:${company.email}`}
+                            className="mt-1 block break-all font-semibold text-regime-blue hover:underline"
+                          >
+                            {company.email}
+                          </a>
+                        </dd>
+                      </div>
+                    )}
 
-                {company?.address && (
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">
-                      Address
-                    </p>
+                    {company?.address && (
+                      <div>
+                        <dt className="text-xs font-bold uppercase tracking-widest text-gray-500">
+                          Address
+                        </dt>
 
-                    <p className="mt-1 font-semibold text-gray-900">
-                      {company.address}
-                    </p>
-                  </div>
-                )}
-
-                {company?.whatsapp && (
-                  <a
-                    href={`https://wa.me/${company.whatsapp.replace(
-                      /\D/g,
-                      ""
-                    )}?text=${encodeURIComponent(
-                      "Hello Regime Energy Services, I would like to make an enquiry."
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block rounded-lg bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700"
-                  >
-                    Chat on WhatsApp
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-gray-950 px-6 py-12 text-white">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
-            <div>
-              <p className="font-bold">
-                {company?.company_name || "REGIME ENERGY SERVICES"}
-              </p>
-
-              <p className="mt-1 text-sm text-gray-400">
-                {siteSettings?.footer_note ||
-                  "Reliable LPG energy solutions."}
-              </p>
-
-              {siteSettings?.show_company_history_link && (
-                <Link
-                  href="/company-history"
-                  className="mt-3 inline-block text-sm font-semibold text-gray-300 hover:text-white"
-                >
-                  Our History →
-                </Link>
-              )}
-            </div>
-
-            {/* Social links */}
-            {siteSettings &&
-              (siteSettings.facebook_url ||
-                siteSettings.instagram_url ||
-                siteSettings.twitter_url ||
-                siteSettings.linkedin_url ||
-                siteSettings.youtube_url) && (
-                <div className="flex flex-wrap gap-3">
-                  {siteSettings.facebook_url && (
-                    <a
-                      href={siteSettings.facebook_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
-                    >
-                      Facebook
-                    </a>
-                  )}
-
-                  {siteSettings.instagram_url && (
-                    <a
-                      href={siteSettings.instagram_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
-                    >
-                      Instagram
-                    </a>
-                  )}
-
-                  {siteSettings.twitter_url && (
-                    <a
-                      href={siteSettings.twitter_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
-                    >
-                      X / Twitter
-                    </a>
-                  )}
-
-                  {siteSettings.linkedin_url && (
-                    <a
-                      href={siteSettings.linkedin_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
-                    >
-                      LinkedIn
-                    </a>
-                  )}
-
-                  {siteSettings.youtube_url && (
-                    <a
-                      href={siteSettings.youtube_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"
-                    >
-                      YouTube
-                    </a>
-                  )}
+                        <dd className="mt-1 font-semibold leading-6 text-gray-900">
+                          {company.address}
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
                 </div>
-              )}
-          </div>
 
-          <p className="mt-8 border-t border-gray-800 pt-6 text-sm text-gray-500">
-            © {new Date().getFullYear()} Regime Energy Services.
-            All rights reserved.
-          </p>
-        </div>
-      </footer>
-    </main>
+                {/* WhatsApp enquiry panel */}
+                <div className="rounded-2xl bg-regime-blue-dark p-8 text-white md:p-10">
+                  <h3 className="text-2xl font-bold">Need gas today?</h3>
+
+                  <p className="mt-4 leading-7 text-blue-100">
+                    Tell us your location and cylinder size on WhatsApp and
+                    we will arrange your refill or delivery.
+                  </p>
+
+                  <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                    {orderHref && (
+                      <TrackedLink
+                        href={orderHref}
+                        event="whatsapp_click"
+                        label="contact_whatsapp_enquiry"
+                        className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-bold text-white transition hover:bg-green-700"
+                      >
+                        Chat on WhatsApp
+                      </TrackedLink>
+                    )}
+
+                    {callHref && (
+                      <TrackedLink
+                        href={callHref}
+                        event="phone_click"
+                        label="contact_call"
+                        target=""
+                        className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-white px-6 py-3 font-bold text-regime-blue-dark transition hover:bg-blue-50"
+                      >
+                        Call {phoneDisplay}
+                      </TrackedLink>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <SiteFooter />
+    </div>
   );
 }

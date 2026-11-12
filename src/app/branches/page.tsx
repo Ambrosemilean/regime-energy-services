@@ -3,8 +3,11 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { buildMetadata } from "@/lib/seo";
 import QuickActions from "@/components/whatsapp-actions";
+import BranchWorldMap from "@/components/branch-world-map";
 import TrackedLink from "@/components/analytics/tracked-link";
 import TrackedBranchView from "@/components/analytics/tracked-branch-view";
+import SiteHeader from "@/components/site-header";
+import SiteFooter from "@/components/site-footer";
 
 export const metadata = buildMetadata({
   title: "Our Branches — Gas Plants in Owerri",
@@ -44,45 +47,12 @@ export default async function BranchesPage() {
   const branchList = branches ?? [];
 
   return (
-    <main className="min-h-screen bg-white">
+    <div className="flex min-h-screen flex-col bg-white">
+      <SiteHeader currentPath="/branches" />
+
+      <main className="flex-1">
       {/* Analytics: record this branch page visit */}
       <TrackedBranchView />
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-          <div className="flex min-w-0 items-center gap-3">
-            <Link
-              href="/"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-700 text-xs font-extrabold tracking-tight text-white"
-              aria-label="Regime Energy Services home"
-            >
-              RG
-            </Link>
-            <Link
-              href="/"
-              className="truncate text-base font-bold text-blue-900 sm:text-xl"
-            >
-              Regime Energy Services
-            </Link>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 sm:gap-5">
-            <nav aria-label="Site navigation" className="hidden items-center gap-5 md:flex">
-              <Link href="/products" className="text-sm font-medium text-gray-600 hover:text-blue-700">Products</Link>
-              <Link href="/services" className="text-sm font-medium text-gray-600 hover:text-blue-700">Services</Link>
-              <Link href="/branches" className="text-sm font-semibold text-blue-700 underline decoration-2 underline-offset-4">Branches</Link>
-              <Link href="/company-history" className="text-sm font-medium text-gray-600 hover:text-blue-700">Our History</Link>
-            </nav>
-
-            <Link
-              href="/"
-              className="inline-flex min-h-[44px] shrink-0 items-center self-start rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:self-auto"
-            >
-              ← Back to Home
-            </Link>
-          </div>
-        </div>
-      </header>
 
       {/* Page Introduction */}
       <section className="bg-gray-50 px-6 py-16 md:py-20">
@@ -108,6 +78,23 @@ export default async function BranchesPage() {
 
       {/* Branches */}
       <section className="mx-auto max-w-7xl px-6 py-12 md:py-20">
+        {!error && branchList.length > 0 && (
+          <div className="mb-12">
+            <div className="mb-6 text-center">
+              <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">
+                Explore Our Locations
+              </p>
+              <h2 className="mt-2 text-3xl font-bold text-gray-900">
+                Branches Across Nigeria
+              </h2>
+              <p className="mx-auto mt-3 max-w-2xl text-gray-600">
+                Select a pin to view branch details, contact the team, or open directions.
+              </p>
+            </div>
+            <BranchWorldMap branches={branchList} />
+          </div>
+        )}
+
         {error ? (
           <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-red-700">
             Unable to load branch locations at this time.
@@ -319,6 +306,9 @@ export default async function BranchesPage() {
           </div>
         )}
       </section>
-    </main>
+      </main>
+
+      <SiteFooter />
+    </div>
   );
 }

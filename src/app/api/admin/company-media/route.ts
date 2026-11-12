@@ -60,6 +60,11 @@ export async function POST(request: Request) {
       .getAll("files")
       .filter((item): item is File => item instanceof File);
 
+    // Optional custom title (e.g. "Weighbridge") applied to every image
+    // in this upload batch.
+    const customTitle =
+      formData.get("title")?.toString().trim() || null;
+
     if (files.length === 0) {
       return NextResponse.json(
         {
@@ -150,8 +155,8 @@ export async function POST(request: Request) {
         .from("company_media")
         .insert({
           image_url: imageUrl,
-          title: file.name.replace(/\.[^/.]+$/, ""),
-          alt_text: "Regime Energy Services",
+          title: customTitle || file.name.replace(/\.[^/.]+$/, ""),
+          alt_text: customTitle || "Regime Energy Services",
           display_order: nextOrder,
           is_active: true,
         });

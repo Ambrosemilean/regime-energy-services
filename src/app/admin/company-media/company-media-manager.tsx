@@ -13,6 +13,18 @@ type CompanyMedia = {
   is_active: boolean;
 };
 
+function findWeighbridgeMedia(media: CompanyMedia[]) {
+  return (
+    media.find((item) =>
+      [item.title, item.alt_text]
+        .filter(Boolean)
+        .some((value) =>
+          (value as string).toLowerCase().includes("weighbridge")
+        )
+    ) ?? null
+  );
+}
+
 export default function CompanyMediaManager({
   media,
 }: {
@@ -23,9 +35,18 @@ export default function CompanyMediaManager({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  function handleFileChange(
-    event: React.ChangeEvent<HTMLInputElement>
-  ) {
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingError, setDeletingError] = useState("");
+
+  // Weighbridge image — a dedicated single-image slot stored with the
+  // title "Weighbridge" so the homepage featured section can find it.
+  const weighbridgeImage = findWeighbridgeMedia(media);
+
+  const [weighbridgeFile, setWeighbridgeFile] = useState<File | null>(null);
+  const [weighbridgeUploading, setWeighbridgeUploading] = useState(false);
+  const [weighbridgeError, setWeighbridgeError] = useState("");
+
+  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     setError("");
     setSuccess("");
 
@@ -52,16 +73,13 @@ export default function CompanyMediaManager({
     setSelectedFiles((previousFiles) => {
       const existingFiles = new Set(
         previousFiles.map(
-          (file) =>
-            `${file.name}-${file.size}-${file.lastModified}`
+          (file) => `${file.name}-${file.size}-${file.lastModified}`
         )
       );
 
       const newFiles = validFiles.filter(
         (file) =>
-          !existingFiles.has(
-            `${file.name}-${file.size}-${file.lastModified}`
-          )
+          !existingFiles.has(`${file.name}-${file.size}-${file.lastModified}`)
       );
 
       return [...previousFiles, ...newFiles];
@@ -71,9 +89,7 @@ export default function CompanyMediaManager({
     event.target.value = "";
   }
 
-  function removeSelectedFile(
-    fileToRemove: File
-  ) {
+  function removeSelectedFile(fileToRemove: File) {
     setSelectedFiles((previousFiles) =>
       previousFiles.filter(
         (file) =>
@@ -109,20 +125,15 @@ export default function CompanyMediaManager({
         formData.append("files", file);
       });
 
-      const response = await fetch(
-        "/api/admin/company-media",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const response = await fetch("/api/admin/company-media", {
+        method: "POST",
+        body: formData,
+      });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          result.error || "Failed to upload images."
-        );
+        throw new Error(result.error || "Failed to upload images.");
       }
 
       setSelectedFiles([]);
@@ -145,8 +156,208 @@ export default function CompanyMediaManager({
     }
   }
 
+  async function handleDelete(id: string) {
+    setDeletingError("");
+    setDeletingId(id);
+
+    try {
+      const response = await fetch(`/api/admin/company-media/${id}`, {
+        method: "DELETE",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to delete the image.");
+      }
+
+      window.location.reload();
+    } catch (err) {
+      setDeletingError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong while deleting."
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  function handleWeighbridgeFileChange(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setWeighbridgeError("Only JPG, PNG and WEBP images are allowed.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setWeighbridgeError("The image must be 5MB or smaller.");
+      event.target.value = "";
+      return;
+    }
+
+    setWeighbridgeError("");
+    setWeighbridgeFile(file);
+  }
+
+  /**
+   * Uploading always replaces the existing weighbridge image: the new file
+   * goes up first, then the old record (and its storage object) is deleted
+   * so only one weighbridge image exists.
+   */
+  async function handleWeighbridgeUpload() {
+    if (!weighbridgeFile) {
+      setWeighbridgeError("Please choose an image first.");
+      return;
+    }
+
+    setWeighbridgeUploading(true);
+    setWeighbridgeError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("files", weighbridgeFile);
+      formData.append("title", "Weighbridge");
+
+      const response = await fetch("/api/admin/company-media", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to upload the image.");
+      }
+
+      if (weighbridgeImage) {
+        await fetch(`/api/admin/company-media/${weighbridgeImage.id}`, {
+          method: "DELETE",
+        });
+      }
+
+      window.location.reload();
+    } catch (err) {
+      setWeighbridgeError(
+        err instanceof Error ? err.message : "Something went wrong."
+      );
+    } finally {
+      setWeighbridgeUploading(false);
+    }
+  }
+
+  async function handleWeighbridgeDelete() {
+    if (!weighbridgeImage) return;
+
+    setWeighbridgeUploading(true);
+    setWeighbridgeError("");
+
+    try {
+      const response = await fetch(
+        `/api/admin/company-media/${weighbridgeImage.id}`,
+        { method: "DELETE" }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to delete the image.");
+      }
+
+      window.location.reload();
+    } catch (err) {
+      setWeighbridgeError(
+        err instanceof Error ? err.message : "Something went wrong."
+      );
+    } finally {
+      setWeighbridgeUploading(false);
+    }
+  }
+
   return (
     <div className="space-y-8">
+      {/* Weighbridge image — feeds the homepage featured section */}
+      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-semibold text-gray-900">
+          Weighbridge Image
+        </h2>
+
+        <p className="mt-1 text-sm text-gray-500">
+          Shown in the &quot;Weighbridge Services&quot; section on the
+          homepage. One image only — uploading a new one replaces the
+          previous.
+        </p>
+
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
+          <div>
+            {weighbridgeImage ? (
+              <div className="overflow-hidden rounded-lg border border-gray-200">
+                <img
+                  src={weighbridgeImage.image_url}
+                  alt="Weighbridge"
+                  className="h-52 w-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="flex h-52 items-center justify-center rounded-lg bg-gray-100 text-sm text-gray-500">
+                No weighbridge image uploaded
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col justify-center gap-4">
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleWeighbridgeFileChange}
+              className="block w-full rounded-lg border border-gray-300 px-4 py-3 text-sm"
+            />
+
+            {weighbridgeFile && (
+              <p className="text-sm text-gray-600">
+                Selected: {weighbridgeFile.name}
+              </p>
+            )}
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleWeighbridgeUpload}
+                disabled={weighbridgeUploading || !weighbridgeFile}
+                className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {weighbridgeUploading
+                  ? "Working..."
+                  : weighbridgeImage
+                    ? "Update Image"
+                    : "Upload Image"}
+              </button>
+
+              {weighbridgeImage && (
+                <button
+                  type="button"
+                  onClick={handleWeighbridgeDelete}
+                  disabled={weighbridgeUploading}
+                  className="rounded-lg border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+
+            {weighbridgeError && (
+              <p className="text-sm text-red-600">{weighbridgeError}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Upload Section */}
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-gray-900">
@@ -154,8 +365,8 @@ export default function CompanyMediaManager({
         </h2>
 
         <p className="mt-1 text-sm text-gray-500">
-          Upload multiple images for the Regime Energy Services
-          website slideshow.
+          Upload multiple images for the Regime Energy Services website
+          slideshow.
         </p>
 
         <div className="mt-6">
@@ -278,10 +489,16 @@ export default function CompanyMediaManager({
           </h2>
 
           <p className="mt-1 text-sm text-gray-500">
-            {media.length} image
-            {media.length === 1 ? "" : "s"} currently uploaded.
+            {media.length} image{media.length === 1 ? "" : "s"} currently
+            uploaded.
           </p>
         </div>
+
+        {deletingError && (
+          <div className="mt-5 rounded-lg bg-red-50 p-4 text-sm text-red-700">
+            {deletingError}
+          </div>
+        )}
 
         {media.length === 0 ? (
           <div className="mt-6 rounded-lg bg-gray-50 p-10 text-center">
@@ -290,8 +507,8 @@ export default function CompanyMediaManager({
             </p>
 
             <p className="mt-2 text-sm text-gray-500">
-              Upload your first images above to begin building the
-              website slideshow.
+              Upload your first images above to begin building the website
+              slideshow.
             </p>
           </div>
         ) : (
@@ -303,10 +520,7 @@ export default function CompanyMediaManager({
               >
                 <img
                   src={item.image_url}
-                  alt={
-                    item.alt_text ||
-                    "Regime Energy Services"
-                  }
+                  alt={item.alt_text || "Regime Energy Services"}
                   className="h-52 w-full object-cover"
                 />
 
@@ -323,9 +537,7 @@ export default function CompanyMediaManager({
                           : "bg-gray-100 text-gray-600"
                       }`}
                     >
-                      {item.is_active
-                        ? "Active"
-                        : "Inactive"}
+                      {item.is_active ? "Active" : "Inactive"}
                     </span>
                   </div>
 
@@ -338,6 +550,15 @@ export default function CompanyMediaManager({
                       {item.description}
                     </p>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(item.id)}
+                    disabled={deletingId !== null}
+                    className="mt-4 w-full rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {deletingId === item.id ? "Deleting..." : "Remove Image"}
+                  </button>
                 </div>
               </div>
             ))}

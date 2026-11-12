@@ -55,6 +55,7 @@ type SiteSettingsValues = {
   meta_description: string | null;
   show_company_history_link: boolean;
   show_chat_assistant: boolean;
+  show_branch_map: boolean;
 };
 
 function buildValues(body: Record<string, unknown>): SiteSettingsValues {
@@ -70,6 +71,7 @@ function buildValues(body: Record<string, unknown>): SiteSettingsValues {
     meta_description: null,
     show_company_history_link: true,
     show_chat_assistant: true,
+    show_branch_map: true,
   };
 
   for (const field of URL_FIELDS) {
@@ -93,6 +95,11 @@ function buildValues(body: Record<string, unknown>): SiteSettingsValues {
   values.show_chat_assistant =
     typeof body.show_chat_assistant === "boolean"
       ? body.show_chat_assistant
+      : true;
+
+  values.show_branch_map =
+    typeof body.show_branch_map === "boolean"
+      ? body.show_branch_map
       : true;
 
   return values;

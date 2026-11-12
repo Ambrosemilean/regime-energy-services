@@ -1,7 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { buildMetadata } from "@/lib/seo";
+import SiteHeader from "@/components/site-header";
+import SiteFooter from "@/components/site-footer";
 
 export const metadata = buildMetadata({
   title: "Our History — Company Story & Milestones",
@@ -35,64 +36,10 @@ export default async function CompanyHistoryPage() {
     company?.company_name || "Regime Energy Services";
 
   return (
-    <main className="min-h-screen bg-white text-gray-900">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
-          <Link
-            href="/"
-            aria-label={`${companyName} homepage`}
-            className="flex min-w-0 items-center gap-3"
-          >
-            {company?.logo_url ? (
-              <div className="relative h-12 w-12 shrink-0">
-                <Image
-                  src={company.logo_url}
-                  alt={`${companyName} logo`}
-                  fill
-                  priority
-                  sizes="48px"
-                  className="object-contain"
-                />
-              </div>
-            ) : (
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 font-extrabold text-blue-800">
-                RG
-              </div>
-            )}
+    <div className="flex min-h-screen flex-col bg-white text-gray-900">
+      <SiteHeader currentPath="/company-history" />
 
-            <div className="min-w-0">
-              <p className="truncate text-sm font-extrabold text-blue-950 sm:text-lg">
-                {companyName}
-              </p>
-
-              {company?.tagline && (
-                <p className="line-clamp-1 text-xs text-gray-500">
-                  {company.tagline}
-                </p>
-              )}
-            </div>
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="text-sm font-semibold text-gray-600 hover:text-blue-700"
-            >
-              <span aria-hidden="true">← </span>
-              Home
-            </Link>
-
-            <Link
-              href="/#contact"
-              className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800"
-            >
-              Contact Us
-            </Link>
-          </div>
-        </div>
-      </header>
-
+      <main className="flex-1">
       {/* Hero */}
       <section className="relative overflow-hidden bg-blue-950 px-4 py-16 text-white sm:px-6 sm:py-24">
         <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-blue-600/30 blur-3xl" />
@@ -251,11 +198,9 @@ export default async function CompanyHistoryPage() {
           </Link>
         </div>
       </section>
+      </main>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-100 bg-white px-4 py-6 text-center text-sm text-gray-500">
-        © {new Date().getFullYear()} {companyName}. All rights reserved.
-      </footer>
-    </main>
+      <SiteFooter />
+    </div>
   );
 }

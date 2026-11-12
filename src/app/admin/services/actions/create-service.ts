@@ -327,4 +327,290 @@ export async function createService(
           : "Unable to upload service images.",
     };
   }
+}// ---------------------------------------------------------------------------
+// Update an existing service (content is admin-editable)
+// ---------------------------------------------------------------------------
+
+type UpdateServiceResult = {
+  success: boolean;
+  message: string;
+};
+
+export async function updateService(
+  formData: FormData
+): Promise<UpdateServiceResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, message: "You must be signed in." };
+  }
+
+  const { data: isAdmin, error: roleError } = await supabase.rpc(
+    "has_admin_role",
+    {
+      required_roles: [
+        "super_admin",
+        "website_manager",
+        "content_manager",
+      ],
+    }
+  );
+
+  if (roleError || !isAdmin) {
+    return {
+      success: false,
+      message: "You do not have permission to edit services.",
+    };
+  }
+
+  const serviceId = String(formData.get("service_id") || "").trim();
+
+  if (!serviceId) {
+    return { success: false, message: "Service id is missing." };
+  }
+
+  const name = String(formData.get("name") || "").trim();
+  const shortDescription = String(
+    formData.get("short_description") || ""
+  ).trim();
+  const description = String(formData.get("description") || "").trim();
+  const serviceCategory = String(
+    formData.get("service_category") || ""
+  ).trim();
+  const isActive = formData.get("is_active") === "true";
+
+  if (!name) {
+    return { success: false, message: "Service name is required." };
+  }
+
+  const slug = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  if (!slug) {
+    return { success: false, message: "Unable to create a valid slug." };
+  }
+
+  // Keep the slug unique — if another service already owns it, keep the
+  // existing slug instead of failing the whole save.
+  const { data: slugOwner } = await supabase
+    .from("services")
+    .select("id")
+    .eq("slug", slug)
+    .neq("id", serviceId)
+    .maybeSingle();
+
+  const finalSlug = slugOwner ? undefined : slug;
+
+  const { error: updateError } = await supabase
+    .from("services")
+    .update({
+      name,
+      ...(finalSlug ? { slug: finalSlug } : {}),
+      short_description: shortDescription || null,
+      description: description || null,
+      service_category: serviceCategory || null,
+      is_active: isActive,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", serviceId);
+
+  if (updateError) {
+    console.error("Service update error:", updateError);
+
+    return {
+      success: false,
+      message:
+        updateError.code === "23505"
+          ? "A service with this name or slug already exists."
+          : "Unable to update the service.",
+    };
+  }
+
+  // Optional: replace the primary image if a new file was provided.
+  const primaryFile = formData.get("image_primary");
+
+  if (primaryFile instanceof File && primaryFile.size > 0) {
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    if (!allowedTypes.includes(primaryFile.type)) {
+      return {
+        success: false,
+        message:
+          "Invalid image type for the primary image. Use JPG, PNG, or WEBP.",
+      };
+    }
+
+    if (primaryFile.size > 5 * 1024 * 1024) {
+      return {
+        success: false,
+        message: "The primary image is larger than 5MB.",
+      };
+    }
+
+    const { data: existingPrimary } = await supabase
+      .from("service_images")
+      .select("id, image_url")
+      .eq("service_id", serviceId)
+      .eq("is_primary", true)
+      .maybeSingle();
+
+    // Delete the old primary image record and its storage object.
+    if (existingPrimary) {
+      const marker = "/service-images/";
+      const urlIndex = existingPrimary.image_url.indexOf(marker);
+
+      if (urlIndex !== -1) {
+        await supabase.storage
+          .from("service-images")
+          .remove([
+            existingPrimary.image_url.slice(urlIndex + marker.length),
+          ]);
+      }
+
+      await supabase
+        .from("service_images")
+        .delete()
+        .eq("id", existingPrimary.id);
+    }
+
+    const fileExtension =
+      primaryFile.name.split(".").pop()?.toLowerCase() || "jpg";
+    const filePath = `${serviceId}/primary-${crypto.randomUUID()}.${fileExtension}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("service-images")
+      .upload(filePath, primaryFile, {
+        contentType: primaryFile.type,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      return {
+        success: false,
+        message: `Primary image upload failed: ${uploadError.message}`,
+      };
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage
+      .from("service-images")
+      .getPublicUrl(filePath);
+
+    const { error: imageRecordError } = await supabase
+      .from("service_images")
+      .insert({
+        service_id: serviceId,
+        image_url: publicUrl,
+        alt_text: `${name} - primary`,
+        image_type: "primary",
+        display_order: 0,
+        is_primary: true,
+      });
+
+    if (imageRecordError) {
+      return {
+        success: false,
+        message: `Primary image save failed: ${imageRecordError.message}`,
+      };
+    }
+
+    // Keep services.image_url in sync with the primary image.
+    const { error: syncError } = await supabase
+      .from("services")
+      .update({ image_url: publicUrl })
+      .eq("id", serviceId);
+
+    if (syncError) {
+      console.error("Service image sync error:", syncError);
+    }
+  }
+
+  return {
+    success: true,
+    message: "Service updated successfully.",
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Delete a service (and its images, both records and storage objects)
+// ---------------------------------------------------------------------------
+
+export async function deleteService(
+  formData: FormData
+): Promise<{ success: boolean; message: string }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, message: "You must be signed in." };
+  }
+
+  const { data: isAdmin, error: roleError } = await supabase.rpc(
+    "has_admin_role",
+    {
+      required_roles: ["super_admin", "website_manager"],
+    }
+  );
+
+  if (roleError || !isAdmin) {
+    return {
+      success: false,
+      message: "You do not have permission to delete services.",
+    };
+  }
+
+  const serviceId = String(formData.get("service_id") || "").trim();
+
+  if (!serviceId) {
+    return { success: false, message: "Service id is missing." };
+  }
+
+  const { data: images } = await supabase
+    .from("service_images")
+    .select("image_url")
+    .eq("service_id", serviceId);
+
+  if (images && images.length > 0) {
+    const paths = images
+      .map((image) => {
+        const marker = "/service-images/";
+        const index = image.image_url.indexOf(marker);
+
+        return index !== -1
+          ? image.image_url.slice(index + marker.length)
+          : null;
+      })
+      .filter((path): path is string => path !== null);
+
+    if (paths.length > 0) {
+      await supabase.storage.from("service-images").remove(paths);
+    }
+  }
+
+  const { error: deleteError } = await supabase
+    .from("services")
+    .delete()
+    .eq("id", serviceId);
+
+  if (deleteError) {
+    console.error("Service delete error:", deleteError);
+
+    return { success: false, message: "Unable to delete the service." };
+  }
+
+  return {
+    success: true,
+    message: "Service deleted successfully.",
+  };
 }

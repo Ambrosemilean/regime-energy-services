@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import TrackedView from "@/components/analytics/tracked-view";
 import TrackedLink from "@/components/analytics/tracked-link";
 import { buildMetadata } from "@/lib/seo";
+import SiteHeader from "@/components/site-header";
+import SiteFooter from "@/components/site-footer";
 
 type ServicePageProps = {
   params: Promise<{
@@ -93,28 +95,12 @@ export default async function ServiceDetailsPage({
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <div className="flex min-h-screen flex-col bg-white">
+      <SiteHeader currentPath="/services" />
+
+      <main className="flex-1">
       {/* Analytics: record this service view */}
       <TrackedView event="service_view" label={service.name} />
-
-      {/* Header */}
-      <section className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-          <Link
-            href="/"
-            className="text-xl font-bold text-blue-700"
-          >
-            Regime Energy Services
-          </Link>
-
-          <Link
-            href="/#services"
-            className="text-sm font-medium text-gray-700 transition hover:text-blue-700"
-          >
-            ← Back to Services
-          </Link>
-        </div>
-      </section>
 
       {/* Service Details */}
       <section className="mx-auto max-w-7xl px-6 py-12 md:py-20">
@@ -230,6 +216,9 @@ export default async function ServiceDetailsPage({
           </div>
         </div>
       </section>
-    </main>
+      </main>
+
+      <SiteFooter />
+    </div>
   );
 }

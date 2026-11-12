@@ -8,6 +8,8 @@
   --regime-blue-dark: #063d78;
   --regime-red: #d62828;
   --regime-yellow: #d9a441;
+  --regime-green: #a8c825;
+  --regime-green-dark: #8aa81b;
 
   --surface: #f7f9fc;
   --surface-dark: #eef3f8;
@@ -23,6 +25,8 @@
   --color-regime-blue-dark: var(--regime-blue-dark);
   --color-regime-red: var(--regime-red);
   --color-regime-yellow: var(--regime-yellow);
+  --color-regime-green: var(--regime-green);
+  --color-regime-green-dark: var(--regime-green-dark);
 
   --color-surface: var(--surface);
   --color-surface-dark: var(--surface-dark);
@@ -39,7 +43,7 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 90px;
+  scroll-padding-top: 96px;
 }
 
 body {
@@ -278,6 +282,221 @@ a {
 
 .regime-image:hover img {
   transform: scale(1.035);
+}
+
+/* Lemon green accent chip — used sparingly for indicators */
+.regime-accent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  background: rgba(168, 200, 37, 0.14);
+  color: #5f7212;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Stat number treatment used in the statistics band */
+.regime-stat-number {
+  font-size: clamp(1.9rem, 4vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--regime-blue);
+  line-height: 1;
+}
+
+/* Trust-indicator marquee/ticker — slow, continuous, reduced-motion safe */
+@keyframes regime-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.regime-marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 8%,
+    #000 92%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 8%,
+    #000 92%,
+    transparent
+  );
+}
+
+.regime-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: regime-marquee 28s linear infinite;
+}
+
+.regime-marquee:hover .regime-marquee-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .regime-marquee-track {
+    animation: none;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+/* Leaflet map: brand branch pin styling ------------------------------ */
+.regime-branch-pin {
+  background: transparent;
+  border: 0;
+}
+
+.regime-branch-pin-dot {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border: 3px solid #ffffff;
+  border-radius: 999px;
+  background: var(--regime-red);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.35);
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    background-color 150ms ease;
+}
+
+.regime-branch-pin-dot:hover {
+  transform: scale(1.15);
+}
+
+.regime-branch-pin-dot.regime-branch-pin-selected {
+  box-shadow:
+    0 0 0 6px rgba(214, 40, 40, 0.18),
+    0 2px 6px rgba(15, 23, 42, 0.35);
+}
+
+/* On-map per-branch info popup ------------------------------------------ */
+.regime-branch-popup .leaflet-popup-content-wrapper {
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+}
+
+.regime-branch-popup .leaflet-popup-content {
+  margin: 14px 16px;
+  line-height: 1.5;
+}
+
+.regime-popup-brand {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--regime-blue);
+  margin: 0;
+}
+
+.regime-popup-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 2px 0 6px;
+}
+
+.regime-popup-address {
+  font-size: 12.5px;
+  color: #475569;
+  margin: 0 0 4px;
+}
+
+.regime-popup-contact {
+  font-size: 12.5px;
+  margin: 0 0 2px;
+}
+
+.regime-popup-contact a {
+  color: var(--regime-blue);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.regime-popup-contact a:hover {
+  text-decoration: underline;
+}
+
+.regime-popup-description {
+  font-size: 12px;
+  color: #64748b;
+  margin: 6px 0 0;
+}
+
+.regime-popup-actions {
+  margin-top: 10px;
+}
+
+.regime-popup-directions {
+  display: inline-block;
+  padding: 7px 14px;
+  border-radius: 0.5rem;
+  background: var(--regime-blue);
+  color: #ffffff !important;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none !important;
+}
+
+.regime-popup-directions:hover {
+  background: var(--regime-blue-dark, #1d4ed8);
+}
+
+/* Branch name labels pinned permanently beside each marker */
+.regime-branch-tooltip {
+  border: 1px solid var(--border) !important;
+  border-radius: 0.5rem !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 3px 10px !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12) !important;
+}
+
+.regime-branch-tooltip::before {
+  display: none !important; /* drop the arrow — cleaner corporate look */
+}
+
+/* Landscape mission/vision/promise card */
+.regime-mvp-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.1rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--regime-blue);
+  border-radius: 0.9rem;
+  background: #ffffff;
+  padding: 1.4rem 1.6rem;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.03),
+    0 8px 24px rgba(15, 23, 42, 0.05);
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    border-color 200ms ease;
+}
+
+.regime-mvp-card:hover {
+  transform: translateY(-2px);
+  border-left-color: var(--regime-red);
+  box-shadow:
+    0 4px 8px rgba(15, 23, 42, 0.04),
+    0 14px 32px rgba(15, 23, 42, 0.08);
 }
 
 /* Subtle background pattern */

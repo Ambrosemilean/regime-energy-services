@@ -16,6 +16,7 @@ type SiteSettings = {
   meta_description: string | null;
   show_company_history_link: boolean;
   show_chat_assistant: boolean | null;
+  show_branch_map: boolean | null;
 };
 
 export default function SiteSettingsForm({
@@ -58,6 +59,9 @@ export default function SiteSettingsForm({
   const [showChatAssistant, setShowChatAssistant] = useState(
     settings?.show_chat_assistant ?? true
   );
+  const [showBranchMap, setShowBranchMap] = useState(
+    settings?.show_branch_map ?? true
+  );
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -88,6 +92,7 @@ export default function SiteSettingsForm({
           meta_description: metaDescription,
           show_company_history_link: showHistoryLink,
           show_chat_assistant: showChatAssistant,
+          show_branch_map: showBranchMap,
         }),
       });
 
@@ -312,6 +317,22 @@ export default function SiteSettingsForm({
             <span className="text-sm font-medium text-gray-700">
               Show chat assistant (Regi) on the website — uncheck to hide it
               from visitors
+            </span>
+          </label>
+
+          <label className="flex cursor-pointer items-center gap-3">
+            <input
+              type="checkbox"
+              checked={showBranchMap}
+              onChange={(event) =>
+                setShowBranchMap(event.target.checked)
+              }
+              className="h-5 w-5 rounded border-gray-300"
+            />
+
+            <span className="text-sm font-medium text-gray-700">
+              Show the branch map on the homepage — uncheck to hide the
+              &quot;Find a Regime Branch Near You&quot; map from visitors
             </span>
           </label>
         </div>

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { buildMetadata } from "@/lib/seo";
 import QuickActions from "@/components/whatsapp-actions";
+import SiteHeader from "@/components/site-header";
+import SiteFooter from "@/components/site-footer";
 
 export const metadata = buildMetadata({
   title: "Our Products — Cylinders, Regulators & LPG Accessories",
@@ -87,46 +89,12 @@ export default async function ProductsListPage({
   }
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* Header */}
-      <section className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-          <div className="flex min-w-0 items-center gap-3">
-            <Link
-              href="/"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-700 text-xs font-extrabold tracking-tight text-white"
-              aria-label="Regime Energy Services home"
-            >
-              RG
-            </Link>
-            <Link
-              href="/"
-              className="truncate text-base font-bold text-blue-900 sm:text-xl"
-            >
-              Regime Energy Services
-            </Link>
-          </div>
+    <div className="flex min-h-screen flex-col bg-white">
+      <SiteHeader currentPath="/products" />
 
-          <div className="flex flex-wrap items-center gap-2 sm:gap-5">
-            <nav aria-label="Site navigation" className="hidden items-center gap-5 md:flex">
-              <Link href="/products" className="text-sm font-semibold text-blue-700 underline decoration-2 underline-offset-4">Products</Link>
-              <Link href="/services" className="text-sm font-medium text-gray-600 hover:text-blue-700">Services</Link>
-              <Link href="/branches" className="text-sm font-medium text-gray-600 hover:text-blue-700">Branches</Link>
-              <Link href="/company-history" className="text-sm font-medium text-gray-600 hover:text-blue-700">Our History</Link>
-            </nav>
-
-            <Link
-              href="/"
-              className="inline-flex min-h-[44px] shrink-0 items-center self-start rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:self-auto"
-            >
-              ← Back to Home
-            </Link>
-          </div>
-        </div>
-      </section>
-
+      <main className="flex-1">
       {/* Page Intro */}
-      <section className="mx-auto max-w-7xl px-6 pb-6 pt-12 text-center">
+      <section className="mx-auto max-w-7xl px-6 pb-6 pt-12 text-center md:pt-16">
         <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">
           Regime Energy Services
         </p>
@@ -303,6 +271,9 @@ export default async function ProductsListPage({
           </div>
         )}
       </section>
-    </main>
+      </main>
+
+      <SiteFooter />
+    </div>
   );
 }

@@ -1,0 +1,3672 @@
+warning: in the working copy of 'src/app/admin/company-media/company-media-manager.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/admin/products/actions/create-product.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/admin/services/actions/create-service.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/branches/[slug]/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/chat/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/company-history/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/products/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/services/[slug]/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/services/page.tsx', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/.vscode/settings.json b/.vscode/settings.json[m
+[1mindex 3ebdbc0..6dd6233 100644[m
+[1m--- a/.vscode/settings.json[m
+[1m+++ b/.vscode/settings.json[m
+[36m@@ -1,3 +1,4 @@[m
+ {[m
+[31m-    "CodeGPT.apiKey": "CodeGPT Plus Beta"[m
+[32m+[m[32m    "CodeGPT.apiKey": "CodeGPT Plus Beta",[m
+[32m+[m[32m    "mos.port": ""[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/src/app/admin/company-media/company-media-manager.tsx b/src/app/admin/company-media/company-media-manager.tsx[m
+[1mindex bce6d68..e5511e1 100644[m
+[1m--- a/src/app/admin/company-media/company-media-manager.tsx[m
+[1m+++ b/src/app/admin/company-media/company-media-manager.tsx[m
+[36m@@ -13,6 +13,18 @@[m [mtype CompanyMedia = {[m
+   is_active: boolean;[m
+ };[m
+ [m
+[32m+[m[32mfunction findWeighbridgeMedia(media: CompanyMedia[]) {[m
+[32m+[m[32m  return ([m
+[32m+[m[32m    media.find((item) =>[m
+[32m+[m[32m      [item.title, item.alt_text][m
+[32m+[m[32m        .filter(Boolean)[m
+[32m+[m[32m        .some((value) =>[m
+[32m+[m[32m          (value as string).toLowerCase().includes("weighbridge")[m
+[32m+[m[32m        )[m
+[32m+[m[32m    ) ?? null[m
+[32m+[m[32m  );[m
+[32m+[m[32m}[m
+[32m+[m
+ export default function CompanyMediaManager({[m
+   media,[m
+ }: {[m
+[36m@@ -23,9 +35,18 @@[m [mexport default function CompanyMediaManager({[m
+   const [error, setError] = useState("");[m
+   const [success, setSuccess] = useState("");[m
+ [m
+[31m-  function handleFileChange([m
+[31m-    event: React.ChangeEvent<HTMLInputElement>[m
+[31m-  ) {[m
+[32m+[m[32m  const [deletingId, setDeletingId] = useState<string | null>(null);[m
+[32m+[m[32m  const [deletingError, setDeletingError] = useState("");[m
+[32m+[m
+[32m+[m[32m  // Weighbridge image — a dedicated single-image slot stored with the[m
+[32m+[m[32m  // title "Weighbridge" so the homepage featured section can find it.[m
+[32m+[m[32m  const weighbridgeImage = findWeighbridgeMedia(media);[m
+[32m+[m
+[32m+[m[32m  const [weighbridgeFile, setWeighbridgeFile] = useState<File | null>(null);[m
+[32m+[m[32m  const [weighbridgeUploading, setWeighbridgeUploading] = useState(false);[m
+[32m+[m[32m  const [weighbridgeError, setWeighbridgeError] = useState("");[m
+[32m+[m
+[32m+[m[32m  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {[m
+     setError("");[m
+     setSuccess("");[m
+ [m
+[36m@@ -52,16 +73,13 @@[m [mexport default function CompanyMediaManager({[m
+     setSelectedFiles((previousFiles) => {[m
+       const existingFiles = new Set([m
+         previousFiles.map([m
+[31m-          (file) =>[m
+[31m-            `${file.name}-${file.size}-${file.lastModified}`[m
+[32m+[m[32m          (file) => `${file.name}-${file.size}-${file.lastModified}`[m
+         )[m
+       );[m
+ [m
+       const newFiles = validFiles.filter([m
+         (file) =>[m
+[31m-          !existingFiles.has([m
+[31m-            `${file.name}-${file.size}-${file.lastModified}`[m
+[31m-          )[m
+[32m+[m[32m          !existingFiles.has(`${file.name}-${file.size}-${file.lastModified}`)[m
+       );[m
+ [m
+       return [...previousFiles, ...newFiles];[m
+[36m@@ -71,9 +89,7 @@[m [mexport default function CompanyMediaManager({[m
+     event.target.value = "";[m
+   }[m
+ [m
+[31m-  function removeSelectedFile([m
+[31m-    fileToRemove: File[m
+[31m-  ) {[m
+[32m+[m[32m  function removeSelectedFile(fileToRemove: File) {[m
+     setSelectedFiles((previousFiles) =>[m
+       previousFiles.filter([m
+         (file) =>[m
+[36m@@ -109,20 +125,15 @@[m [mexport default function CompanyMediaManager({[m
+         formData.append("files", file);[m
+       });[m
+ [m
+[31m-      const response = await fetch([m
+[31m-        "/api/admin/company-media",[m
+[31m-        {[m
+[31m-          method: "POST",[m
+[31m-          body: formData,[m
+[31m-        }[m
+[31m-      );[m
+[32m+[m[32m      const response = await fetch("/api/admin/company-media", {[m
+[32m+[m[32m        method: "POST",[m
+[32m+[m[32m        body: formData,[m
+[32m+[m[32m      });[m
+ [m
+       const result = await response.json();[m
+ [m
+       if (!response.ok) {[m
+[31m-        throw new Error([m
+[31m-          result.error || "Failed to upload images."[m
+[31m-        );[m
+[32m+[m[32m        throw new Error(result.error || "Failed to upload images.");[m
+       }[m
+ [m
+       setSelectedFiles([]);[m
+[36m@@ -145,8 +156,208 @@[m [mexport default function CompanyMediaManager({[m
+     }[m
+   }[m
+ [m
+[32m+[m[32m  async function handleDelete(id: string) {[m
+[32m+[m[32m    setDeletingError("");[m
+[32m+[m[32m    setDeletingId(id);[m
+[32m+[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      const response = await fetch(`/api/admin/company-media/${id}`, {[m
+[32m+[m[32m        method: "DELETE",[m
+[32m+[m[32m      });[m
+[32m+[m
+[32m+[m[32m      const result = await response.json();[m
+[32m+[m
+[32m+[m[32m      if (!response.ok) {[m
+[32m+[m[32m        throw new Error(result.error || "Failed to delete the image.");[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      window.location.reload();[m
+[32m+[m[32m    } catch (err) {[m
+[32m+[m[32m      setDeletingError([m
+[32m+[m[32m        err instanceof Error[m
+[32m+[m[32m          ? err.message[m
+[32m+[m[32m          : "Something went wrong while deleting."[m
+[32m+[m[32m      );[m
+[32m+[m[32m    } finally {[m
+[32m+[m[32m      setDeletingId(null);[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  function handleWeighbridgeFileChange([m
+[32m+[m[32m    event: React.ChangeEvent<HTMLInputElement>[m
+[32m+[m[32m  ) {[m
+[32m+[m[32m    const file = event.target.files?.[0];[m
+[32m+[m
+[32m+[m[32m    if (!file) return;[m
+[32m+[m
+[32m+[m[32m    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {[m
+[32m+[m[32m      setWeighbridgeError("Only JPG, PNG and WEBP images are allowed.");[m
+[32m+[m[32m      event.target.value = "";[m
+[32m+[m[32m      return;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    if (file.size > 5 * 1024 * 1024) {[m
+[32m+[m[32m      setWeighbridgeError("The image must be 5MB or smaller.");[m
+[32m+[m[32m      event.target.value = "";[m
+[32m+[m[32m      return;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    setWeighbridgeError("");[m
+[32m+[m[32m    setWeighbridgeFile(file);[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  /**[m
+[32m+[m[32m   * Uploading always replaces the existing weighbridge image: the new file[m
+[32m+[m[32m   * goes up first, then the old record (and its storage object) is deleted[m
+[32m+[m[32m   * so only one weighbridge image exists.[m
+[32m+[m[32m   */[m
+[32m+[m[32m  async function handleWeighbridgeUpload() {[m
+[32m+[m[32m    if (!weighbridgeFile) {[m
+[32m+[m[32m      setWeighbridgeError("Please choose an image first.");[m
+[32m+[m[32m      return;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    setWeighbridgeUploading(true);[m
+[32m+[m[32m    setWeighbridgeError("");[m
+[32m+[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      const formData = new FormData();[m
+[32m+[m[32m      formData.append("files", weighbridgeFile);[m
+[32m+[m[32m      formData.append("title", "Weighbridge");[m
+[32m+[m
+[32m+[m[32m      const response = await fetch("/api/admin/company-media", {[m
+[32m+[m[32m        method: "POST",[m
+[32m+[m[32m        body: formData,[m
+[32m+[m[32m      });[m
+[32m+[m
+[32m+[m[32m      const result = await response.json();[m
+[32m+[m
+[32m+[m[32m      if (!response.ok) {[m
+[32m+[m[32m        throw new Error(result.error || "Failed to upload the image.");[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      if (weighbridgeImage) {[m
+[32m+[m[32m        await fetch(`/api/admin/company-media/${weighbridgeImage.id}`, {[m
+[32m+[m[32m          method: "DELETE",[m
+[32m+[m[32m        });[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      window.location.reload();[m
+[32m+[m[32m    } catch (err) {[m
+[32m+[m[32m      setWeighbridgeError([m
+[32m+[m[32m        err instanceof Error ? err.message : "Something went wrong."[m
+[32m+[m[32m      );[m
+[32m+[m[32m    } finally {[m
+[32m+[m[32m      setWeighbridgeUploading(false);[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  async function handleWeighbridgeDelete() {[m
+[32m+[m[32m    if (!weighbridgeImage) return;[m
+[32m+[m
+[32m+[m[32m    setWeighbridgeUploading(true);[m
+[32m+[m[32m    setWeighbridgeError("");[m
+[32m+[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      const response = await fetch([m
+[32m+[m[32m        `/api/admin/company-media/${weighbridgeImage.id}`,[m
+[32m+[m[32m        { method: "DELETE" }[m
+[32m+[m[32m      );[m
+[32m+[m
+[32m+[m[32m      const result = await response.json();[m
+[32m+[m
+[32m+[m[32m      if (!response.ok) {[m
+[32m+[m[32m        throw new Error(result.error || "Failed to delete the image.");[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      window.location.reload();[m
+[32m+[m[32m    } catch (err) {[m
+[32m+[m[32m      setWeighbridgeError([m
+[32m+[m[32m        err instanceof Error ? err.message : "Something went wrong."[m
+[32m+[m[32m      );[m
+[32m+[m[32m    } finally {[m
+[32m+[m[32m      setWeighbridgeUploading(false);[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+   return ([m
+     <div className="space-y-8">[m
+[32m+[m[32m      {/* Weighbridge image — feeds the homepage featured section */}[m
+[32m+[m[32m      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">[m
+[32m+[m[32m        <h2 className="text-xl font-semibold text-gray-900">[m
+[32m+[m[32m          Weighbridge Image[m
+[32m+[m[32m        </h2>[m
+[32m+[m
+[32m+[m[32m        <p className="mt-1 text-sm text-gray-500">[m
+[32m+[m[32m          Shown in the &quot;Weighbridge Services&quot; section on the[m
+[32m+[m[32m          homepage. One image only — uploading a new one replaces the[m
+[32m+[m[32m          previous.[m
+[32m+[m[32m        </p>[m
+[32m+[m
+[32m+[m[32m        <div className="mt-6 grid gap-6 md:grid-cols-2">[m
+[32m+[m[32m          <div>[m
+[32m+[m[32m            {weighbridgeImage ? ([m
+[32m+[m[32m              <div className="overflow-hidden rounded-lg border border-gray-200">[m
+[32m+[m[32m                <img[m
+[32m+[m[32m                  src={weighbridgeImage.image_url}[m
+[32m+[m[32m                  alt="Weighbridge"[m
+[32m+[m[32m                  className="h-52 w-full object-cover"[m
+[32m+[m[32m                />[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            ) : ([m
+[32m+[m[32m              <div className="flex h-52 items-center justify-center rounded-lg bg-gray-100 text-sm text-gray-500">[m
+[32m+[m[32m                No weighbridge image uploaded[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            )}[m
+[32m+[m[32m          </div>[m
+[32m+[m
+[32m+[m[32m          <div className="flex flex-col justify-center gap-4">[m
+[32m+[m[32m            <input[m
+[32m+[m[32m              type="file"[m
+[32m+[m[32m              accept="image/jpeg,image/png,image/webp"[m
+[32m+[m[32m              onChange={handleWeighbridgeFileChange}[m
+[32m+[m[32m              className="block w-full rounded-lg border border-gray-300 px-4 py-3 text-sm"[m
+[32m+[m[32m            />[m
+[32m+[m
+[32m+[m[32m            {weighbridgeFile && ([m
+[32m+[m[32m              <p className="text-sm text-gray-600">[m
+[32m+[m[32m                Selected: {weighbridgeFile.name}[m
+[32m+[m[32m              </p>[m
+[32m+[m[32m            )}[m
+[32m+[m
+[32m+[m[32m            <div className="flex flex-wrap gap-3">[m
+[32m+[m[32m              <button[m
+[32m+[m[32m                type="button"[m
+[32m+[m[32m                onClick={handleWeighbridgeUpload}[m
+[32m+[m[32m                disabled={weighbridgeUploading || !weighbridgeFile}[m
+[32m+[m[32m                className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"[m
+[32m+[m[32m              >[m
+[32m+[m[32m                {weighbridgeUploading[m
+[32m+[m[32m                  ? "Working..."[m
+[32m+[m[32m                  : weighbridgeImage[m
+[32m+[m[32m                    ? "Update Image"[m
+[32m+[m[32m                    : "Upload Image"}[m
+[32m+[m[32m              </button>[m
+[32m+[m
+[32m+[m[32m              {weighbridgeImage && ([m
+[32m+[m[32m                <button[m
+[32m+[m[32m                  type="button"[m
+[32m+[m[32m                  onClick={handleWeighbridgeDelete}[m
+[32m+[m[32m                  disabled={weighbridgeUploading}[m
+[32m+[m[32m                  className="rounded-lg border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:opacity-50"[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  Delete[m
+[32m+[m[32m                </button>[m
+[32m+[m[32m              )}[m
+[32m+[m[32m            </div>[m
+[32m+[m
+[32m+[m[32m            {weighbridgeError && ([m
+[32m+[m[32m              <p className="text-sm text-red-600">{weighbridgeError}</p>[m
+[32m+[m[32m            )}[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </div>[m
+[32m+[m
+       {/* Upload Section */}[m
+       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">[m
+         <h2 className="text-xl font-semibold text-gray-900">[m
+[36m@@ -154,8 +365,8 @@[m [mexport default function CompanyMediaManager({[m
+         </h2>[m
+ [m
+         <p className="mt-1 text-sm text-gray-500">[m
+[31m-          Upload multiple images for the Regime Energy Services[m
+[31m-          website slideshow.[m
+[32m+[m[32m          Upload multiple images for the Regime Energy Services website[m
+[32m+[m[32m          slideshow.[m
+         </p>[m
+ [m
+         <div className="mt-6">[m
+[36m@@ -278,11 +489,17 @@[m [mexport default function CompanyMediaManager({[m
+           </h2>[m
+ [m
+           <p className="mt-1 text-sm text-gray-500">[m
+[31m-            {media.length} image[m
+[31m-            {media.length === 1 ? "" : "s"} currently uploaded.[m
+[32m+[m[32m            {media.length} image{media.length === 1 ? "" : "s"} currently[m
+[32m+[m[32m            uploaded.[m
+           </p>[m
+         </div>[m
+ [m
+[32m+[m[32m        {deletingError && ([m
+[32m+[m[32m          <div className="mt-5 rounded-lg bg-red-50 p-4 text-sm text-red-700">[m
+[32m+[m[32m            {deletingError}[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        )}[m
+[32m+[m
+         {media.length === 0 ? ([m
+           <div className="mt-6 rounded-lg bg-gray-50 p-10 text-center">[m
+             <p className="font-medium text-gray-700">[m
+[36m@@ -290,8 +507,8 @@[m [mexport default function CompanyMediaManager({[m
+             </p>[m
+ [m
+             <p className="mt-2 text-sm text-gray-500">[m
+[31m-              Upload your first images above to begin building the[m
+[31m-              website slideshow.[m
+[32m+[m[32m              Upload your first images above to begin building the website[m
+[32m+[m[32m              slideshow.[m
+             </p>[m
+           </div>[m
+         ) : ([m
+[36m@@ -303,10 +520,7 @@[m [mexport default function CompanyMediaManager({[m
+               >[m
+                 <img[m
+                   src={item.image_url}[m
+[31m-                  alt={[m
+[31m-                    item.alt_text ||[m
+[31m-                    "Regime Energy Services"[m
+[31m-                  }[m
+[32m+[m[32m                  alt={item.alt_text || "Regime Energy Services"}[m
+                   className="h-52 w-full object-cover"[m
+                 />[m
+ [m
+[36m@@ -323,9 +537,7 @@[m [mexport default function CompanyMediaManager({[m
+                           : "bg-gray-100 text-gray-600"[m
+                       }`}[m
+                     >[m
+[31m-                      {item.is_active[m
+[31m-                        ? "Active"[m
+[31m-                        : "Inactive"}[m
+[32m+[m[32m                      {item.is_active ? "Active" : "Inactive"}[m
+                     </span>[m
+                   </div>[m
+ [m
+[36m@@ -338,6 +550,15 @@[m [mexport default function CompanyMediaManager({[m
+                       {item.description}[m
+                     </p>[m
+                   )}[m
+[32m+[m
+[32m+[m[32m                  <button[m
+[32m+[m[32m                    type="button"[m
+[32m+[m[32m                    onClick={() => handleDelete(item.id)}[m
+[32m+[m[32m                    disabled={deletingId !== null}[m
+[32m+[m[32m                    className="mt-4 w-full rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"[m
+[32m+[m[32m                  >[m
+[32m+[m[32m                    {deletingId === item.id ? "Deleting..." : "Remove Image"}[m
+[32m+[m[32m                  </button>[m
+                 </div>[m
+               </div>[m
+             ))}[m
+[36m@@ -346,4 +567,4 @@[m [mexport default function CompanyMediaManager({[m
+       </div>[m
+     </div>[m
+   );[m
+[31m-}[m
+\ No newline at end of file[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/app/admin/products/actions/create-product.ts b/src/app/admin/products/actions/create-product.ts[m
+[1mindex a2b9af3..9dfb704 100644[m
+[1m--- a/src/app/admin/products/actions/create-product.ts[m
+[1m+++ b/src/app/admin/products/actions/create-product.ts[m
+[36m@@ -361,4 +361,301 @@[m [mexport async function createProduct([m
+           : "Unable to upload product images.",[m
+     };[m
+   }[m
+[31m-}[m
+\ No newline at end of file[m
+[32m+[m[32m}[m
+[32m+[m[32m// ---------------------------------------------------------------------------[m
+[32m+[m[32m// Update an existing product (content is admin-editable)[m
+[32m+[m[32m// ---------------------------------------------------------------------------[m
+[32m+[m
+[32m+[m[32mtype UpdateProductResult = {[m
+[32m+[m[32m  success: boolean;[m
+[32m+[m[32m  message: string;[m
+[32m+[m[32m};[m
+[32m+[m
+[32m+[m[32mexport async function updateProduct([m
+[32m+[m[32m  formData: FormData[m
+[32m+[m[32m): Promise<UpdateProductResult> {[m
+[32m+[m[32m  const supabase = await createClient();[m
+[32m+[m
+[32m+[m[32m  const {[m
+[32m+[m[32m    data: { user },[m
+[32m+[m[32m  } = await supabase.auth.getUser();[m
+[32m+[m
+[32m+[m[32m  if (!user) {[m
+[32m+[m[32m    return { success: false, message: "You must be signed in." };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const { data: isAdmin, error: roleError } = await supabase.rpc([m
+[32m+[m[32m    "has_admin_role",[m
+[32m+[m[32m    {[m
+[32m+[m[32m      required_roles: [[m
+[32m+[m[32m        "super_admin",[m
+[32m+[m[32m        "website_manager",[m
+[32m+[m[32m        "content_manager",[m
+[32m+[m[32m      ],[m
+[32m+[m[32m    }[m
+[32m+[m[32m  );[m
+[32m+[m
+[32m+[m[32m  if (roleError || !isAdmin) {[m
+[32m+[m[32m    return {[m
+[32m+[m[32m      success: false,[m
+[32m+[m[32m      message: "You do not have permission to edit products.",[m
+[32m+[m[32m    };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const productId = String(formData.get("product_id") || "").trim();[m
+[32m+[m
+[32m+[m[32m  if (!productId) {[m
+[32m+[m[32m    return { success: false, message: "Product id is missing." };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const name = String(formData.get("name") || "").trim();[m
+[32m+[m[32m  const categoryId = String(formData.get("category_id") || "").trim();[m
+[32m+[m[32m  const shortDescription = String([m
+[32m+[m[32m    formData.get("short_description") || ""[m
+[32m+[m[32m  ).trim();[m
+[32m+[m[32m  const description = String(formData.get("description") || "").trim();[m
+[32m+[m[32m  const sizeCapacity = String(formData.get("size_capacity") || "").trim();[m
+[32m+[m[32m  const features = String(formData.get("features") || "").trim();[m
+[32m+[m[32m  const specifications = String([m
+[32m+[m[32m    formData.get("specifications") || ""[m
+[32m+[m[32m  ).trim();[m
+[32m+[m[32m  const suitableUse = String(formData.get("suitable_use") || "").trim();[m
+[32m+[m[32m  const availability = String([m
+[32m+[m[32m    formData.get("availability") || "available"[m
+[32m+[m[32m  );[m
+[32m+[m[32m  const isFeatured = formData.get("is_featured") === "true";[m
+[32m+[m[32m  const isActive = formData.get("is_active") === "true";[m
+[32m+[m
+[32m+[m[32m  if (!name) {[m
+[32m+[m[32m    return { success: false, message: "Product name is required." };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  if (!categoryId) {[m
+[32m+[m[32m    return { success: false, message: "Product category is required." };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  if ([m
+[32m+[m[32m    !["available", "unavailable", "on_request"].includes(availability)[m
+[32m+[m[32m  ) {[m
+[32m+[m[32m    return { success: false, message: "Invalid product availability." };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const slug = name[m
+[32m+[m[32m    .toLowerCase()[m
+[32m+[m[32m    .trim()[m
+[32m+[m[32m    .replace(/[^a-z0-9]+/g, "-")[m
+[32m+[m[32m    .replace(/^-+|-+$/g, "");[m
+[32m+[m
+[32m+[m[32m  if (!slug) {[m
+[32m+[m[32m    return { success: false, message: "Unable to create a valid slug." };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  // Keep the slug unique — if another product already owns it, keep the[m
+[32m+[m[32m  // existing slug instead of failing the whole save.[m
+[32m+[m[32m  const { data: slugOwner } = await supabase[m
+[32m+[m[32m    .from("products")[m
+[32m+[m[32m    .select("id")[m
+[32m+[m[32m    .eq("slug", slug)[m
+[32m+[m[32m    .neq("id", productId)[m
+[32m+[m[32m    .maybeSingle();[m
+[32m+[m
+[32m+[m[32m  const finalSlug = slugOwner ? undefined : slug;[m
+[32m+[m
+[32m+[m[32m  const { error: updateError } = await supabase[m
+[32m+[m[32m    .from("products")[m
+[32m+[m[32m    .update({[m
+[32m+[m[32m      category_id: categoryId,[m
+[32m+[m[32m      name,[m
+[32m+[m[32m      ...(finalSlug ? { slug: finalSlug } : {}),[m
+[32m+[m[32m      short_description: shortDescription || null,[m
+[32m+[m[32m      description: description || null,[m
+[32m+[m[32m      size_capacity: sizeCapacity || null,[m
+[32m+[m[32m      features: features || null,[m
+[32m+[m[32m      specifications: specifications || null,[m
+[32m+[m[32m      suitable_use: suitableUse || null,[m
+[32m+[m[32m      availability,[m
+[32m+[m[32m      is_featured: isFeatured,[m
+[32m+[m[32m      is_active: isActive,[m
+[32m+[m[32m      updated_at: new Date().toISOString(),[m
+[32m+[m[32m    })[m
+[32m+[m[32m    .eq("id", productId);[m
+[32m+[m
+[32m+[m[32m  if (updateError) {[m
+[32m+[m[32m    console.error("Product update error:", updateError);[m
+[32m+[m
+[32m+[m[32m    return {[m
+[32m+[m[32m      success: false,[m
+[32m+[m[32m      message:[m
+[32m+[m[32m        updateError.code === "23505"[m
+[32m+[m[32m          ? "A product with this name or slug already exists."[m
+[32m+[m[32m          : "Unable to update the product.",[m
+[32m+[m[32m    };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  // Optional: replace the primary image if a new file was provided.[m
+[32m+[m[32m  const primaryFile = formData.get("image_primary");[m
+[32m+[m
+[32m+[m[32m  if (primaryFile instanceof File && primaryFile.size > 0) {[m
+[32m+[m[32m    if (!ALLOWED_IMAGE_TYPES.includes(primaryFile.type)) {[m
+[32m+[m[32m      return {[m
+[32m+[m[32m        success: false,[m
+[32m+[m[32m        message:[m
+[32m+[m[32m          "Invalid image type for the primary image. Use JPG, PNG, or WEBP.",[m
+[32m+[m[32m      };[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    if (primaryFile.size > MAX_IMAGE_SIZE) {[m
+[32m+[m[32m      return {[m
+[32m+[m[32m        success: false,[m
+[32m+[m[32m        message: "The primary image is larger than 5MB.",[m
+[32m+[m[32m      };[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    const { data: existingPrimary } = await supabase[m
+[32m+[m[32m      .from("product_images")[m
+[32m+[m[32m      .select("id, image_url")[m
+[32m+[m[32m      .eq("product_id", productId)[m
+[32m+[m[32m      .eq("is_primary", true)[m
+[32m+[m[32m      .maybeSingle();[m
+[32m+[m
+[32m+[m[32m    // Delete the old primary image record and its storage object.[m
+[32m+[m[32m    if (existingPrimary) {[m
+[32m+[m[32m      const marker = "/product-images/";[m
+[32m+[m[32m      const urlIndex = existingPrimary.image_url.indexOf(marker);[m
+[32m+[m
+[32m+[m[32m      if (urlIndex !== -1) {[m
+[32m+[m[32m        await supabase.storage[m
+[32m+[m[32m          .from("product-images")[m
+[32m+[m[32m          .remove([[m
+[32m+[m[32m            existingPrimary.image_url.slice(urlIndex + marker.length),[m
+[32m+[m[32m          ]);[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      await supabase[m
+[32m+[m[32m        .from("product_images")[m
+[32m+[m[32m        .delete()[m
+[32m+[m[32m        .eq("id", existingPrimary.id);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    const safeFileName = getSafeFileName(primaryFile.name);[m
+[32m+[m[32m    const storagePath = `${productId}/${crypto.randomUUID()}-${safeFileName}`;[m
+[32m+[m[32m    const fileBuffer = await primaryFile.arrayBuffer();[m
+[32m+[m
+[32m+[m[32m    const { error: uploadError } = await supabase.storage[m
+[32m+[m[32m      .from("product-images")[m
+[32m+[m[32m      .upload(storagePath, fileBuffer, {[m
+[32m+[m[32m        contentType: primaryFile.type,[m
+[32m+[m[32m        upsert: false,[m
+[32m+[m[32m      });[m
+[32m+[m
+[32m+[m[32m    if (uploadError) {[m
+[32m+[m[32m      return {[m
+[32m+[m[32m        success: false,[m
+[32m+[m[32m        message: `Primary image upload failed: ${uploadError.message}`,[m
+[32m+[m[32m      };[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    const { data: publicUrlData } = supabase.storage[m
+[32m+[m[32m      .from("product-images")[m
+[32m+[m[32m      .getPublicUrl(storagePath);[m
+[32m+[m
+[32m+[m[32m    const { error: imageRecordError } = await supabase[m
+[32m+[m[32m      .from("product_images")[m
+[32m+[m[32m      .insert({[m
+[32m+[m[32m        product_id: productId,[m
+[32m+[m[32m        image_url: publicUrlData.publicUrl,[m
+[32m+[m[32m        alt_text: `${name} - primary image`,[m
+[32m+[m[32m        image_type: "primary",[m
+[32m+[m[32m        display_order: 0,[m
+[32m+[m[32m        is_primary: true,[m
+[32m+[m[32m      });[m
+[32m+[m
+[32m+[m[32m    if (imageRecordError) {[m
+[32m+[m[32m      return {[m
+[32m+[m[32m        success: false,[m
+[32m+[m[32m        message: `Primary image save failed: ${imageRecordError.message}`,[m
+[32m+[m[32m      };[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return {[m
+[32m+[m[32m    success: true,[m
+[32m+[m[32m    message: "Product updated successfully.",[m
+[32m+[m[32m  };[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m// ---------------------------------------------------------------------------[m
+[32m+[m[32m// Delete a product (and its images, both records and storage objects)[m
+[32m+[m[32m// ---------------------------------------------------------------------------[m
+[32m+[m
+[32m+[m[32mexport async function deleteProduct([m
+[32m+[m[32m  formData: FormData[m
+[32m+[m[32m): Promise<{ success: boolean; message: string }> {[m
+[32m+[m[32m  const supabase = await createClient();[m
+[32m+[m
+[32m+[m[32m  const {[m
+[32m+[m[32m    data: { user },[m
+[32m+[m[32m  } = await supabase.auth.getUser();[m
+[32m+[m
+[32m+[m[32m  if (!user) {[m
+[32m+[m[32m    return { success: false, message: "You must be signed in." };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const { data: isAdmin, error: roleError } = await supabase.rpc([m
+[32m+[m[32m    "has_admin_role",[m
+[32m+[m[32m    {[m
+[32m+[m[32m      required_roles: ["super_admin", "website_manager"],[m
+[32m+[m[32m    }[m
+[32m+[m[32m  );[m
+[32m+[m
+[32m+[m[32m  if (roleError || !isAdmin) {[m
+[32m+[m[32m    return {[m
+[32m+[m[32m      success: false,[m
+[32m+[m[32m      message: "You do not have permission to delete products.",[m
+[32m+[m[32m    };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const productId = String(formData.get("product_id") || "").trim();[m
+[32m+[m
+[32m+[m[32m  if (!productId) {[m
+[32m+[m[32m    return { success: false, message: "Product id is missing." };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const { data: images } = await supabase[m
+[32m+[m[32m    .from("product_images")[m
+[32m+[m[32m    .select("image_url")[m
+[32m+[m[32m    .eq("product_id", productId);[m
+[32m+[m
+[32m+[m[32m  if (images && images.length > 0) {[m
+[32m+[m[32m    const paths = images[m
+[32m+[m[32m      .map((image) => {[m
+[32m+[m[32m        const marker = "/product-images/";[m
+[32m+[m[32m        const index = image.image_url.indexOf(marker);[m
+[32m+[m
+[32m+[m[32m        return index !== -1[m
+[32m+[m[32m          ? image.image_url.slice(index + marker.length)[m
+[32m+[m[32m          : null;[m
+[32m+[m[32m      })[m
+[32m+[m[32m      .filter((path): path is string => path !== null);[m
+[32m+[m
+[32m+[m[32m    if (paths.length > 0) {[m
+[32m+[m[32m      await supabase.storage.from("product-images").remove(paths);[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const { error: deleteError } = await supabase[m
+[32m+[m[32m    .from("products")[m
+[32m+[m[32m    .delete()[m
+[32m+[m[32m    .eq("id", productId);[m
+[32m+[m
+[32m+[m[32m  if (deleteError) {[m
+[32m+[m[32m    console.error("Product delete error:", deleteError);[m
+[32m+[m
+[32m+[m[32m    return { success: false, message: "Unable to delete the product." };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return {[m
+[32m+[m[32m    success: true,[m
+[32m+[m[32m    message: "Product deleted successfully.",[m
+[32m+[m[32m  };[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/app/admin/services/actions/create-service.ts b/src/app/admin/services/actions/create-service.ts[m
+[1mindex c8e7f7d..5a5c46a 100644[m
+[1m--- a/src/app/admin/services/actions/create-service.ts[m
+[1m+++ b/src/app/admin/services/actions/create-service.ts[m
+[36m@@ -327,4 +327,290 @@[m [mexport async function createService([m
+           : "Unable to upload service images.",[m
+     };[m
+   }[m
+[31m-}[m
+\ No newline at end of file[m
+[32m+[m[32m}// ---------------------------------------------------------------------------[m
+[32m+[m[32m// Update an existing service (content is admin-editable)[m
+[32m+[m[32m// ---------------------------------------------------------------------------[m
+[32m+[m
+[32m+[m[32mtype UpdateServiceResult = {[m
+[32m+[m[32m  success: boolean;[m
+[32m+[m[32m  message: string;[m
+[32m+[m[32m};[m
+[32m+[m
+[32m+[m[32mexport async function updateService([m
+[32m+[m[32m  formData: FormData[m
+[32m+[m[32m): Promise<UpdateServiceResult> {[m
+[32m+[m[32m  const supabase = await createClient();[m
+[32m+[m
+[32m+[m[32m  const {[m
+[32m+[m[32m    data: { user },[m
+[32m+[m[32m  } = await supabase.auth.getUser();[m
+[32m+[m
+[32m+[m[32m  if (!user) {[m
+[32m+[m[32m    return { success: false, message: "You must be signed in." };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const { data: isAdmin, error: roleError } = await supabase.rpc([m
+[32m+[m[32m    "has_admin_role",[m
+[32m+[m[32m    {[m
+[32m+[m[32m      required_roles: [[m
+[32m+[m[32m        "super_admin",[m
+[32m+[m[32m        "website_manager",[m
+[32m+[m[32m        "content_manager",[m
+[32m+[m[32m      ],[m
+[32m+[m[32m    }[m
+[32m+[m[32m  );[m
+[32m+[m
+[32m+[m[32m  if (roleError || !isAdmin) {[m
+[32m+[m[32m    return {[m
+[32m+[m[32m      success: false,[m
+[32m+[m[32m      message: "You do not have permission to edit services.",[m
+[32m+[m[32m    };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const serviceId = String(formData.get("service_id") || "").trim();[m
+[32m+[m
+[32m+[m[32m  if (!serviceId) {[m
+[32m+[m[32m    return { success: false, message: "Service id is missing." };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const name = String(formData.get("name") || "").trim();[m
+[32m+[m[32m  const shortDescription = String([m
+[32m+[m[32m    formData.get("short_description") || ""[m
+[32m+[m[32m  ).trim();[m
+[32m+[m[32m  const description = String(formData.get("description") || "").trim();[m
+[32m+[m[32m  const serviceCategory = String([m
+[32m+[m[32m    formData.get("service_category") || ""[m
+[32m+[m[32m  ).trim();[m
+[32m+[m[32m  const isActive = formData.get("is_active") === "true";[m
+[32m+[m
+[32m+[m[32m  if (!name) {[m
+[32m+[m[32m    return { success: false, message: "Service name is required." };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const slug = name[m
+[32m+[m[32m    .toLowerCase()[m
+[32m+[m[32m    .trim()[m
+[32m+[m[32m    .replace(/[^a-z0-9]+/g, "-")[m
+[32m+[m[32m    .replace(/^-+|-+$/g, "");[m
+[32m+[m
+[32m+[m[32m  if (!slug) {[m
+[32m+[m[32m    return { success: false, message: "Unable to create a valid slug." };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  // Keep the slug unique — if another service already owns it, keep the[m
+[32m+[m[32m  // existing slug instead of failing the whole save.[m
+[32m+[m[32m  const { data: slugOwner } = await supabase[m
+[32m+[m[32m    .from("services")[m
+[32m+[m[32m    .select("id")[m
+[32m+[m[32m    .eq("slug", slug)[m
+[32m+[m[32m    .neq("id", serviceId)[m
+[32m+[m[32m    .maybeSingle();[m
+[32m+[m
+[32m+[m[32m  const finalSlug = slugOwner ? undefined : slug;[m
+[32m+[m
+[32m+[m[32m  const { error: updateError } = await supabase[m
+[32m+[m[32m    .from("services")[m
+[32m+[m[32m    .update({[m
+[32m+[m[32m      name,[m
+[32m+[m[32m      ...(finalSlug ? { slug: finalSlug } : {}),[m
+[32m+[m[32m      short_description: shortDescription || null,[m
+[32m+[m[32m      description: description || null,[m
+[32m+[m[32m      service_category: serviceCategory || null,[m
+[32m+[m[32m      is_active: isActive,[m
+[32m+[m[32m      updated_at: new Date().toISOString(),[m
+[32m+[m[32m    })[m
+[32m+[m[32m    .eq("id", serviceId);[m
+[32m+[m
+[32m+[m[32m  if (updateError) {[m
+[32m+[m[32m    console.error("Service update error:", updateError);[m
+[32m+[m
+[32m+[m[32m    return {[m
+[32m+[m[32m      success: false,[m
+[32m+[m[32m      message:[m
+[32m+[m[32m        updateError.code === "23505"[m
+[32m+[m[32m          ? "A service with this name or slug already exists."[m
+[32m+[m[32m          : "Unable to update the service.",[m
+[32m+[m[32m    };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  // Optional: replace the primary image if a new file was provided.[m
+[32m+[m[32m  const primaryFile = formData.get("image_primary");[m
+[32m+[m
+[32m+[m[32m  if (primaryFile instanceof File && primaryFile.size > 0) {[m
+[32m+[m[32m    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];[m
+[32m+[m
+[32m+[m[32m    if (!allowedTypes.includes(primaryFile.type)) {[m
+[32m+[m[32m      return {[m
+[32m+[m[32m        success: false,[m
+[32m+[m[32m        message:[m
+[32m+[m[32m          "Invalid image type for the primary image. Use JPG, PNG, or WEBP.",[m
+[32m+[m[32m      };[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    if (primaryFile.size > 5 * 1024 * 1024) {[m
+[32m+[m[32m      return {[m
+[32m+[m[32m        success: false,[m
+[32m+[m[32m        message: "The primary image is larger than 5MB.",[m
+[32m+[m[32m      };[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    const { data: existingPrimary } = await supabase[m
+[32m+[m[32m      .from("service_images")[m
+[32m+[m[32m      .select("id, image_url")[m
+[32m+[m[32m      .eq("service_id", serviceId)[m
+[32m+[m[32m      .eq("is_primary", true)[m
+[32m+[m[32m      .maybeSingle();[m
+[32m+[m
+[32m+[m[32m    // Delete the old primary image record and its storage object.[m
+[32m+[m[32m    if (existingPrimary) {[m
+[32m+[m[32m      const marker = "/service-images/";[m
+[32m+[m[32m      const urlIndex = existingPrimary.image_url.indexOf(marker);[m
+[32m+[m
+[32m+[m[32m      if (urlIndex !== -1) {[m
+[32m+[m[32m        await supabase.storage[m
+[32m+[m[32m          .from("service-images")[m
+[32m+[m[32m          .remove([[m
+[32m+[m[32m            existingPrimary.image_url.slice(urlIndex + marker.length),[m
+[32m+[m[32m          ]);[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      await supabase[m
+[32m+[m[32m        .from("service_images")[m
+[32m+[m[32m        .delete()[m
+[32m+[m[32m        .eq("id", existingPrimary.id);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    const fileExtension =[m
+[32m+[m[32m      primaryFile.name.split(".").pop()?.toLowerCase() || "jpg";[m
+[32m+[m[32m    const filePath = `${serviceId}/primary-${crypto.randomUUID()}.${fileExtension}`;[m
+[32m+[m
+[32m+[m[32m    const { error: uploadError } = await supabase.storage[m
+[32m+[m[32m      .from("service-images")[m
+[32m+[m[32m      .upload(filePath, primaryFile, {[m
+[32m+[m[32m        contentType: primaryFile.type,[m
+[32m+[m[32m        upsert: false,[m
+[32m+[m[32m      });[m
+[32m+[m
+[32m+[m[32m    if (uploadError) {[m
+[32m+[m[32m      return {[m
+[32m+[m[32m        success: false,[m
+[32m+[m[32m        message: `Primary image upload failed: ${uploadError.message}`,[m
+[32m+[m[32m      };[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    const {[m
+[32m+[m[32m      data: { publicUrl },[m
+[32m+[m[32m    } = supabase.storage[m
+[32m+[m[32m      .from("service-images")[m
+[32m+[m[32m      .getPublicUrl(filePath);[m
+[32m+[m
+[32m+[m[32m    const { error: imageRecordError } = await supabase[m
+[32m+[m[32m      .from("service_images")[m
+[32m+[m[32m      .insert({[m
+[32m+[m[32m        service_id: serviceId,[m
+[32m+[m[32m        image_url: publicUrl,[m
+[32m+[m[32m        alt_text: `${name} - primary`,[m
+[32m+[m[32m        image_type: "primary",[m
+[32m+[m[32m        display_order: 0,[m
+[32m+[m[32m        is_primary: true,[m
+[32m+[m[32m      });[m
+[32m+[m
+[32m+[m[32m    if (imageRecordError) {[m
+[32m+[m[32m      return {[m
+[32m+[m[32m        success: false,[m
+[32m+[m[32m        message: `Primary image save failed: ${imageRecordError.message}`,[m
+[32m+[m[32m      };[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // Keep services.image_url in sync with the primary image.[m
+[32m+[m[32m    const { error: syncError } = await supabase[m
+[32m+[m[32m      .from("services")[m
+[32m+[m[32m      .update({ image_url: publicUrl })[m
+[32m+[m[32m      .eq("id", serviceId);[m
+[32m+[m
+[32m+[m[32m    if (syncError) {[m
+[32m+[m[32m      console.error("Service image sync error:", syncError);[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return {[m
+[32m+[m[32m    success: true,[m
+[32m+[m[32m    message: "Service updated successfully.",[m
+[32m+[m[32m  };[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m// ---------------------------------------------------------------------------[m
+[32m+[m[32m// Delete a service (and its images, both records and storage objects)[m
+[32m+[m[32m// ---------------------------------------------------------------------------[m
+[32m+[m
+[32m+[m[32mexport async function deleteService([m
+[32m+[m[32m  formData: FormData[m
+[32m+[m[32m): Promise<{ success: boolean; message: string }> {[m
+[32m+[m[32m  const supabase = await createClient();[m
+[32m+[m
+[32m+[m[32m  const {[m
+[32m+[m[32m    data: { user },[m
+[32m+[m[32m  } = await supabase.auth.getUser();[m
+[32m+[m
+[32m+[m[32m  if (!user) {[m
+[32m+[m[32m    return { success: false, message: "You must be signed in." };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const { data: isAdmin, error: roleError } = await supabase.rpc([m
+[32m+[m[32m    "has_admin_role",[m
+[32m+[m[32m    {[m
+[32m+[m[32m      required_roles: ["super_admin", "website_manager"],[m
+[32m+[m[32m    }[m
+[32m+[m[32m  );[m
+[32m+[m
+[32m+[m[32m  if (roleError || !isAdmin) {[m
+[32m+[m[32m    return {[m
+[32m+[m[32m      success: false,[m
+[32m+[m[32m      message: "You do not have permission to delete services.",[m
+[32m+[m[32m    };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const serviceId = String(formData.get("service_id") || "").trim();[m
+[32m+[m
+[32m+[m[32m  if (!serviceId) {[m
+[32m+[m[32m    return { success: false, message: "Service id is missing." };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const { data: images } = await supabase[m
+[32m+[m[32m    .from("service_images")[m
+[32m+[m[32m    .select("image_url")[m
+[32m+[m[32m    .eq("service_id", serviceId);[m
+[32m+[m
+[32m+[m[32m  if (images && images.length > 0) {[m
+[32m+[m[32m    const paths = images[m
+[32m+[m[32m      .map((image) => {[m
+[32m+[m[32m        const marker = "/service-images/";[m
+[32m+[m[32m        const index = image.image_url.indexOf(marker);[m
+[32m+[m
+[32m+[m[32m        return index !== -1[m
+[32m+[m[32m          ? image.image_url.slice(index + marker.length)[m
+[32m+[m[32m          : null;[m
+[32m+[m[32m      })[m
+[32m+[m[32m      .filter((path): path is string => path !== null);[m
+[32m+[m
+[32m+[m[32m    if (paths.length > 0) {[m
+[32m+[m[32m      await supabase.storage.from("service-images").remove(paths);[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  const { error: deleteError } = await supabase[m
+[32m+[m[32m    .from("services")[m
+[32m+[m[32m    .delete()[m
+[32m+[m[32m    .eq("id", serviceId);[m
+[32m+[m
+[32m+[m[32m  if (deleteError) {[m
+[32m+[m[32m    console.error("Service delete error:", deleteError);[m
+[32m+[m
+[32m+[m[32m    return { success: false, message: "Unable to delete the service." };[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return {[m
+[32m+[m[32m    success: true,[m
+[32m+[m[32m    message: "Service deleted successfully.",[m
+[32m+[m[32m  };[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/app/api/admin/company-media/route.ts b/src/app/api/admin/company-media/route.ts[m
+[1mindex 3b8a088..c81ecdd 100644[m
+[1m--- a/src/app/api/admin/company-media/route.ts[m
+[1m+++ b/src/app/api/admin/company-media/route.ts[m
+[36m@@ -60,6 +60,11 @@[m [mexport async function POST(request: Request) {[m
+       .getAll("files")[m
+       .filter((item): item is File => item instanceof File);[m
+ [m
+[32m+[m[32m    // Optional custom title (e.g. "Weighbridge") applied to every image[m
+[32m+[m[32m    // in this upload batch.[m
+[32m+[m[32m    const customTitle =[m
+[32m+[m[32m      formData.get("title")?.toString().trim() || null;[m
+[32m+[m
+     if (files.length === 0) {[m
+       return NextResponse.json([m
+         {[m
+[36m@@ -150,8 +155,8 @@[m [mexport async function POST(request: Request) {[m
+         .from("company_media")[m
+         .insert({[m
+           image_url: imageUrl,[m
+[31m-          title: file.name.replace(/\.[^/.]+$/, ""),[m
+[31m-          alt_text: "Regime Energy Services",[m
+[32m+[m[32m          title: customTitle || file.name.replace(/\.[^/.]+$/, ""),[m
+[32m+[m[32m          alt_text: customTitle || "Regime Energy Services",[m
+           display_order: nextOrder,[m
+           is_active: true,[m
+         });[m
+[1mdiff --git a/src/app/branches/[slug]/page.tsx b/src/app/branches/[slug]/page.tsx[m
+[1mindex d39eebb..b0077a7 100644[m
+[1m--- a/src/app/branches/[slug]/page.tsx[m
+[1m+++ b/src/app/branches/[slug]/page.tsx[m
+[36m@@ -6,6 +6,8 @@[m [mimport { createClient } from "@/lib/supabase/server";[m
+ import TrackedView from "@/components/analytics/tracked-view";[m
+ import TrackedLink from "@/components/analytics/tracked-link";[m
+ import { buildMetadata } from "@/lib/seo";[m
+[32m+[m[32mimport SiteHeader from "@/components/site-header";[m
+[32m+[m[32mimport SiteFooter from "@/components/site-footer";[m
+ [m
+ type BranchPageProps = {[m
+   params: Promise<{[m
+[36m@@ -103,29 +105,13 @@[m [mexport default async function BranchDetailsPage({[m
+     : null;[m
+ [m
+   return ([m
+[31m-    <main className="min-h-screen bg-white">[m
+[32m+[m[32m    <div className="flex min-h-screen flex-col bg-white">[m
+[32m+[m[32m      <SiteHeader currentPath="/branches" />[m
+[32m+[m
+[32m+[m[32m      <main className="flex-1">[m
+       {/* Analytics: record this branch view */}[m
+       <TrackedView event="branch_view" label={branch.name} />[m
+ [m
+[31m-      {/* Header */}[m
+[31m-      <section className="border-b border-gray-200 bg-white">[m
+[31m-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">[m
+[31m-          <Link[m
+[31m-            href="/"[m
+[31m-            className="text-xl font-bold text-blue-700"[m
+[31m-          >[m
+[31m-            Regime Energy Services[m
+[31m-          </Link>[m
+[31m-[m
+[31m-          <Link[m
+[31m-            href="/branches"[m
+[31m-            className="text-sm font-medium text-gray-700 transition hover:text-blue-700"[m
+[31m-          >[m
+[31m-            ← Back to Branches[m
+[31m-          </Link>[m
+[31m-        </div>[m
+[31m-      </section>[m
+[31m-[m
+       {/* Branch Details */}[m
+       <section className="mx-auto max-w-7xl px-6 py-12 md:py-20">[m
+         <div className="grid gap-10 md:grid-cols-2 md:items-start">[m
+[36m@@ -291,6 +277,9 @@[m [mexport default async function BranchDetailsPage({[m
+           </div>[m
+         </div>[m
+       </section>[m
+[31m-    </main>[m
+[32m+[m[32m      </main>[m
+[32m+[m
+[32m+[m[32m      <SiteFooter />[m
+[32m+[m[32m    </div>[m
+   );[m
+ }[m
+[1mdiff --git a/src/app/branches/page.tsx b/src/app/branches/page.tsx[m
+[1mindex 5494d33..576b0ee 100644[m
+[1m--- a/src/app/branches/page.tsx[m
+[1m+++ b/src/app/branches/page.tsx[m
+[36m@@ -3,8 +3,11 @@[m [mimport Link from "next/link";[m
+ import { createClient } from "@/lib/supabase/server";[m
+ import { buildMetadata } from "@/lib/seo";[m
+ import QuickActions from "@/components/whatsapp-actions";[m
+[32m+[m[32mimport BranchWorldMap from "@/components/branch-world-map";[m
+ import TrackedLink from "@/components/analytics/tracked-link";[m
+ import TrackedBranchView from "@/components/analytics/tracked-branch-view";[m
+[32m+[m[32mimport SiteHeader from "@/components/site-header";[m
+[32m+[m[32mimport SiteFooter from "@/components/site-footer";[m
+ [m
+ export const metadata = buildMetadata({[m
+   title: "Our Branches — Gas Plants in Owerri",[m
+[36m@@ -44,45 +47,12 @@[m [mexport default async function BranchesPage() {[m
+   const branchList = branches ?? [];[m
+ [m
+   return ([m
+[31m-    <main className="min-h-screen bg-white">[m
+[32m+[m[32m    <div className="flex min-h-screen flex-col bg-white">[m
+[32m+[m[32m      <SiteHeader currentPath="/branches" />[m
+[32m+[m
+[32m+[m[32m      <main className="flex-1">[m
+       {/* Analytics: record this branch page visit */}[m
+       <TrackedBranchView />[m
+[31m-      {/* Header */}[m
+[31m-      <header className="border-b border-gray-200 bg-white">[m
+[31m-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">[m
+[31m-          <div className="flex min-w-0 items-center gap-3">[m
+[31m-            <Link[m
+[31m-              href="/"[m
+[31m-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-700 text-xs font-extrabold tracking-tight text-white"[m
+[31m-              aria-label="Regime Energy Services home"[m
+[31m-            >[m
+[31m-              RG[m
+[31m-            </Link>[m
+[31m-            <Link[m
+[31m-              href="/"[m
+[31m-              className="truncate text-base font-bold text-blue-900 sm:text-xl"[m
+[31m-            >[m
+[31m-              Regime Energy Services[m
+[31m-            </Link>[m
+[31m-          </div>[m
+[31m-[m
+[31m-          <div className="flex flex-wrap items-center gap-2 sm:gap-5">[m
+[31m-            <nav aria-label="Site navigation" className="hidden items-center gap-5 md:flex">[m
+[31m-              <Link href="/products" className="text-sm font-medium text-gray-600 hover:text-blue-700">Products</Link>[m
+[31m-              <Link href="/services" className="text-sm font-medium text-gray-600 hover:text-blue-700">Services</Link>[m
+[31m-              <Link href="/branches" className="text-sm font-semibold text-blue-700 underline decoration-2 underline-offset-4">Branches</Link>[m
+[31m-              <Link href="/company-history" className="text-sm font-medium text-gray-600 hover:text-blue-700">Our History</Link>[m
+[31m-            </nav>[m
+[31m-[m
+[31m-            <Link[m
+[31m-              href="/"[m
+[31m-              className="inline-flex min-h-[44px] shrink-0 items-center self-start rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:self-auto"[m
+[31m-            >[m
+[31m-              ← Back to Home[m
+[31m-            </Link>[m
+[31m-          </div>[m
+[31m-        </div>[m
+[31m-      </header>[m
+ [m
+       {/* Page Introduction */}[m
+       <section className="bg-gray-50 px-6 py-16 md:py-20">[m
+[36m@@ -108,6 +78,23 @@[m [mexport default async function BranchesPage() {[m
+ [m
+       {/* Branches */}[m
+       <section className="mx-auto max-w-7xl px-6 py-12 md:py-20">[m
+[32m+[m[32m        {!error && branchList.length > 0 && ([m
+[32m+[m[32m          <div className="mb-12">[m
+[32m+[m[32m            <div className="mb-6 text-center">[m
+[32m+[m[32m              <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">[m
+[32m+[m[32m                Explore Our Locations[m
+[32m+[m[32m              </p>[m
+[32m+[m[32m              <h2 className="mt-2 text-3xl font-bold text-gray-900">[m
+[32m+[m[32m                Branches Across Nigeria[m
+[32m+[m[32m              </h2>[m
+[32m+[m[32m              <p className="mx-auto mt-3 max-w-2xl text-gray-600">[m
+[32m+[m[32m                Select a pin to view branch details, contact the team, or open directions.[m
+[32m+[m[32m              </p>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m            <BranchWorldMap branches={branchList} />[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        )}[m
+[32m+[m
+         {error ? ([m
+           <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-red-700">[m
+             Unable to load branch locations at this time.[m
+[36m@@ -319,6 +306,9 @@[m [mexport default async function BranchesPage() {[m
+           </div>[m
+         )}[m
+       </section>[m
+[31m-    </main>[m
+[32m+[m[32m      </main>[m
+[32m+[m
+[32m+[m[32m      <SiteFooter />[m
+[32m+[m[32m    </div>[m
+   );[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/src/app/chat/page.tsx b/src/app/chat/page.tsx[m
+[1mindex e51eba0..8ac22f7 100644[m
+[1m--- a/src/app/chat/page.tsx[m
+[1m+++ b/src/app/chat/page.tsx[m
+[36m@@ -1,5 +1,6 @@[m
+[31m-import Link from "next/link";[m
+ import ChatPanel from "@/components/chat/chat-panel";[m
+[32m+[m[32mimport SiteHeader from "@/components/site-header";[m
+[32m+[m[32mimport SiteFooter from "@/components/site-footer";[m
+ [m
+ export const metadata = {[m
+   title: "Chat with Regi — Regime Energy Services Assistant",[m
+[36m@@ -9,29 +10,29 @@[m [mexport const metadata = {[m
+ [m
+ export default function ChatPage() {[m
+   return ([m
+[31m-    <main className="flex min-h-screen flex-col bg-gray-100">[m
+[31m-      <header className="border-b border-gray-200 bg-white">[m
+[31m-        <div className="mx-auto flex max-w-4xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">[m
+[31m-          <div className="min-w-0">[m
+[31m-            <h1 className="text-lg font-bold text-blue-900 sm:text-xl">[m
+[31m-              Regi — Customer Chat Assistant[m
+[31m-            </h1>[m
+[31m-            <p className="truncate text-sm text-gray-500">[m
+[31m-              Regime Energy Services · trained on real customer conversations[m
+[31m-            </p>[m
+[32m+[m[32m    <div className="flex min-h-screen flex-col bg-gray-100">[m
+[32m+[m[32m      <SiteHeader currentPath="/chat" />[m
+[32m+[m
+[32m+[m[32m      <main className="flex flex-1 flex-col">[m
+[32m+[m[32m        <div className="border-b border-gray-200 bg-white">[m
+[32m+[m[32m          <div className="mx-auto flex max-w-4xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">[m
+[32m+[m[32m            <div className="min-w-0">[m
+[32m+[m[32m              <h1 className="text-lg font-bold text-blue-900 sm:text-xl">[m
+[32m+[m[32m                Regi — Customer Chat Assistant[m
+[32m+[m[32m              </h1>[m
+[32m+[m[32m              <p className="truncate text-sm text-gray-500">[m
+[32m+[m[32m                Regime Energy Services · trained on real customer conversations[m
+[32m+[m[32m              </p>[m
+[32m+[m[32m            </div>[m
+           </div>[m
+[31m-          <Link[m
+[31m-            href="/"[m
+[31m-            className="inline-flex min-h-[40px] shrink-0 items-center self-start rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:self-auto"[m
+[31m-          >[m
+[31m-            ← Back to site[m
+[31m-          </Link>[m
+         </div>[m
+[31m-      </header>[m
+ [m
+[31m-      <div className="mx-auto w-full max-w-4xl flex-1 p-3 sm:p-6">[m
+[31m-        <ChatPanel />[m
+[31m-      </div>[m
+[31m-    </main>[m
+[32m+[m[32m        <div className="mx-auto w-full max-w-4xl flex-1 p-3 sm:p-6">[m
+[32m+[m[32m          <ChatPanel />[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </main>[m
+[32m+[m
+[32m+[m[32m      <SiteFooter />[m
+[32m+[m[32m    </div>[m
+   );[m
+ }[m
+[1mdiff --git a/src/app/company-history/page.tsx b/src/app/company-history/page.tsx[m
+[1mindex 6bb4256..173fcb7 100644[m
+[1m--- a/src/app/company-history/page.tsx[m
+[1m+++ b/src/app/company-history/page.tsx[m
+[36m@@ -1,7 +1,8 @@[m
+[31m-import Image from "next/image";[m
+ import Link from "next/link";[m
+ import { createClient } from "@/lib/supabase/server";[m
+ import { buildMetadata } from "@/lib/seo";[m
+[32m+[m[32mimport SiteHeader from "@/components/site-header";[m
+[32m+[m[32mimport SiteFooter from "@/components/site-footer";[m
+ [m
+ export const metadata = buildMetadata({[m
+   title: "Our History — Company Story & Milestones",[m
+[36m@@ -35,64 +36,10 @@[m [mexport default async function CompanyHistoryPage() {[m
+     company?.company_name || "Regime Energy Services";[m
+ [m
+   return ([m
+[31m-    <main className="min-h-screen bg-white text-gray-900">[m
+[31m-      {/* Header */}[m
+[31m-      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-md">[m
+[31m-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">[m
+[31m-          <Link[m
+[31m-            href="/"[m
+[31m-            aria-label={`${companyName} homepage`}[m
+[31m-            className="flex min-w-0 items-center gap-3"[m
+[31m-          >[m
+[31m-            {company?.logo_url ? ([m
+[31m-              <div className="relative h-12 w-12 shrink-0">[m
+[31m-                <Image[m
+[31m-                  src={company.logo_url}[m
+[31m-                  alt={`${companyName} logo`}[m
+[31m-                  fill[m
+[31m-                  priority[m
+[31m-                  sizes="48px"[m
+[31m-                  className="object-contain"[m
+[31m-                />[m
+[31m-              </div>[m
+[31m-            ) : ([m
+[31m-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 font-extrabold text-blue-800">[m
+[31m-                RG[m
+[31m-              </div>[m
+[31m-            )}[m
+[31m-[m
+[31m-            <div className="min-w-0">[m
+[31m-              <p className="truncate text-sm font-extrabold text-blue-950 sm:text-lg">[m
+[31m-                {companyName}[m
+[31m-              </p>[m
+[31m-[m
+[31m-              {company?.tagline && ([m
+[31m-                <p className="line-clamp-1 text-xs text-gray-500">[m
+[31m-                  {company.tagline}[m
+[31m-                </p>[m
+[31m-              )}[m
+[31m-            </div>[m
+[31m-          </Link>[m
+[31m-[m
+[31m-          <div className="flex items-center gap-3">[m
+[31m-            <Link[m
+[31m-              href="/"[m
+[31m-              className="text-sm font-semibold text-gray-600 hover:text-blue-700"[m
+[31m-            >[m
+[31m-              <span aria-hidden="true">← </span>[m
+[31m-              Home[m
+[31m-            </Link>[m
+[31m-[m
+[31m-            <Link[m
+[31m-              href="/#contact"[m
+[31m-              className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800"[m
+[31m-            >[m
+[31m-              Contact Us[m
+[31m-            </Link>[m
+[31m-          </div>[m
+[31m-        </div>[m
+[31m-      </header>[m
+[32m+[m[32m    <div className="flex min-h-screen flex-col bg-white text-gray-900">[m
+[32m+[m[32m      <SiteHeader currentPath="/company-history" />[m
+ [m
+[32m+[m[32m      <main className="flex-1">[m
+       {/* Hero */}[m
+       <section className="relative overflow-hidden bg-blue-950 px-4 py-16 text-white sm:px-6 sm:py-24">[m
+         <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-blue-600/30 blur-3xl" />[m
+[36m@@ -251,11 +198,9 @@[m [mexport default async function CompanyHistoryPage() {[m
+           </Link>[m
+         </div>[m
+       </section>[m
+[32m+[m[32m      </main>[m
+ [m
+[31m-      {/* Footer */}[m
+[31m-      <footer className="border-t border-gray-100 bg-white px-4 py-6 text-center text-sm text-gray-500">[m
+[31m-        © {new Date().getFullYear()} {companyName}. All rights reserved.[m
+[31m-      </footer>[m
+[31m-    </main>[m
+[32m+[m[32m      <SiteFooter />[m
+[32m+[m[32m    </div>[m
+   );[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/src/app/globals.css b/src/app/globals.css[m
+[1mindex 34dac45..1a0f023 100644[m
+[1m--- a/src/app/globals.css[m
+[1m+++ b/src/app/globals.css[m
+[36m@@ -8,6 +8,8 @@[m
+   --regime-blue-dark: #063d78;[m
+   --regime-red: #d62828;[m
+   --regime-yellow: #d9a441;[m
+[32m+[m[32m  --regime-green: #a8c825;[m
+[32m+[m[32m  --regime-green-dark: #8aa81b;[m
+ [m
+   --surface: #f7f9fc;[m
+   --surface-dark: #eef3f8;[m
+[36m@@ -23,6 +25,8 @@[m
+   --color-regime-blue-dark: var(--regime-blue-dark);[m
+   --color-regime-red: var(--regime-red);[m
+   --color-regime-yellow: var(--regime-yellow);[m
+[32m+[m[32m  --color-regime-green: var(--regime-green);[m
+[32m+[m[32m  --color-regime-green-dark: var(--regime-green-dark);[m
+ [m
+   --color-surface: var(--surface);[m
+   --color-surface-dark: var(--surface-dark);[m
+[36m@@ -39,7 +43,7 @@[m
+ [m
+ html {[m
+   scroll-behavior: smooth;[m
+[31m-  scroll-padding-top: 90px;[m
+[32m+[m[32m  scroll-padding-top: 96px;[m
+ }[m
+ [m
+ body {[m
+[36m@@ -280,6 +284,221 @@[m [ma {[m
+   transform: scale(1.035);[m
+ }[m
+ [m
+[32m+[m[32m/* Lemon green accent chip — used sparingly for indicators */[m
+[32m+[m[32m.regime-accent-chip {[m
+[32m+[m[32m  display: inline-flex;[m
+[32m+[m[32m  align-items: center;[m
+[32m+[m[32m  gap: 0.45rem;[m
+[32m+[m[32m  border-radius: 999px;[m
+[32m+[m[32m  background: rgba(168, 200, 37, 0.14);[m
+[32m+[m[32m  color: #5f7212;[m
+[32m+[m[32m  padding: 0.3rem 0.7rem;[m
+[32m+[m[32m  font-size: 0.75rem;[m
+[32m+[m[32m  font-weight: 700;[m
+[32m+[m[32m  letter-spacing: 0.02em;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Stat number treatment used in the statistics band */[m
+[32m+[m[32m.regime-stat-number {[m
+[32m+[m[32m  font-size: clamp(1.9rem, 4vw, 2.75rem);[m
+[32m+[m[32m  font-weight: 800;[m
+[32m+[m[32m  letter-spacing: -0.03em;[m
+[32m+[m[32m  color: var(--regime-blue);[m
+[32m+[m[32m  line-height: 1;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Trust-indicator marquee/ticker — slow, continuous, reduced-motion safe */[m
+[32m+[m[32m@keyframes regime-marquee {[m
+[32m+[m[32m  from {[m
+[32m+[m[32m    transform: translateX(0);[m
+[32m+[m[32m  }[m
+[32m+[m[32m  to {[m
+[32m+[m[32m    transform: translateX(-50%);[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-marquee {[m
+[32m+[m[32m  overflow: hidden;[m
+[32m+[m[32m  -webkit-mask-image: linear-gradient([m
+[32m+[m[32m    to right,[m
+[32m+[m[32m    transparent,[m
+[32m+[m[32m    #000 8%,[m
+[32m+[m[32m    #000 92%,[m
+[32m+[m[32m    transparent[m
+[32m+[m[32m  );[m
+[32m+[m[32m  mask-image: linear-gradient([m
+[32m+[m[32m    to right,[m
+[32m+[m[32m    transparent,[m
+[32m+[m[32m    #000 8%,[m
+[32m+[m[32m    #000 92%,[m
+[32m+[m[32m    transparent[m
+[32m+[m[32m  );[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-marquee-track {[m
+[32m+[m[32m  display: flex;[m
+[32m+[m[32m  width: max-content;[m
+[32m+[m[32m  animation: regime-marquee 28s linear infinite;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-marquee:hover .regime-marquee-track {[m
+[32m+[m[32m  animation-play-state: paused;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m@media (prefers-reduced-motion: reduce) {[m
+[32m+[m[32m  .regime-marquee-track {[m
+[32m+[m[32m    animation: none;[m
+[32m+[m[32m    flex-wrap: wrap;[m
+[32m+[m[32m    justify-content: center;[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Leaflet map: brand branch pin styling ------------------------------ */[m
+[32m+[m[32m.regime-branch-pin {[m
+[32m+[m[32m  background: transparent;[m
+[32m+[m[32m  border: 0;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-branch-pin-dot {[m
+[32m+[m[32m  display: block;[m
+[32m+[m[32m  width: 22px;[m
+[32m+[m[32m  height: 22px;[m
+[32m+[m[32m  border: 3px solid #ffffff;[m
+[32m+[m[32m  border-radius: 999px;[m
+[32m+[m[32m  background: var(--regime-red);[m
+[32m+[m[32m  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.35);[m
+[32m+[m[32m  cursor: pointer;[m
+[32m+[m[32m  transition:[m
+[32m+[m[32m    transform 150ms ease,[m
+[32m+[m[32m    background-color 150ms ease;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-branch-pin-dot:hover {[m
+[32m+[m[32m  transform: scale(1.15);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-branch-pin-dot.regime-branch-pin-selected {[m
+[32m+[m[32m  box-shadow:[m
+[32m+[m[32m    0 0 0 6px rgba(214, 40, 40, 0.18),[m
+[32m+[m[32m    0 2px 6px rgba(15, 23, 42, 0.35);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* On-map per-branch info popup ------------------------------------------ */[m
+[32m+[m[32m.regime-branch-popup .leaflet-popup-content-wrapper {[m
+[32m+[m[32m  border-radius: 0.75rem;[m
+[32m+[m[32m  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-branch-popup .leaflet-popup-content {[m
+[32m+[m[32m  margin: 14px 16px;[m
+[32m+[m[32m  line-height: 1.5;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-popup-brand {[m
+[32m+[m[32m  font-size: 10px;[m
+[32m+[m[32m  font-weight: 700;[m
+[32m+[m[32m  letter-spacing: 0.08em;[m
+[32m+[m[32m  text-transform: uppercase;[m
+[32m+[m[32m  color: var(--regime-blue);[m
+[32m+[m[32m  margin: 0;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-popup-title {[m
+[32m+[m[32m  font-size: 15px;[m
+[32m+[m[32m  font-weight: 800;[m
+[32m+[m[32m  color: #0f172a;[m
+[32m+[m[32m  margin: 2px 0 6px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-popup-address {[m
+[32m+[m[32m  font-size: 12.5px;[m
+[32m+[m[32m  color: #475569;[m
+[32m+[m[32m  margin: 0 0 4px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-popup-contact {[m
+[32m+[m[32m  font-size: 12.5px;[m
+[32m+[m[32m  margin: 0 0 2px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-popup-contact a {[m
+[32m+[m[32m  color: var(--regime-blue);[m
+[32m+[m[32m  font-weight: 600;[m
+[32m+[m[32m  text-decoration: none;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-popup-contact a:hover {[m
+[32m+[m[32m  text-decoration: underline;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-popup-description {[m
+[32m+[m[32m  font-size: 12px;[m
+[32m+[m[32m  color: #64748b;[m
+[32m+[m[32m  margin: 6px 0 0;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-popup-actions {[m
+[32m+[m[32m  margin-top: 10px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-popup-directions {[m
+[32m+[m[32m  display: inline-block;[m
+[32m+[m[32m  padding: 7px 14px;[m
+[32m+[m[32m  border-radius: 0.5rem;[m
+[32m+[m[32m  background: var(--regime-blue);[m
+[32m+[m[32m  color: #ffffff !important;[m
+[32m+[m[32m  font-size: 12.5px;[m
+[32m+[m[32m  font-weight: 700;[m
+[32m+[m[32m  text-decoration: none !important;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-popup-directions:hover {[m
+[32m+[m[32m  background: var(--regime-blue-dark, #1d4ed8);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Branch name labels pinned permanently beside each marker */[m
+[32m+[m[32m.regime-branch-tooltip {[m
+[32m+[m[32m  border: 1px solid var(--border) !important;[m
+[32m+[m[32m  border-radius: 0.5rem !important;[m
+[32m+[m[32m  background: #ffffff !important;[m
+[32m+[m[32m  color: #0f172a !important;[m
+[32m+[m[32m  font-weight: 700;[m
+[32m+[m[32m  font-size: 12px;[m
+[32m+[m[32m  padding: 3px 10px !important;[m
+[32m+[m[32m  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12) !important;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-branch-tooltip::before {[m
+[32m+[m[32m  display: none !important; /* drop the arrow — cleaner corporate look */[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Landscape mission/vision/promise card */[m
+[32m+[m[32m.regime-mvp-card {[m
+[32m+[m[32m  display: flex;[m
+[32m+[m[32m  align-items: flex-start;[m
+[32m+[m[32m  gap: 1.1rem;[m
+[32m+[m[32m  border: 1px solid var(--border);[m
+[32m+[m[32m  border-left: 4px solid var(--regime-blue);[m
+[32m+[m[32m  border-radius: 0.9rem;[m
+[32m+[m[32m  background: #ffffff;[m
+[32m+[m[32m  padding: 1.4rem 1.6rem;[m
+[32m+[m[32m  box-shadow:[m
+[32m+[m[32m    0 1px 2px rgba(15, 23, 42, 0.03),[m
+[32m+[m[32m    0 8px 24px rgba(15, 23, 42, 0.05);[m
+[32m+[m[32m  transition:[m
+[32m+[m[32m    transform 200ms ease,[m
+[32m+[m[32m    box-shadow 200ms ease,[m
+[32m+[m[32m    border-color 200ms ease;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.regime-mvp-card:hover {[m
+[32m+[m[32m  transform: translateY(-2px);[m
+[32m+[m[32m  border-left-color: var(--regime-red);[m
+[32m+[m[32m  box-shadow:[m
+[32m+[m[32m    0 4px 8px rgba(15, 23, 42, 0.04),[m
+[32m+[m[32m    0 14px 32px rgba(15, 23, 42, 0.08);[m
+[32m+[m[32m}[m
+[32m+[m
+ /* Subtle background pattern */[m
+ .regime-grid-background {[m
+   background-color: #ffffff;[m
+[1mdiff --git a/src/app/page.tsx b/src/app/page.tsx[m
+[1mindex 6382dd6..9f0b627 100644[m
+[1m--- a/src/app/page.tsx[m
+[1m+++ b/src/app/page.tsx[m
+[36m@@ -1,97 +1,141 @@[m
+[31m-﻿import Image from "next/image";[m
+[32m+[m[32mimport Image from "next/image";[m
+ import Link from "next/link";[m
+ import { createClient } from "@/lib/supabase/server";[m
+ import CompanySlideshow from "@/components/company-slideshow";[m
+[31m-import SiteMobileMenu from "@/components/site-mobile-menu";[m
+[32m+[m[32mimport BranchWorldMap from "@/components/branch-world-map";[m
+[32m+[m[32mimport SiteHeader from "@/components/site-header";[m
+[32m+[m[32mimport SiteFooter from "@/components/site-footer";[m
+ import TrackedLink from "@/components/analytics/tracked-link";[m
+[31m-import { getCompanyWhatsAppLink } from "@/components/whatsapp-actions";[m
+[32m+[m[32mimport {[m
+[32m+[m[32m  getCompanyWhatsAppLink,[m
+[32m+[m[32m} from "@/components/whatsapp-actions";[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Homepage — redesigned corporate layout for Regime Energy Services.[m
+[32m+[m[32m *[m
+[32m+[m[32m * All company content remains dynamic from Supabase (company profile,[m
+[32m+[m[32m * media, services, products, branches, site settings). Only presentation[m
+[32m+[m[32m * is defined here; the approved brand copy below is static page content.[m
+[32m+[m[32m */[m
+[32m+[m
+[32m+[m[32mtype ServiceRow = {[m
+[32m+[m[32m  id: string;[m
+[32m+[m[32m  name: string;[m
+[32m+[m[32m  slug: string;[m
+[32m+[m[32m  short_description: string | null;[m
+[32m+[m[32m  description: string | null;[m
+[32m+[m[32m  image_url: string | null;[m
+[32m+[m[32m  service_category: string | null;[m
+[32m+[m[32m  display_order: number | null;[m
+[32m+[m[32m};[m
+[32m+[m
+[32m+[m[32mtype ProductRow = {[m
+[32m+[m[32m  id: string;[m
+[32m+[m[32m  name: string;[m
+[32m+[m[32m  slug: string;[m
+[32m+[m[32m  short_description: string | null;[m
+[32m+[m[32m  description: string | null;[m
+[32m+[m[32m  display_order: number | null;[m
+[32m+[m[32m  product_images: {[m
+[32m+[m[32m    image_url: string;[m
+[32m+[m[32m    alt_text: string | null;[m
+[32m+[m[32m    is_primary: boolean | null;[m
+[32m+[m[32m    display_order: number | null;[m
+[32m+[m[32m  }[];[m
+[32m+[m[32m};[m
+[32m+[m
+[32m+[m[32mtype BranchRow = {[m
+[32m+[m[32m  id: string;[m
+[32m+[m[32m  name: string;[m
+[32m+[m[32m  slug: string;[m
+[32m+[m[32m  address: string | null;[m
+[32m+[m[32m  phone: string | null;[m
+[32m+[m[32m  whatsapp: string | null;[m
+[32m+[m[32m  email: string | null;[m
+[32m+[m[32m  google_maps_url: string | null;[m
+[32m+[m[32m  latitude: number | null;[m
+[32m+[m[32m  longitude: number | null;[m
+[32m+[m[32m  image_url: string | null;[m
+[32m+[m[32m  description: string | null;[m
+[32m+[m[32m  display_order: number | null;[m
+[32m+[m[32m};[m
+[32m+[m
+[32m+[m[32m/** Presentation-only service commitments (approved homepage copy). */[m
+[32m+[m[32mconst TRUST_COMMITMENTS = [[m
+[32m+[m[32m  {[m
+[32m+[m[32m    title: "Accurate Dispensing",[m
+[32m+[m[32m    text: "Every refill is measured with calibrated equipment — 1kg is always 1kg.",[m
+[32m+[m[32m  },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    title: "Safe Handling",[m
+[32m+[m[32m    text: "Trained staff, certified cylinders and disciplined LPG handling, storage and transport.",[m
+[32m+[m[32m  },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    title: "Home and Business Delivery",[m
+[32m+[m[32m    text: "Swift delivery to homes and businesses across Egbu, Owerri Municipal and Owerri North.",[m
+[32m+[m[32m  },[m
+[32m+[m[32m] as const;[m
+[32m+[m
+[32m+[m[32mconst CUSTOMER_CATEGORIES = [[m
+[32m+[m[32m  { label: "Residential", text: "Household refills and cylinder accessories." },[m
+[32m+[m[32m  { label: "Commercial", text: "Restaurants, hotels, bakeries and schools." },[m
+[32m+[m[32m  { label: "Industrial", text: "Bulk supply for factories and industry." },[m
+[32m+[m[32m] as const;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * Mission / vision cards. Admin-written copy is preferred when present.[m
+[32m+[m[32m */[m
+ [m
+ export default async function Home() {[m
+   const supabase = await createClient();[m
+ [m
+[31m-  const { data: company } = await supabase[m
+[31m-    .from("company_profile")[m
+[31m-    .select("*")[m
+[31m-    .eq("is_active", true)[m
+[31m-    .limit(1)[m
+[31m-    .maybeSingle();[m
+[31m-[m
+[31m-  const { data: media } = await supabase[m
+[31m-    .from("company_media")[m
+[31m-    .select("*")[m
+[31m-    .eq("is_active", true)[m
+[31m-    .order("display_order", { ascending: true })[m
+[31m-    .order("created_at", { ascending: true });[m
+[31m-[m
+[31m-  // Load active services from Supabase[m
+[31m-  const { data: services } = await supabase[m
+[31m-    .from("services")[m
+[31m-    .select([m
+[31m-      "id, name, slug, short_description, description, image_url, is_active, display_order"[m
+[31m-    )[m
+[31m-    .eq("is_active", true)[m
+[31m-    .order("display_order", { ascending: true })[m
+[31m-    .order("created_at", { ascending: true });[m
+[31m-[m
+[31m-  // Load active products from Supabase[m
+[31m-  const { data: products } = await supabase[m
+[31m-    .from("products")[m
+[31m-    .select([m
+[31m-      `[m
+[31m-      id,[m
+[31m-      name,[m
+[31m-      slug,[m
+[31m-      short_description,[m
+[31m-      description,[m
+[31m-      is_active,[m
+[31m-      display_order,[m
+[31m-      product_images ([m
+[31m-        image_url,[m
+[31m-        alt_text,[m
+[31m-        is_primary,[m
+[31m-        display_order[m
+[32m+[m[32m  const [[m
+[32m+[m[32m    { data: company },[m
+[32m+[m[32m    { data: media },[m
+[32m+[m[32m    { data: services },[m
+[32m+[m[32m    { data: products },[m
+[32m+[m[32m    { data: branches },[m
+[32m+[m[32m    orderHref,[m
+[32m+[m[32m    deliveryHref,[m
+[32m+[m[32m  ] = await Promise.all([[m
+[32m+[m[32m    supabase[m
+[32m+[m[32m      .from("company_profile")[m
+[32m+[m[32m      .select("*")[m
+[32m+[m[32m      .eq("is_active", true)[m
+[32m+[m[32m      .limit(1)[m
+[32m+[m[32m      .maybeSingle(),[m
+[32m+[m[32m    supabase[m
+[32m+[m[32m      .from("company_media")[m
+[32m+[m[32m      .select("*")[m
+[32m+[m[32m      .eq("is_active", true)[m
+[32m+[m[32m      .order("display_order", { ascending: true })[m
+[32m+[m[32m      .order("created_at", { ascending: true }),[m
+[32m+[m[32m    supabase[m
+[32m+[m[32m      .from("services")[m
+[32m+[m[32m      .select([m
+[32m+[m[32m        "id, name, slug, short_description, description, image_url, service_category, is_active, display_order"[m
+       )[m
+[31m-    `[m
+[31m-    )[m
+[31m-    .eq("is_active", true)[m
+[31m-    .order("display_order", { ascending: true })[m
+[31m-    .order("created_at", { ascending: true });[m
+[31m-[m
+[31m-  // Load active branches from Supabase[m
+[31m-  const { data: branches } = await supabase[m
+[31m-    .from("branches")[m
+[31m-    .select([m
+[31m-      `[m
+[31m-      id,[m
+[31m-      name,[m
+[31m-      slug,[m
+[31m-      address,[m
+[31m-      phone,[m
+[31m-      whatsapp,[m
+[31m-      email,[m
+[31m-      google_maps_url,[m
+[31m-      latitude,[m
+[31m-      longitude,[m
+[31m-      image_url,[m
+[31m-      description,[m
+[31m-      is_active,[m
+[31m-      display_order[m
+[31m-    `[m
+[31m-    )[m
+[31m-    .eq("is_active", true)[m
+[31m-    .order("display_order", { ascending: true })[m
+[31m-    .order("created_at", { ascending: true });[m
+[31m-[m
+[31m-  // Load global site settings[m
+[31m-  const { data: siteSettings } = await supabase[m
+[31m-    .from("site_settings")[m
+[31m-    .select("*")[m
+[31m-    .eq("is_active", true)[m
+[31m-    .limit(1)[m
+[31m-    .maybeSingle();[m
+[31m-[m
+[31m-  // Conversion actions — WhatsApp enquiries with pre-filled messages.[m
+[31m-  const [orderHref, deliveryHref] = await Promise.all([[m
+[32m+[m[32m      .eq("is_active", true)[m
+[32m+[m[32m      .order("display_order", { ascending: true })[m
+[32m+[m[32m      .order("created_at", { ascending: true }),[m
+[32m+[m[32m    supabase[m
+[32m+[m[32m      .from("products")[m
+[32m+[m[32m      .select([m
+[32m+[m[32m        `id, name, slug, short_description, description, is_active, display_order,[m
+[32m+[m[32m        product_images (image_url, alt_text, is_primary, display_order)`[m
+[32m+[m[32m      )[m
+[32m+[m[32m      .eq("is_active", true)[m
+[32m+[m[32m      .order("display_order", { ascending: true })[m
+[32m+[m[32m      .order("created_at", { ascending: true }),[m
+[32m+[m[32m    supabase[m
+[32m+[m[32m      .from("branches")[m
+[32m+[m[32m      .select([m
+[32m+[m[32m        `id, name, slug, address, phone, whatsapp, email, google_maps_url,[m
+[32m+[m[32m        latitude, longitude, image_url, description, is_active, display_order`[m
+[32m+[m[32m      )[m
+[32m+[m[32m      .eq("is_active", true)[m
+[32m+[m[32m      .order("display_order", { ascending: true })[m
+[32m+[m[32m      .order("created_at", { ascending: true }),[m
+     getCompanyWhatsAppLink([m
+       "Hello Regime Energy Services, I would like to order gas."[m
+     ),[m
+[36m@@ -100,799 +144,821 @@[m [mexport default async function Home() {[m
+     ),[m
+   ]);[m
+ [m
+[32m+[m[32m  const serviceList = (services ?? []) as ServiceRow[];[m
+[32m+[m[32m  const productList = (products ?? []) as ProductRow[];[m
+[32m+[m[32m  const branchList = (branches ?? []) as BranchRow[];[m
+[32m+[m
+[32m+[m[32m  // The admin uploads a weighbridge photo via Company Media with a file[m
+[32m+[m[32m  // name/title containing "weighbridge". It is shown in the featured[m
+[32m+[m[32m  // weighbridge section instead of the hero slideshow.[m
+[32m+[m[32m  const weighbridgeMedia =[m
+[32m+[m[32m    media?.find((item) =>[m
+[32m+[m[32m      [item.title, item.alt_text][m
+[32m+[m[32m        .filter(Boolean)[m
+[32m+[m[32m        .some((value) =>[m
+[32m+[m[32m          (value as string).toLowerCase().includes("weighbridge")[m
+[32m+[m[32m        )[m
+[32m+[m[32m    ) ?? null;[m
+[32m+[m
+[32m+[m[32m  const heroMedia = weighbridgeMedia[m
+[32m+[m[32m    ? media!.filter((item) => item.id !== weighbridgeMedia.id)[m
+[32m+[m[32m    : (media ?? []);[m
+[32m+[m
+[32m+[m[32m  const phoneHref = company?.phone ? `tel:${company.phone}` : null;[m
+[32m+[m[32m  const callHref = phoneHref ?? (company?.phone ? `tel:${company.phone}` : null);[m
+[32m+[m[32m  const phoneDisplay = company?.phone || "08021295401";[m
+[32m+[m
+   return ([m
+[31m-    <main className="min-h-screen bg-white">[m
+[31m-      {/* Header */}[m
+[31m-      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-md">[m
+[31m-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:gap-4 sm:px-6 sm:py-5">[m
+[31m-          <div className="flex min-w-0 flex-1 items-center gap-3">[m
+[31m-            {company?.logo_url && ([m
+[31m-              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white sm:h-12 sm:w-12">[m
+[31m-                <Image[m
+[31m-                  src={company.logo_url}[m
+[31m-                  alt={`${company.company_name || "Regime Energy Services"} logo`}[m
+[31m-                  fill[m
+[31m-                  sizes="48px"[m
+[31m-                  priority[m
+[31m-                  className="object-contain"[m
+[31m-                />[m
+[31m-              </div>[m
+[31m-            )}[m
+[32m+[m[32m    <div className="flex min-h-screen flex-col bg-white">[m
+[32m+[m[32m      <SiteHeader currentPath="/" />[m
+[32m+[m
+[32m+[m[32m      <main className="flex-1">[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        {/* Hero — real company imagery with headline overlay          */}[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        {heroMedia.length > 0 ? ([m
+[32m+[m[32m          <CompanySlideshow media={heroMedia}>[m
+[32m+[m[32m            <div className="max-w-3xl py-16 md:py-24">[m
+[32m+[m[32m              <span className="regime-accent-chip bg-white/95">[m
+[32m+[m[32m                Since 2013 · Owerri, Imo State[m
+[32m+[m[32m              </span>[m
+[32m+[m
+[32m+[m[32m              <h1 className="mt-5 text-4xl font-bold leading-tight text-white sm:text-5xl md:text-6xl">[m
+[32m+[m[32m                Powering Everyday Life With Dependable LPG[m
+[32m+[m[32m              </h1>[m
+[32m+[m
+[32m+[m[32m              <p className="mt-5 max-w-2xl text-base leading-8 text-slate-200 sm:text-lg">[m
+[32m+[m[32m                Regime Energy Services is a downstream energy company[m
+[32m+[m[32m                supplying LPG to homes, businesses and industries, with safe[m
+[32m+[m[32m                handling and accurate dispensing every time.[m
+[32m+[m[32m              </p>[m
+[32m+[m
+[32m+[m[32m              <div className="mt-8 flex flex-col gap-3 sm:flex-row">[m
+[32m+[m[32m                <Link[m
+[32m+[m[32m                  href="#about"[m
+[32m+[m[32m                  className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-regime-blue px-7 py-3 font-bold text-white transition hover:bg-regime-blue-dark"[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  Discover More[m
+[32m+[m[32m                </Link>[m
+ [m
+[31m-            <div className="min-w-0">[m
+[31m-              <h1 className="truncate text-base font-bold tracking-tight text-blue-900 sm:text-xl md:text-2xl">[m
+[31m-                {company?.company_name || "REGIME ENERGY SERVICES"}[m
+[32m+[m[32m                {deliveryHref && ([m
+[32m+[m[32m                  <TrackedLink[m
+[32m+[m[32m                    href={deliveryHref}[m
+[32m+[m[32m                    event="whatsapp_click"[m
+[32m+[m[32m                    label="hero_request_delivery"[m
+[32m+[m[32m                    className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-lg bg-regime-red px-7 py-3 font-bold text-white transition hover:bg-red-700"[m
+[32m+[m[32m                  >[m
+[32m+[m[32m                    Request Delivery[m
+[32m+[m[32m                  </TrackedLink>[m
+[32m+[m[32m                )}[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m          </CompanySlideshow>[m
+[32m+[m[32m        ) : ([m
+[32m+[m[32m          <section className="bg-regime-blue-dark px-4 py-20 text-white sm:px-6 md:py-28">[m
+[32m+[m[32m            <div className="mx-auto max-w-7xl">[m
+[32m+[m[32m              <span className="regime-accent-chip bg-white/95">[m
+[32m+[m[32m                Since 2013 · Owerri, Imo State[m
+[32m+[m[32m              </span>[m
+[32m+[m
+[32m+[m[32m              <h1 className="mt-5 max-w-4xl text-4xl font-bold leading-tight sm:text-5xl md:text-6xl">[m
+[32m+[m[32m                Powering Everyday Life With Dependable LPG[m
+               </h1>[m
+ [m
+[31m-              {company?.tagline && ([m
+[31m-                <p className="hidden truncate text-sm text-gray-500 sm:block">[m
+[31m-                  {company.tagline}[m
+[31m-                </p>[m
+[31m-              )}[m
+[32m+[m[32m              <p className="mt-5 max-w-2xl text-lg leading-8 text-blue-100">[m
+[32m+[m[32m                Regime Energy Services is a downstream energy company[m
+[32m+[m[32m                supplying LPG to homes, businesses and industries, with safe[m
+[32m+[m[32m                handling and accurate dispensing every time.[m
+[32m+[m[32m              </p>[m
+[32m+[m
+[32m+[m[32m              <div className="mt-8 flex flex-col gap-3 sm:flex-row">[m
+[32m+[m[32m                <Link[m
+[32m+[m[32m                  href="#about"[m
+[32m+[m[32m                  className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-white px-7 py-3 font-bold text-regime-blue-dark transition hover:bg-blue-50"[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  Discover More[m
+[32m+[m[32m                </Link>[m
+[32m+[m
+[32m+[m[32m                {deliveryHref && ([m
+[32m+[m[32m                  <TrackedLink[m
+[32m+[m[32m                    href={deliveryHref}[m
+[32m+[m[32m                    event="whatsapp_click"[m
+[32m+[m[32m                    label="hero_request_delivery"[m
+[32m+[m[32m                    className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-regime-red px-7 py-3 font-bold text-white transition hover:bg-red-700"[m
+[32m+[m[32m                  >[m
+[32m+[m[32m                    Request Delivery[m
+[32m+[m[32m                  </TrackedLink>[m
+[32m+[m[32m                )}[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m          </section>[m
+[32m+[m[32m        )}[m
+[32m+[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        {/* Trust indicators — marquee ticker + customer categories */}[m
+[32m+[m[32m        <section className="border-b border-gray-100 bg-white px-0 py-10 sm:py-12">[m
+[32m+[m[32m          {/* Marquee ticker of service commitments (duplicated for a seamless[m
+[32m+[m[32m              loop; hidden from screen readers as a duplicate) */}[m
+[32m+[m[32m          <div className="regime-marquee" aria-label="Our service commitments">[m
+[32m+[m[32m            <div className="regime-marquee-track">[m
+[32m+[m[32m              {[0, 1].map((copy) => ([m
+[32m+[m[32m                <div[m
+[32m+[m[32m                  key={copy}[m
+[32m+[m[32m                  aria-hidden={copy === 1}[m
+[32m+[m[32m                  className="flex shrink-0 items-center gap-10 pr-10"[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  {TRUST_COMMITMENTS.map((item) => ([m
+[32m+[m[32m                    <span[m
+[32m+[m[32m                      key={item.title}[m
+[32m+[m[32m                      className="flex items-center gap-2.5 whitespace-nowrap text-sm font-semibold text-gray-800"[m
+[32m+[m[32m                    >[m
+[32m+[m[32m                      <span[m
+[32m+[m[32m                        aria-hidden="true"[m
+[32m+[m[32m                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-regime-green/15 text-xs font-bold text-regime-green-dark"[m
+[32m+[m[32m                      >[m
+[32m+[m[32m                        ✓[m
+[32m+[m[32m                      </span>[m
+[32m+[m
+[32m+[m[32m                      <span className="font-bold text-gray-900">[m
+[32m+[m[32m                        {item.title}[m
+[32m+[m[32m                      </span>[m
+[32m+[m
+[32m+[m[32m                      <span className="hidden text-gray-500 md:inline">[m
+[32m+[m[32m                        — {item.text}[m
+[32m+[m[32m                      </span>[m
+[32m+[m
+[32m+[m[32m                      <span[m
+[32m+[m[32m                        aria-hidden="true"[m
+[32m+[m[32m                        className="ml-6 h-1.5 w-1.5 rounded-full bg-regime-red"[m
+[32m+[m[32m                      />[m
+[32m+[m[32m                    </span>[m
+[32m+[m[32m                  ))}[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m              ))}[m
+             </div>[m
+           </div>[m
+[31m-          <nav className="hidden items-center gap-7 md:flex">[m
+[31m-            {[[m
+[31m-              { href: "#about", label: "About" },[m
+[31m-              { href: "#services", label: "Services" },[m
+[31m-              { href: "#products", label: "Products" },[m
+[31m-              { href: "#branches", label: "Branches" },[m
+[31m-              { href: "/company-history", label: "Our History", isLink: true },[m
+[31m-              { href: "#contact", label: "Contact" },[m
+[31m-            ].map((item) => {[m
+[31m-              const className =[m
+[31m-                "nav-link relative rounded text-[13px] font-medium tracking-wide text-slate-600 hover:text-blue-800 hover:[text-shadow:0_1px_2px_rgb(37_99_235/0.18)] focus-visible:text-blue-800";[m
+[31m-[m
+[31m-              return item.isLink ? ([m
+[31m-                <Link key={item.href} href={item.href} className={className}>[m
+[31m-                  {item.label}[m
+[31m-                </Link>[m
+[31m-              ) : ([m
+[31m-                <a key={item.href} href={item.href} className={className}>[m
+[31m-                  {item.label}[m
+[31m-                </a>[m
+[31m-              );[m
+[31m-            })}[m
+[31m-          </nav>[m
+[31m-[m
+[31m-          {orderHref && ([m
+[31m-            <TrackedLink[m
+[31m-              href={orderHref}[m
+[31m-              event="whatsapp_click"[m
+[31m-              label="header_order_gas"[m
+[31m-              className="hidden shrink-0 rounded-lg bg-green-600 px-7 py-3 text-sm font-bold text-white transition hover:bg-green-700 md:inline-flex"[m
+[31m-            >[m
+[31m-              Order Gas[m
+[31m-            </TrackedLink>[m
+[31m-          )}[m
+[31m-[m
+[31m-          <SiteMobileMenu whatsappHref={orderHref} />[m
+[31m-        </div>[m
+[31m-      </header>[m
+[31m-[m
+[31m-      {/* Hero Slideshow */}[m
+[31m-      {media && media.length > 0 ? ([m
+[31m-        <CompanySlideshow media={media} />[m
+[31m-      ) : ([m
+[31m-        <section className="bg-blue-900 px-4 py-20 text-white sm:px-6 md:py-28">[m
+[31m-          <div className="mx-auto max-w-7xl">[m
+[31m-            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-yellow-400 sm:text-sm">[m
+[31m-              Regime Energy Services[m
+[31m-            </p>[m
+[31m-[m
+[31m-            <h2 className="max-w-4xl text-3xl font-bold leading-tight sm:text-4xl md:text-6xl">[m
+[31m-              Reliable LPG Energy Solutions for Homes and Businesses[m
+[31m-            </h2>[m
+[31m-[m
+[31m-            <p className="mt-6 max-w-2xl text-lg leading-8 text-blue-100">[m
+[31m-              Safe, reliable and efficient LPG supply, distribution,[m
+[31m-              delivery and related energy services.[m
+[31m-            </p>[m
+[32m+[m
+[32m+[m[32m            <div className="mx-auto max-w-7xl">[m
+[32m+[m[32m              <div className="border-t border-gray-100 pt-10">[m
+[32m+[m[32m                <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">[m
+[32m+[m[32m                <h2 className="max-w-md text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">[m
+[32m+[m[32m                  Trusted by homes, businesses and industries across Owerri.[m
+[32m+[m[32m                </h2>[m
+[32m+[m
+[32m+[m[32m                <div className="grid gap-4 sm:grid-cols-3">[m
+[32m+[m[32m                  {CUSTOMER_CATEGORIES.map((category) => ([m
+[32m+[m[32m                    <div[m
+[32m+[m[32m                      key={category.label}[m
+[32m+[m[32m                      className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4"[m
+[32m+[m[32m                    >[m
+[32m+[m[32m                      <p className="text-sm font-bold text-regime-blue">[m
+[32m+[m[32m                        {category.label}[m
+[32m+[m[32m                      </p>[m
+[32m+[m
+[32m+[m[32m                      <p className="mt-1 text-xs leading-5 text-gray-600">[m
+[32m+[m[32m                        {category.text}[m
+[32m+[m[32m                      </p>[m
+[32m+[m[32m                    </div>[m
+[32m+[m[32m                  ))}[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            </div>[m
+           </div>[m
+         </section>[m
+[31m-      )}[m
+[31m-[m
+[31m-      {/* Hero Introduction */}[m
+[31m-      <section className="px-4 py-12 sm:px-6 md:py-20">[m
+[31m-        <div className="mx-auto max-w-7xl">[m
+[31m-          <div className="max-w-3xl">[m
+[31m-            <p className="text-sm font-bold uppercase tracking-widest text-red-600">[m
+[31m-              Regime Energy Services[m
+[31m-            </p>[m
+[31m-[m
+[31m-            <h2 className="mt-3 text-2xl font-bold text-gray-900 sm:text-3xl md:text-5xl">[m
+[31m-              Powering everyday life with dependable LPG solutions.[m
+[31m-            </h2>[m
+[31m-[m
+[31m-            <p className="mt-6 text-lg leading-8 text-gray-600">[m
+[31m-              {company?.short_description ||[m
+[31m-                "Regime Energy Services provides LPG supply, distribution, delivery and related energy services for residential, commercial and industrial customers."}[m
+[31m-            </p>[m
+[31m-          </div>[m
+ [m
+[31m-          <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">[m
+[31m-            {orderHref && ([m
+[31m-              <TrackedLink[m
+[31m-                href={orderHref}[m
+[31m-                event="whatsapp_click"[m
+[31m-                label="hero_order_gas"[m
+[31m-                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700"[m
+[31m-              >[m
+[31m-                Order Gas[m
+[31m-              </TrackedLink>[m
+[31m-            )}[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        {/* Location + statistics                                       */}[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        <section className="px-4 py-12 sm:px-6 md:py-14">[m
+[32m+[m[32m          <div className="mx-auto max-w-7xl">[m
+[32m+[m[32m            <div className="grid items-center gap-10 lg:grid-cols-2">[m
+[32m+[m[32m              <div>[m
+[32m+[m[32m                <p className="regime-eyebrow">Where We Operate</p>[m
+ [m
+[31m-            {deliveryHref && ([m
+[31m-              <TrackedLink[m
+[31m-                href={deliveryHref}[m
+[31m-                event="whatsapp_click"[m
+[31m-                label="hero_request_delivery"[m
+[31m-                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-blue-700 px-6 py-3 font-semibold text-white hover:bg-blue-800"[m
+[31m-              >[m
+[31m-                Request Delivery[m
+[31m-              </TrackedLink>[m
+[31m-            )}[m
+[32m+[m[32m                <h2 className="regime-heading text-3xl sm:text-4xl">[m
+[32m+[m[32m                  We Serve Owerri And Beyond[m
+[32m+[m[32m                </h2>[m
+ [m
+[31m-            <Link[m
+[31m-              href="/products"[m
+[31m-              className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-gray-300 px-6 py-3 font-semibold text-gray-800 hover:bg-gray-50"[m
+[31m-            >[m
+[31m-              View Products[m
+[31m-            </Link>[m
+[31m-[m
+[31m-            <Link[m
+[31m-              href="/branches"[m
+[31m-              className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-blue-700 px-6 py-3 font-semibold text-blue-700 hover:bg-blue-50"[m
+[31m-            >[m
+[31m-              Find a Branch[m
+[31m-            </Link>[m
+[31m-          </div>[m
+[31m-        </div>[m
+[31m-      </section>[m
+[31m-[m
+[31m-      {/* About */}[m
+[31m-      <section id="about" className="bg-gray-50 px-6 py-20">[m
+[31m-        <div className="mx-auto max-w-7xl">[m
+[31m-          <div className="grid gap-12 md:grid-cols-2">[m
+[31m-            <div>[m
+[31m-              <p className="text-sm font-bold uppercase tracking-widest text-blue-700">[m
+[31m-                About Regime[m
+[32m+[m[32m                <p className="regime-lead mt-4 max-w-xl [text-align:justify]">[m
+[32m+[m[32m                <strong>Two branches</strong> keep LPG close to you: our Main[m
+[32m+[m[32m                Branch at <strong>Egbeada Junction, Irete</strong>, and our[m
+[32m+[m[32m                Egbu Branch on Egbu Road, with delivery across Egbu, Owerri[m
+[32m+[m[32m                Municipal and Owerri North.[m
+               </p>[m
+ [m
+[31m-              <h2 className="mt-3 text-3xl font-bold text-gray-900">[m
+[31m-                Built around safe and dependable energy service[m
+[31m-              </h2>[m
+[31m-            </div>[m
+[32m+[m[32m                <div className="mt-8 flex flex-wrap gap-3">[m
+[32m+[m[32m                  <Link[m
+[32m+[m[32m                    href="/branches"[m
+[32m+[m[32m                    className="regime-button-primary"[m
+[32m+[m[32m                  >[m
+[32m+[m[32m                    Find a Branch[m
+[32m+[m[32m                  </Link>[m
+ [m
+[31m-            <div>[m
+[31m-              <p className="text-lg leading-8 text-gray-600">[m
+[31m-                {company?.full_description ||[m
+[31m-                  company?.short_description ||[m
+[31m-                  "Regime Energy Services is focused on dependable LPG supply, distribution and customer-focused energy services."}[m
+[31m-              </p>[m
+[31m-            </div>[m
+[31m-          </div>[m
+[32m+[m[32m                  {orderHref && ([m
+[32m+[m[32m                    <TrackedLink[m
+[32m+[m[32m                      href={orderHref}[m
+[32m+[m[32m                      event="whatsapp_click"[m
+[32m+[m[32m                      label="locations_order_gas"[m
+[32m+[m[32m                      className="regime-button-secondary"[m
+[32m+[m[32m                    >[m
+[32m+[m[32m                      Order Gas[m
+[32m+[m[32m                    </TrackedLink>[m
+[32m+[m[32m                  )}[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m              </div>[m
+[32m+[m
+[32m+[m[32m              {/* Statistics — branch count is live; the rest is approved[m
+[32m+[m[32m                  company copy (no stats table exists in the database). */}[m
+[32m+[m[32m              <div className="grid gap-4 sm:grid-cols-3">[m
+[32m+[m[32m                <div className="regime-card p-6">[m
+[32m+[m[32m                  <p className="regime-stat-number">13+</p>[m
+ [m
+[31m-          {(company?.mission || company?.vision) && ([m
+[31m-            <div className="mt-14 grid gap-6 md:grid-cols-2">[m
+[31m-              {company?.mission && ([m
+[31m-                <div className="rounded-2xl bg-white p-8 shadow-sm">[m
+[31m-                  <h3 className="text-xl font-bold text-blue-900">[m
+[31m-                    Our Mission[m
+[31m-                  </h3>[m
+[32m+[m[32m                  <p className="mt-2 text-sm font-semibold text-gray-900">[m
+[32m+[m[32m                    Years of Experience[m
+[32m+[m[32m                  </p>[m
+[32m+[m
+[32m+[m[32m                  <p className="mt-1 text-xs text-gray-500">[m
+[32m+[m[32m                    Serving since 2013[m
+[32m+[m[32m                  </p>[m
+[32m+[m[32m                </div>[m
+[32m+[m
+[32m+[m[32m                <div className="regime-card p-6">[m
+[32m+[m[32m                  <p className="regime-stat-number">{branchList.length || 2}</p>[m
+[32m+[m
+[32m+[m[32m                  <p className="mt-2 text-sm font-semibold text-gray-900">[m
+[32m+[m[32m                    Branches in Owerri[m
+[32m+[m[32m                  </p>[m
+ [m
+[31m-                  <p className="mt-4 leading-7 text-gray-600">[m
+[31m-                    {company.mission}[m
+[32m+[m[32m                  <p className="mt-1 text-xs text-gray-500">[m
+[32m+[m[32m                    Egbeada Junction &amp; Egbu Road[m
+                   </p>[m
+                 </div>[m
+[31m-              )}[m
+ [m
+[31m-              {company?.vision && ([m
+[31m-                <div className="rounded-2xl bg-white p-8 shadow-sm">[m
+[31m-                  <h3 className="text-xl font-bold text-red-700">[m
+[31m-                    Our Vision[m
+[31m-                  </h3>[m
+[32m+[m[32m                <div className="regime-card p-6">[m
+[32m+[m[32m                  <p className="regime-stat-number">4</p>[m
+ [m
+[31m-                  <p className="mt-4 leading-7 text-gray-600">[m
+[31m-                    {company.vision}[m
+[32m+[m[32m                  <p className="mt-2 text-sm font-semibold text-gray-900">[m
+[32m+[m[32m                    Refill Sizes[m
+[32m+[m[32m                  </p>[m
+[32m+[m
+[32m+[m[32m                  <p className="mt-1 text-xs text-gray-500">[m
+[32m+[m[32m                    3kg, 6kg, 12.5kg and 50kg[m
+                   </p>[m
+                 </div>[m
+[31m-              )}[m
+[32m+[m[32m              </div>[m
+             </div>[m
+[31m-          )}[m
+[31m-        </div>[m
+[31m-      </section>[m
+[31m-[m
+[31m-      {/* Services Preview */}[m
+[31m-      <section id="services" className="px-6 py-20">[m
+[31m-        <div className="mx-auto max-w-7xl">[m
+[31m-          <div className="max-w-2xl">[m
+[31m-            <p className="text-sm font-bold uppercase tracking-widest text-red-600">[m
+[31m-              What We Do[m
+[31m-            </p>[m
+[31m-[m
+[31m-            <h2 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">[m
+[31m-              Energy and support services[m
+[31m-            </h2>[m
+[31m-[m
+[31m-            <p className="mt-4 leading-7 text-gray-600">[m
+[31m-              Explore the range of services available from Regime[m
+[31m-              Energy Services.[m
+[31m-            </p>[m
+           </div>[m
+[32m+[m[32m        </section>[m
+ [m
+[31m-          {services && services.length > 0 ? ([m
+[31m-            <>[m
+[31m-              <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">[m
+[31m-                {services.slice(0, 4).map((service) => ([m
+[31m-                  <Link[m
+[31m-                    key={service.id}[m
+[31m-                    href={`/services/${service.slug}`}[m
+[31m-                    className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"[m
+[31m-                  >[m
+[31m-                    {service.image_url ? ([m
+[31m-                      <div className="relative h-48 w-full overflow-hidden bg-gray-100">[m
+[31m-                        <Image[m
+[31m-                          src={service.image_url}[m
+[31m-                          alt={service.name}[m
+[31m-                          fill[m
+[31m-                          quality={85}[m
+[31m-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"[m
+[31m-                          className="object-cover transition duration-300 group-hover:scale-105"[m
+[31m-                        />[m
+[31m-                      </div>[m
+[31m-                    ) : ([m
+[31m-                      <div className="flex h-48 w-full items-center justify-center bg-blue-50">[m
+[31m-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-xl font-bold text-blue-700 shadow-sm">[m
+[31m-                          ✓[m
+[31m-                        </div>[m
+[31m-                      </div>[m
+[31m-                    )}[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        {/* About                                                       */}[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        <section id="about" className="bg-gray-50 px-4 py-12 sm:px-6 md:py-14">[m
+[32m+[m[32m          <div className="mx-auto max-w-7xl">[m
+[32m+[m[32m            <div className="grid items-center gap-10 lg:grid-cols-2">[m
+[32m+[m[32m              <div className="regime-image overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">[m
+[32m+[m[32m                {media && media.length > 0 ? ([m
+[32m+[m[32m                  <div className="relative aspect-[4/3] w-full">[m
+[32m+[m[32m                    <Image[m
+[32m+[m[32m                      src={[m
+[32m+[m[32m                        weighbridgeMedia?.image_url ??[m
+[32m+[m[32m                        media[0].image_url[m
+[32m+[m[32m                      }[m
+[32m+[m[32m                      alt={[m
+[32m+[m[32m                        media[0].alt_text ||[m
+[32m+[m[32m                        media[0].title ||[m
+[32m+[m[32m                        "Regime Energy Services operations"[m
+[32m+[m[32m                      }[m
+[32m+[m[32m                      fill[m
+[32m+[m[32m                      quality={85}[m
+[32m+[m[32m                      sizes="(max-width: 1024px) 100vw, 50vw"[m
+[32m+[m[32m                      className="object-cover"[m
+[32m+[m[32m                    />[m
+[32m+[m[32m                  </div>[m
+[32m+[m[32m                ) : ([m
+[32m+[m[32m                  <div className="flex aspect-[4/3] w-full items-center justify-center bg-regime-blue/5">[m
+[32m+[m[32m                    <p className="text-lg font-bold text-regime-blue">[m
+[32m+[m[32m                      Regime Energy Services[m
+[32m+[m[32m                    </p>[m
+[32m+[m[32m                  </div>[m
+[32m+[m[32m                )}[m
+[32m+[m[32m              </div>[m
+ [m
+[31m-                    <div className="p-7">[m
+[31m-                      <h3 className="font-bold text-gray-900 group-hover:text-blue-700">[m
+[31m-                        {service.name}[m
+[31m-                      </h3>[m
+[32m+[m[32m              <div>[m
+[32m+[m[32m                <p className="regime-eyebrow">About Regime</p>[m
+ [m
+[31m-                      <p className="mt-3 text-sm leading-6 text-gray-600">[m
+[31m-                        {service.short_description ||[m
+[31m-                          service.description ||[m
+[31m-                          "Professional and dependable service from Regime Energy Services."}[m
+[31m-                      </p>[m
+[32m+[m[32m                <h2 className="regime-heading text-3xl sm:text-4xl">[m
+[32m+[m[32m                  Providing Affordable and Reliable Energy[m
+[32m+[m[32m                </h2>[m
+[32m+[m
+[32m+[m[32m                <p className="regime-lead mt-4 [text-align:justify]">[m
+[32m+[m[32m                  <strong>Since 2013</strong>, Regime Energy Services Limited[m
+[32m+[m[32m                  has made LPG more accessible through dependable distribution[m
+[32m+[m[32m                  and supply — serving households, commercial establishments[m
+[32m+[m[32m                  and industry with <strong>reliability, transparency,[m
+[32m+[m[32m                  professionalism and safety</strong>.[m
+[32m+[m[32m                </p>[m
+ [m
+[31m-                      <span className="mt-5 inline-block text-sm font-semibold text-blue-700 group-hover:underline">[m
+[31m-                        Learn More →[m
+[32m+[m[32m                <ul className="mt-7 space-y-4">[m
+[32m+[m[32m                  {[[m
+[32m+[m[32m                    "Accurately measured LPG refills",[m
+[32m+[m[32m                    "Safe handling, storage and transport",[m
+[32m+[m[32m                    "Easy ordering and delivery on WhatsApp",[m
+[32m+[m[32m                  ].map((item) => ([m
+[32m+[m[32m                    <li key={item} className="flex items-start gap-3">[m
+[32m+[m[32m                      <span[m
+[32m+[m[32m                        aria-hidden="true"[m
+[32m+[m[32m                        className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-regime-green/15 text-[11px] font-bold text-regime-green-dark"[m
+[32m+[m[32m                      >[m
+[32m+[m[32m                        ✓[m
+                       </span>[m
+[31m-                    </div>[m
+[31m-                  </Link>[m
+[31m-                ))}[m
+[31m-              </div>[m
+ [m
+[31m-              {services.length > 4 && ([m
+[31m-                <div className="mt-10 text-center">[m
+[32m+[m[32m                      <span className="text-sm font-medium text-gray-800">[m
+[32m+[m[32m                        {item}[m
+[32m+[m[32m                      </span>[m
+[32m+[m[32m                    </li>[m
+[32m+[m[32m                  ))}[m
+[32m+[m[32m                </ul>[m
+[32m+[m
+[32m+[m[32m                <div className="mt-9">[m
+                   <Link[m
+[31m-                    href="/services"[m
+[31m-                    className="inline-block rounded-lg border border-blue-700 px-7 py-3 font-semibold text-blue-700 transition hover:bg-blue-700 hover:text-white"[m
+[32m+[m[32m                    href="/company-history"[m
+[32m+[m[32m                    className="regime-button-primary"[m
+                   >[m
+[31m-                    View All Services[m
+[32m+[m[32m                    Read More[m
+                   </Link>[m
+                 </div>[m
+[31m-              )}[m
+[31m-            </>[m
+[31m-          ) : ([m
+[31m-            <div className="mt-10 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center">[m
+[31m-              <p className="text-gray-600">[m
+[31m-                Our services will be displayed here.[m
+[31m-              </p>[m
+[32m+[m[32m              </div>[m
+             </div>[m
+[31m-          )}[m
+[31m-        </div>[m
+[31m-      </section>[m
+[31m-[m
+[31m-      {/* Weighbridge */}[m
+[31m-      <section className="bg-blue-900 px-6 py-20 text-white">[m
+[31m-        <div className="mx-auto max-w-7xl">[m
+[31m-          <div className="grid items-center gap-10 md:grid-cols-2">[m
+[31m-            <div>[m
+[31m-              <p className="text-sm font-bold uppercase tracking-widest text-yellow-400">[m
+[31m-                Featured Service[m
+[31m-              </p>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </section>[m
+[32m+[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        {/* Safety / Mission / Vision                                   */}[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        <section className="px-4 py-12 sm:px-6 md:py-14">[m
+[32m+[m[32m          <div className="mx-auto max-w-7xl">[m
+[32m+[m[32m            <div className="max-w-3xl">[m
+[32m+[m[32m              <p className="regime-eyebrow">Safety First</p>[m
+ [m
+[31m-              <h2 className="mt-3 text-3xl font-bold md:text-4xl">[m
+[31m-                Weighbridge Services[m
+[32m+[m[32m              <h2 className="regime-heading text-2xl sm:text-3xl">[m
+[32m+[m[32m                Safe, Dependable Energy for Every Home and Business[m
+               </h2>[m
+ [m
+[31m-              <p className="mt-5 max-w-xl leading-8 text-blue-100">[m
+[31m-                Accurate weighing services for vehicles and loads,[m
+[31m-                supported by Regime Energy Services.[m
+[32m+[m[32m              <p className="regime-lead mt-4 text-justify">[m
+[32m+[m[32m                Responsible LPG handling, storage, transport and accurate[m
+[32m+[m[32m                dispensing — every kilogram we sell is measured honestly.[m
+               </p>[m
+[31m-[m
+[31m-              <a[m
+[31m-                href="#contact"[m
+[31m-                className="mt-8 inline-block rounded-lg bg-yellow-400 px-6 py-3 font-bold text-gray-900 hover:bg-yellow-300"[m
+[31m-              >[m
+[31m-                Enquire About Weighbridge[m
+[31m-              </a>[m
+             </div>[m
+ [m
+[31m-            <div className="rounded-2xl border border-white/10 bg-white/10 p-8">[m
+[31m-              <p className="text-4xl font-bold">1kg = 1kg</p>[m
+[32m+[m[32m            <div className="mt-8 grid gap-4 md:grid-cols-2">[m
+[32m+[m[32m              {[[m
+[32m+[m[32m                {[m
+[32m+[m[32m                  title: "Our Mission",[m
+[32m+[m[32m                  text:[m
+[32m+[m[32m                    company?.mission ||[m
+[32m+[m[32m                    "To deliver safe, reliable and accessible LPG solutions to homes, businesses and industries.",[m
+[32m+[m[32m                  accent: "border-l-regime-blue bg-regime-blue",[m
+[32m+[m[32m                  letter: "M",[m
+[32m+[m[32m                },[m
+[32m+[m[32m                {[m
+[32m+[m[32m                  title: "Our Vision",[m
+[32m+[m[32m                  text:[m
+[32m+[m[32m                    company?.vision ||[m
+[32m+[m[32m                    "To be a trusted name in Nigeria's downstream LPG industry.",[m
+[32m+[m[32m                  accent: "border-l-regime-red bg-regime-red",[m
+[32m+[m[32m                  letter: "V",[m
+[32m+[m[32m                },[m
+[32m+[m[32m              ].map((card) => ([m
+[32m+[m[32m                <div key={card.title} className="regime-mvp-card">[m
+[32m+[m[32m                  <span[m
+[32m+[m[32m                    aria-hidden="true"[m
+[32m+[m[32m                    className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${card.accent}`}[m
+[32m+[m[32m                  >[m
+[32m+[m[32m                    {card.letter}[m
+[32m+[m[32m                  </span>[m
+[32m+[m
+[32m+[m[32m                  <div className="min-w-0">[m
+[32m+[m[32m                    <h3 className="text-base font-extrabold tracking-tight text-gray-900">[m
+[32m+[m[32m                      {card.title}[m
+[32m+[m[32m                    </h3>[m
+ [m
+[31m-              <p className="mt-3 text-blue-100">[m
+[31m-                Accurate dispensing and dependable measurement are[m
+[31m-                part of our service commitment.[m
+[31m-              </p>[m
+[32m+[m[32m                    <p className="mt-1.5 text-sm font-semibold leading-7 text-gray-700 text-justify">[m
+[32m+[m[32m                      {card.text}[m
+[32m+[m[32m                    </p>[m
+[32m+[m[32m                  </div>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m              ))}[m
+             </div>[m
+           </div>[m
+[31m-        </div>[m
+[31m-      </section>[m
+[31m-[m
+[31m-      {/* Products */}[m
+[31m-      <section id="products" className="bg-gray-50 px-6 py-20">[m
+[31m-        <div className="mx-auto max-w-7xl">[m
+[31m-          <div className="text-center">[m
+[31m-            <p className="text-sm font-bold uppercase tracking-widest text-blue-700">[m
+[31m-              Products[m
+[31m-            </p>[m
+[31m-[m
+[31m-            <h2 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">[m
+[31m-              LPG products and accessories[m
+[31m-            </h2>[m
+[31m-[m
+[31m-            <p className="mx-auto mt-4 max-w-2xl leading-7 text-gray-600">[m
+[31m-              Explore cylinders, regulators, valves, burners, cookers,[m
+[31m-              hoses and other LPG accessories available from Regime.[m
+[31m-            </p>[m
+[31m-          </div>[m
+[32m+[m[32m        </section>[m
+ [m
+[31m-          {products && products.length > 0 ? ([m
+[31m-            <>[m
+[31m-              <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">[m
+[31m-                {products.map((product) => {[m
+[31m-                  const productImages = Array.isArray([m
+[31m-                    product.product_images[m
+[31m-                  )[m
+[31m-                    ? [...product.product_images].sort([m
+[31m-                        (a, b) =>[m
+[31m-                          (a.display_order ?? 0) -[m
+[31m-                          (b.display_order ?? 0)[m
+[31m-                      )[m
+[31m-                    : [];[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        {/* Services                                                    */}[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        <section[m
+[32m+[m[32m          id="services"[m
+[32m+[m[32m          className="bg-gray-50 px-4 py-16 sm:px-6 md:py-20"[m
+[32m+[m[32m        >[m
+[32m+[m[32m          <div className="mx-auto max-w-7xl">[m
+[32m+[m[32m            <div className="max-w-2xl">[m
+[32m+[m[32m              <p className="regime-eyebrow">What We Do</p>[m
+ [m
+[31m-                  const primaryProductImage =[m
+[31m-                    productImages.find([m
+[31m-                      (image) => image.is_primary === true[m
+[31m-                    ) ?? productImages[0];[m
+[32m+[m[32m              <h2 className="regime-heading text-3xl sm:text-4xl">[m
+[32m+[m[32m                Energy and Support Services[m
+[32m+[m[32m              </h2>[m
+ [m
+[31m-                  return ([m
+[32m+[m[32m              <p className="regime-lead mt-4">[m
+[32m+[m[32m                From a single household refill to bulk supply for industry —[m
+[32m+[m[32m                everything you need to cook, trade and operate on LPG.[m
+[32m+[m[32m              </p>[m
+[32m+[m[32m            </div>[m
+[32m+[m
+[32m+[m[32m            {serviceList.length > 0 ? ([m
+[32m+[m[32m              <>[m
+[32m+[m[32m                <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">[m
+[32m+[m[32m                  {serviceList.map((service) => ([m
+                     <Link[m
+[31m-                      key={product.id}[m
+[31m-                      href={`/products/${product.slug}`}[m
+[31m-                      className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"[m
+[32m+[m[32m                      key={service.id}[m
+[32m+[m[32m                      href={`/services/${service.slug}`}[m
+[32m+[m[32m                      className="regime-card group flex flex-col overflow-hidden"[m
+                     >[m
+[31m-                      {primaryProductImage ? ([m
+[31m-                        <div className="relative h-52 w-full overflow-hidden bg-gray-100">[m
+[32m+[m[32m                      {service.image_url ? ([m
+[32m+[m[32m                        <div className="relative h-48 w-full overflow-hidden bg-gray-100">[m
+                           <Image[m
+[31m-                            src={primaryProductImage.image_url}[m
+[31m-                            alt={[m
+[31m-                              primaryProductImage.alt_text ||[m
+[31m-                              product.name[m
+[31m-                            }[m
+[32m+[m[32m                            src={service.image_url}[m
+[32m+[m[32m                            alt={service.name}[m
+                             fill[m
+                             quality={85}[m
+[31m-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"[m
+[32m+[m[32m                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"[m
+                             className="object-cover transition duration-300 group-hover:scale-105"[m
+                           />[m
+                         </div>[m
+                       ) : ([m
+[31m-                        <div className="flex h-52 w-full items-center justify-center bg-blue-50">[m
+[31m-                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-xl font-bold text-blue-700 shadow-sm">[m
+[31m-                            LPG[m
+[31m-                          </div>[m
+[32m+[m[32m                        <div className="flex h-48 w-full items-center justify-center bg-regime-blue/5">[m
+[32m+[m[32m                          <span className="text-sm font-bold uppercase tracking-widest text-regime-blue">[m
+[32m+[m[32m                            {service.service_category || "Service"}[m
+[32m+[m[32m                          </span>[m
+                         </div>[m
+                       )}[m
+ [m
+[31m-                      <div className="p-6">[m
+[31m-                        <h3 className="font-bold text-gray-900 group-hover:text-blue-700">[m
+[31m-                          {product.name}[m
+[32m+[m[32m                      <div className="flex flex-1 flex-col p-6">[m
+[32m+[m[32m                        <h3 className="font-bold text-gray-900 group-hover:text-regime-blue">[m
+[32m+[m[32m                          {service.name}[m
+                         </h3>[m
+ [m
+[31m-                        <p className="mt-3 text-sm leading-6 text-gray-600">[m
+[31m-                          {product.short_description ||[m
+[31m-                            product.description ||[m
+[31m-                            "Quality LPG product available from Regime Energy Services."}[m
+[32m+[m[32m                        <p className="mt-3 flex-1 text-sm leading-6 text-gray-600">[m
+[32m+[m[32m                          {service.short_description ||[m
+[32m+[m[32m                            service.description ||[m
+[32m+[m[32m                            "Professional and dependable service from Regime Energy Services."}[m
+                         </p>[m
+ [m
+[31m-                        <span className="mt-5 inline-block text-sm font-semibold text-blue-700 group-hover:underline">[m
+[31m-                          View Product →[m
+[32m+[m[32m                        <span className="mt-5 inline-block text-sm font-bold text-regime-blue group-hover:underline">[m
+[32m+[m[32m                          Learn More →[m
+                         </span>[m
+                       </div>[m
+                     </Link>[m
+[31m-                  );[m
+[31m-                })}[m
+[31m-              </div>[m
+[32m+[m[32m                  ))}[m
+[32m+[m[32m                </div>[m
+ [m
+[31m-              <div className="mt-10 text-center">[m
+[31m-                <Link[m
+[31m-                  href="/products"[m
+[31m-                  className="inline-block rounded-lg bg-blue-700 px-7 py-3 font-semibold text-white transition hover:bg-blue-800"[m
+[31m-                >[m
+[31m-                  View All Products[m
+[31m-                </Link>[m
+[32m+[m[32m                <div className="mt-10 text-center">[m
+[32m+[m[32m                  <Link href="/services" className="regime-button-secondary">[m
+[32m+[m[32m                    View All Services[m
+[32m+[m[32m                  </Link>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m              </>[m
+[32m+[m[32m            ) : ([m
+[32m+[m[32m              <div className="mt-10 rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center">[m
+[32m+[m[32m                <p className="text-gray-600">[m
+[32m+[m[32m                  Our services will be displayed here.[m
+[32m+[m[32m                </p>[m
+               </div>[m
+[31m-            </>[m
+[31m-          ) : ([m
+[31m-            <div className="mt-10 rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center">[m
+[31m-              <p className="text-gray-600">[m
+[31m-                Our LPG products and accessories will be displayed here.[m
+[31m-              </p>[m
+[31m-[m
+[31m-              <Link[m
+[31m-                href="/products"[m
+[31m-                className="mt-5 inline-block font-semibold text-blue-700 hover:text-blue-800"[m
+[31m-              >[m
+[31m-                Explore Products →[m
+[31m-              </Link>[m
+[31m-            </div>[m
+[31m-          )}[m
+[31m-        </div>[m
+[31m-      </section>[m
+[31m-[m
+[31m-      {/* Branches */}[m
+[31m-      <section id="branches" className="px-6 py-20">[m
+[31m-        <div className="mx-auto max-w-7xl">[m
+[31m-          <div className="text-center">[m
+[31m-            <p className="text-sm font-bold uppercase tracking-widest text-red-600">[m
+[31m-              Our Locations[m
+[31m-            </p>[m
+[31m-[m
+[31m-            <h2 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">[m
+[31m-              Find a Regime branch near you[m
+[31m-            </h2>[m
+[31m-[m
+[31m-            <p className="mx-auto mt-4 max-w-2xl leading-7 text-gray-600">[m
+[31m-              Visit any of our active branch locations for LPG products,[m
+[31m-              services, enquiries and customer support.[m
+[31m-            </p>[m
+[32m+[m[32m            )}[m
+           </div>[m
+[32m+[m[32m        </section>[m
+ [m
+[31m-          {branches && branches.length > 0 ? ([m
+[31m-            <>[m
+[31m-              <div className="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-3">[m
+[31m-                {branches.slice(0, 6).map((branch) => {[m
+[31m-                  const hasCoordinates =[m
+[31m-                    branch.latitude !== null &&[m
+[31m-                    branch.longitude !== null;[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        {/* Featured weighbridge                                        */}[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        <section className="bg-regime-blue-dark px-4 py-12 text-white sm:px-6 md:py-14">[m
+[32m+[m[32m          <div className="mx-auto max-w-7xl">[m
+[32m+[m[32m            <div className="grid items-center gap-10 md:grid-cols-2">[m
+[32m+[m[32m              <div>[m
+[32m+[m[32m                <p className="text-xs font-bold uppercase tracking-widest text-regime-green">[m
+[32m+[m[32m                  Featured Service[m
+[32m+[m[32m                </p>[m
+ [m
+[31m-                  const mapUrl =[m
+[31m-                    hasCoordinates[m
+[31m-                      ? `https://www.google.com/maps?q=${branch.latitude},${branch.longitude}&z=15&output=embed`[m
+[31m-                      : null;[m
+[32m+[m[32m                <h2 className="mt-3 text-3xl font-bold md:text-4xl">[m
+[32m+[m[32m                  Weighbridge Services[m
+[32m+[m[32m                </h2>[m
+ [m
+[31m-                  const branchHref = `/branches/${[m
+[31m-                    branch.slug || branch.id[m
+[31m-                  }`;[m
+[32m+[m[32m                <p className="mt-5 max-w-xl text-base leading-8 text-blue-100">[m
+[32m+[m[32m                  Accurate weighing for vehicles and loads, backed by the[m
+[32m+[m[32m                  same commitment to measurement that goes into every[m
+[32m+[m[32m                  cylinder we fill.[m
+[32m+[m[32m                </p>[m
+ [m
+[31m-                  return ([m
+[31m-                    <div[m
+[31m-                      key={branch.id}[m
+[31m-                      className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"[m
+[31m-                    >[m
+[31m-                      {branch.image_url ? ([m
+[31m-                        <div className="relative h-56 w-full overflow-hidden bg-gray-100">[m
+[31m-                          <Image[m
+[31m-                            src={branch.image_url}[m
+[31m-                            alt={branch.name}[m
+[31m-                            fill[m
+[31m-                            quality={85}[m
+[31m-                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"[m
+[31m-                            className="object-cover"[m
+[31m-                          />[m
+[31m-                        </div>[m
+[31m-                      ) : ([m
+[31m-                        <div className="flex h-56 w-full items-center justify-center bg-blue-50">[m
+[31m-                          <span className="text-lg font-bold text-blue-700">[m
+[31m-                            Regime Branch[m
+[31m-                          </span>[m
+[31m-                        </div>[m
+[31m-                      )}[m
+[32m+[m[32m                <a[m
+[32m+[m[32m                  href="#contact"[m
+[32m+[m[32m                  className="mt-8 inline-flex min-h-[48px] items-center justify-center rounded-lg bg-regime-red px-7 py-3 font-bold text-white transition hover:bg-red-700"[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  Enquire About Weighbridge[m
+[32m+[m[32m                </a>[m
+[32m+[m[32m              </div>[m
+ [m
+[31m-                      <div className="p-7">[m
+[31m-                        <h3 className="text-xl font-bold text-gray-900">[m
+[31m-                          {branchHref ? ([m
+[31m-                            <Link[m
+[31m-                              href={branchHref}[m
+[31m-                              className="absolute inset-0 z-10"[m
+[31m-                              aria-label={`View details for ${branch.name}`}[m
+[31m-                            >[m
+[31m-                              <span className="sr-only">[m
+[31m-                                View {branch.name} details[m
+[31m-                              </span>[m
+[31m-                            </Link>[m
+[31m-                          ) : null}[m
+[31m-                          <span className="relative z-0">{branch.name}</span>[m
+[31m-                        </h3>[m
+[32m+[m[32m              <div className="overflow-hidden rounded-2xl border border-white/15">[m
+[32m+[m[32m                {weighbridgeMedia ? ([m
+[32m+[m[32m                  <div className="relative aspect-[16/10] w-full">[m
+[32m+[m[32m                    <Image[m
+[32m+[m[32m                      src={weighbridgeMedia.image_url}[m
+[32m+[m[32m                      alt={[m
+[32m+[m[32m                        weighbridgeMedia.alt_text ||[m
+[32m+[m[32m                        weighbridgeMedia.title ||[m
+[32m+[m[32m                        "Regime weighbridge operations"[m
+[32m+[m[32m                      }[m
+[32m+[m[32m                      fill[m
+[32m+[m[32m                      quality={85}[m
+[32m+[m[32m                      sizes="(max-width: 768px) 100vw, 50vw"[m
+[32m+[m[32m                      className="object-cover"[m
+[32m+[m[32m                    />[m
+[32m+[m[32m                  </div>[m
+[32m+[m[32m                ) : ([m
+[32m+[m[32m                  <div className="flex aspect-[16/10] w-full items-center justify-center bg-white/10 p-8 text-center">[m
+[32m+[m[32m                    <div>[m
+[32m+[m[32m                      <p className="text-5xl font-bold tracking-tight text-regime-green">[m
+[32m+[m[32m                        1kg = 1kg[m
+[32m+[m[32m                      </p>[m
+ [m
+[31m-                        {branch.description && ([m
+[31m-                          <p className="mt-3 text-sm leading-6 text-gray-600">[m
+[31m-                            {branch.description}[m
+[31m-                          </p>[m
+[31m-                        )}[m
+[32m+[m[32m                      <p className="mt-4 text-blue-100">[m
+[32m+[m[32m                        Accurate dispensing and dependable measurement are[m
+[32m+[m[32m                        part of every service commitment we make.[m
+[32m+[m[32m                      </p>[m
+[32m+[m[32m                    </div>[m
+[32m+[m[32m                  </div>[m
+[32m+[m[32m                )}[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </section>[m
+ [m
+[31m-                        {branch.address && ([m
+[31m-                          <div className="mt-5">[m
+[31m-                            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">[m
+[31m-                              Address[m
+[31m-                            </p>[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        {/* Products                                                    */}[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        <section id="products" className="px-4 py-12 sm:px-6 md:py-14">[m
+[32m+[m[32m          <div className="mx-auto max-w-7xl">[m
+[32m+[m[32m            <div className="text-center">[m
+[32m+[m[32m              <p className="regime-eyebrow justify-center">Products</p>[m
+ [m
+[31m-                            <p className="mt-1 text-sm leading-6 text-gray-800">[m
+[31m-                              {branch.address}[m
+[31m-                            </p>[m
+[31m-                          </div>[m
+[31m-                        )}[m
+[32m+[m[32m              <h2 className="regime-heading text-3xl sm:text-4xl">[m
+[32m+[m[32m                LPG Products and Accessories[m
+[32m+[m[32m              </h2>[m
+[32m+[m
+[32m+[m[32m              <p className="regime-lead mx-auto mt-5 max-w-2xl">[m
+[32m+[m[32m                Cylinders, regulators, valves, burners, cookers, hoses and[m
+[32m+[m[32m                fittings — quality LPG equipment from our branches in[m
+[32m+[m[32m                Owerri.[m
+[32m+[m[32m              </p>[m
+[32m+[m[32m            </div>[m
+ [m
+[31m-                        {/* Google Map */}[m
+[31m-                        {mapUrl && ([m
+[31m-                          <div className="relative z-20 mt-6 overflow-hidden rounded-xl border border-gray-200">[m
+[31m-                            <iframe[m
+[31m-                              title={`${branch.name} location map`}[m
+[31m-                              src={mapUrl}[m
+[31m-                              width="100%"[m
+[31m-                              height="260"[m
+[31m-                              loading="lazy"[m
+[31m-                              referrerPolicy="no-referrer-when-downgrade"[m
+[31m-                              className="block w-full border-0"[m
+[32m+[m[32m            {productList.length > 0 ? ([m
+[32m+[m[32m              <>[m
+[32m+[m[32m                <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">[m
+[32m+[m[32m                  {productList.slice(0, 8).map((product) => {[m
+[32m+[m[32m                    const productImages = Array.isArray(product.product_images)[m
+[32m+[m[32m                      ? [...product.product_images].sort([m
+[32m+[m[32m                        (a, b) =>[m
+[32m+[m[32m                          (a.display_order ?? 0) - (b.display_order ?? 0)[m
+[32m+[m[32m                      )[m
+[32m+[m[32m                      : [];[m
+[32m+[m
+[32m+[m[32m                    const primaryProductImage =[m
+[32m+[m[32m                      productImages.find((image) => image.is_primary === true) ??[m
+[32m+[m[32m                      productImages[0];[m
+[32m+[m
+[32m+[m[32m                    return ([m
+[32m+[m[32m                      <Link[m
+[32m+[m[32m                        key={product.id}[m
+[32m+[m[32m                        href={`/products/${product.slug}`}[m
+[32m+[m[32m                        className="regime-card group flex flex-col overflow-hidden"[m
+[32m+[m[32m                      >[m
+[32m+[m[32m                        {primaryProductImage ? ([m
+[32m+[m[32m                          <div className="relative h-52 w-full overflow-hidden bg-gray-100">[m
+[32m+[m[32m                            <Image[m
+[32m+[m[32m                              src={primaryProductImage.image_url}[m
+[32m+[m[32m                              alt={[m
+[32m+[m[32m                                primaryProductImage.alt_text || product.name[m
+[32m+[m[32m                              }[m
+[32m+[m[32m                              fill[m
+[32m+[m[32m                              quality={85}[m
+[32m+[m[32m                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"[m
+[32m+[m[32m                              className="object-cover transition duration-300 group-hover:scale-105"[m
+                             />[m
+                           </div>[m
+[32m+[m[32m                        ) : ([m
+[32m+[m[32m                          <div className="flex h-52 w-full items-center justify-center bg-regime-blue/5">[m
+[32m+[m[32m                            <span className="text-sm font-bold uppercase tracking-widest text-regime-blue">[m
+[32m+[m[32m                              LPG[m
+[32m+[m[32m                            </span>[m
+[32m+[m[32m                          </div>[m
+                         )}[m
+ [m
+[31m-                        <div className="relative z-20 mt-6 flex flex-wrap gap-3">[m
+[31m-                          {branch.phone && ([m
+[31m-                            <TrackedLink[m
+[31m-                              href={`tel:${branch.phone}`}[m
+[31m-                              event="phone_click"[m
+[31m-                              label={branch.name}[m
+[31m-                              target=""[m
+[31m-                              className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"[m
+[31m-                            >[m
+[31m-                              Call Branch[m
+[31m-                            </TrackedLink>[m
+[31m-                          )}[m
+[31m-[m
+[31m-                          {branch.whatsapp && ([m
+[31m-                            <TrackedLink[m
+[31m-                              href={`https://wa.me/${branch.whatsapp.replace([m
+[31m-                                /\D/g,[m
+[31m-                                ""[m
+[31m-                              )}?text=${encodeURIComponent([m
+[31m-                                `Hello ${branch.name} branch, I would like to order gas.`[m
+[31m-                              )}`}[m
+[31m-                              event="whatsapp_click"[m
+[31m-                              label={branch.name}[m
+[31m-                              className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700"[m
+[31m-                            >[m
+[31m-                              Order Gas[m
+[31m-                            </TrackedLink>[m
+[31m-                          )}[m
+[31m-[m
+[31m-                          {branch.google_maps_url && ([m
+[31m-                            <TrackedLink[m
+[31m-                              href={branch.google_maps_url}[m
+[31m-                              event="maps_click"[m
+[31m-                              label={branch.name}[m
+[31m-                              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50"[m
+[31m-                            >[m
+[31m-                              Open in Google Maps[m
+[31m-                            </TrackedLink>[m
+[31m-                          )}[m
+[32m+[m[32m                        <div className="flex flex-1 flex-col p-6">[m
+[32m+[m[32m                          <h3 className="font-bold text-gray-900 group-hover:text-regime-blue">[m
+[32m+[m[32m                            {product.name}[m
+[32m+[m[32m                          </h3>[m
+[32m+[m
+[32m+[m[32m                          <p className="mt-3 flex-1 text-sm leading-6 text-gray-600">[m
+[32m+[m[32m                            {product.short_description ||[m
+[32m+[m[32m                              product.description ||[m
+[32m+[m[32m                              "Quality LPG product available from Regime Energy Services."}[m
+[32m+[m[32m                          </p>[m
+[32m+[m
+[32m+[m[32m                          <span className="mt-5 inline-block text-sm font-bold text-regime-blue group-hover:underline">[m
+[32m+[m[32m                            View Product →[m
+[32m+[m[32m                          </span>[m
+                         </div>[m
+[31m-                      </div>[m
+[31m-                    </div>[m
+[31m-                  );[m
+[31m-                })}[m
+[31m-              </div>[m
+[32m+[m[32m                      </Link>[m
+[32m+[m[32m                    );[m
+[32m+[m[32m                  })}[m
+[32m+[m[32m                </div>[m
+ [m
+[31m-              {branches.length > 6 && ([m
+                 <div className="mt-10 text-center">[m
+[31m-                  <Link[m
+[31m-                    href="/branches"[m
+[31m-                    className="inline-block rounded-lg border border-blue-700 px-7 py-3 font-semibold text-blue-700 transition hover:bg-blue-700 hover:text-white"[m
+[31m-                  >[m
+[31m-                    View All Branches[m
+[32m+[m[32m                  <Link href="/products" className="regime-button-primary">[m
+[32m+[m[32m                    View All Products[m
+                   </Link>[m
+                 </div>[m
+[31m-              )}[m
+[31m-            </>[m
+[31m-          ) : ([m
+[31m-            <div className="mt-10 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center">[m
+[31m-              <p className="text-gray-600">[m
+[31m-                Our branch locations will be displayed here.[m
+[31m-              </p>[m
+[31m-            </div>[m
+[31m-          )}[m
+[31m-        </div>[m
+[31m-      </section>[m
+[31m-[m
+[31m-      {/* Contact */}[m
+[31m-      <section id="contact" className="bg-gray-50 px-6 py-20">[m
+[31m-        <div className="mx-auto max-w-7xl">[m
+[31m-          <div className="rounded-3xl bg-white p-8 shadow-sm md:p-12">[m
+[31m-            <div className="grid gap-10 md:grid-cols-2">[m
+[31m-              <div>[m
+[31m-                <p className="text-sm font-bold uppercase tracking-widest text-red-600">[m
+[31m-                  Contact Regime[m
+[32m+[m[32m              </>[m
+[32m+[m[32m            ) : ([m
+[32m+[m[32m              <div className="mt-10 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center">[m
+[32m+[m[32m                <p className="text-gray-600">[m
+[32m+[m[32m                  Our LPG products and accessories will be displayed here.[m
+                 </p>[m
+ [m
+[31m-                <h2 className="mt-3 text-3xl font-bold text-gray-900">[m
+[31m-                  Let&apos;s help with your energy needs[m
+[31m-                </h2>[m
+[31m-[m
+[31m-                <p className="mt-5 leading-7 text-gray-600">[m
+[31m-                  Contact Regime Energy Services for LPG supply,[m
+[31m-                  delivery, services and enquiries.[m
+[31m-                </p>[m
+[32m+[m[32m                <Link[m
+[32m+[m[32m                  href="/products"[m
+[32m+[m[32m                  className="mt-5 inline-block font-semibold text-regime-blue hover:underline"[m
+[32m+[m[32m                >[m
+[32m+[m[32m                  Explore Products →[m
+[32m+[m[32m                </Link>[m
+               </div>[m
+[32m+[m[32m            )}[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </section>[m
+ [m
+[31m-              <div className="space-y-5">[m
+[31m-                {company?.phone && ([m
+[31m-                  <div>[m
+[31m-                    <p className="text-sm font-medium text-gray-500">[m
+[31m-                      Phone[m
+[31m-                    </p>[m
+[31m-[m
+[31m-                    <a[m
+[31m-                      href={`tel:${company.phone}`}[m
+[31m-                      className="mt-1 block font-semibold text-blue-700"[m
+[31m-                    >[m
+[31m-                      {company.phone}[m
+[31m-                    </a>[m
+[31m-                  </div>[m
+[31m-                )}[m
+[31m-[m
+[31m-                {company?.email && ([m
+[31m-                  <div>[m
+[31m-                    <p className="text-sm font-medium text-gray-500">[m
+[31m-                      Email[m
+[31m-                    </p>[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        {/* Branches                                                    */}[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        <section[m
+[32m+[m[32m          id="branches"[m
+[32m+[m[32m          className="bg-gray-50 px-4 py-12 sm:px-6 md:py-14"[m
+[32m+[m[32m        >[m
+[32m+[m[32m          <div className="mx-auto max-w-7xl">[m
+[32m+[m[32m            <div className="text-center">[m
+[32m+[m[32m              <p className="regime-eyebrow justify-center">Our Locations</p>[m
+ [m
+[31m-                    <a[m
+[31m-                      href={`mailto:${company.email}`}[m
+[31m-                      className="mt-1 block font-semibold text-blue-700"[m
+[31m-                    >[m
+[31m-                      {company.email}[m
+[31m-                    </a>[m
+[31m-                  </div>[m
+[31m-                )}[m
+[32m+[m[32m              <h2 className="regime-heading text-3xl sm:text-4xl">[m
+[32m+[m[32m                Find a Regime Branch Near You[m
+[32m+[m[32m              </h2>[m
+ [m
+[31m-                {company?.address && ([m
+[31m-                  <div>[m
+[31m-                    <p className="text-sm font-medium text-gray-500">[m
+[31m-                      Address[m
+[31m-                    </p>[m
+[32m+[m[32m              <p className="regime-lead mx-auto mt-5 max-w-2xl">[m
+[32m+[m[32m                Visit a branch for LPG products, refills, enquiries and[m
+[32m+[m[32m                customer support.[m
+[32m+[m[32m              </p>[m
+[32m+[m[32m            </div>[m
+ [m
+[31m-                    <p className="mt-1 font-semibold text-gray-900">[m
+[31m-                      {company.address}[m
+[31m-                    </p>[m
+[31m-                  </div>[m
+[31m-                )}[m
+[32m+[m[32m            {branchList.length > 0 ? ([m
+[32m+[m[32m              <>[m
+[32m+[m[32m                {/* Interactive world map — clicking a branch pin reveals[m
+[32m+[m[32m                    that branch's full details below */}[m
+[32m+[m[32m                <div className="mt-10">[m
+[32m+[m[32m                  <BranchWorldMap branches={branchList} />[m
+[32m+[m[32m                </div>[m
+ [m
+[31m-                {company?.whatsapp && ([m
+[31m-                  <a[m
+[31m-                    href={`https://wa.me/${company.whatsapp.replace([m
+[31m-                      /\D/g,[m
+[31m-                      ""[m
+[31m-                    )}?text=${encodeURIComponent([m
+[31m-                      "Hello Regime Energy Services, I would like to make an enquiry."[m
+[31m-                    )}`}[m
+[31m-                    target="_blank"[m
+[31m-                    rel="noopener noreferrer"[m
+[31m-                    className="inline-block rounded-lg bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700"[m
+[31m-                  >[m
+[31m-                    Chat on WhatsApp[m
+[31m-                  </a>[m
+[31m-                )}[m
+[32m+[m[32m                <div className="mt-8 text-center">[m
+[32m+[m[32m                  <Link href="/branches" className="regime-button-secondary">[m
+[32m+[m[32m                    View All Branches[m
+[32m+[m[32m                  </Link>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m              </>[m
+[32m+[m[32m            ) : ([m
+[32m+[m[32m              <div className="mt-10 rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center">[m
+[32m+[m[32m                <p className="text-gray-600">[m
+[32m+[m[32m                  Our branch locations will be displayed here.[m
+[32m+[m[32m                </p>[m
+               </div>[m
+[31m-            </div>[m
+[32m+[m[32m            )}[m
+           </div>[m
+[31m-        </div>[m
+[31m-      </section>[m
+[31m-[m
+[31m-      {/* Footer */}[m
+[31m-      <footer className="bg-gray-950 px-6 py-12 text-white">[m
+[31m-        <div className="mx-auto max-w-7xl">[m
+[31m-          <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">[m
+[31m-            <div>[m
+[31m-              <p className="font-bold">[m
+[31m-                {company?.company_name || "REGIME ENERGY SERVICES"}[m
+[31m-              </p>[m
+[32m+[m[32m        </section>[m
+ [m
+[31m-              <p className="mt-1 text-sm text-gray-400">[m
+[31m-                {siteSettings?.footer_note ||[m
+[31m-                  "Reliable LPG energy solutions."}[m
+[31m-              </p>[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        {/* Contact + WhatsApp enquiry                                  */}[m
+[32m+[m[32m        {/* ---------------------------------------------------------- */}[m
+[32m+[m[32m        <section id="contact" className="px-4 py-12 sm:px-6 md:py-14">[m
+[32m+[m[32m          <div className="mx-auto max-w-7xl">[m
+[32m+[m[32m            <div className="regime-card p-8 md:p-12">[m
+[32m+[m[32m              <div className="grid gap-10 md:grid-cols-2">[m
+[32m+[m[32m                <div>[m
+[32m+[m[32m                  <p className="regime-eyebrow">Contact Regime</p>[m
+[32m+[m
+[32m+[m[32m                  <h2 className="regime-heading text-3xl">[m
+[32m+[m[32m                    Let&apos;s Help With Your Energy Needs[m
+[32m+[m[32m                  </h2>[m
+[32m+[m
+[32m+[m[32m                  <p className="regime-lead mt-5">[m
+[32m+[m[32m                    Reach out for LPG supply, delivery, services and[m
+[32m+[m[32m                    enquiries. We reply fastest on WhatsApp.[m
+[32m+[m[32m                  </p>[m
+ [m
+[31m-              {siteSettings?.show_company_history_link && ([m
+[31m-                <Link[m
+[31m-                  href="/company-history"[m
+[31m-                  className="mt-3 inline-block text-sm font-semibold text-gray-300 hover:text-white"[m
+[31m-                >[m
+[31m-                  Our History →[m
+[31m-                </Link>[m
+[31m-              )}[m
+[31m-            </div>[m
+[32m+[m[32m                  <dl className="mt-8 space-y-5">[m
+[32m+[m[32m                    {company?.phone && ([m
+[32m+[m[32m                      <div>[m
+[32m+[m[32m                        <dt className="text-xs font-bold uppercase tracking-widest text-gray-500">[m
+[32m+[m[32m                          Phone[m
+[32m+[m[32m                        </dt>[m
+[32m+[m
+[32m+[m[32m                        <dd>[m
+[32m+[m[32m                          <a[m
+[32m+[m[32m                            href={`tel:${company.phone}`}[m
+[32m+[m[32m                            className="mt-1 block font-semibold text-regime-blue hover:underline"[m
+[32m+[m[32m                          >[m
+[32m+[m[32m                            {company.phone}[m
+[32m+[m[32m                          </a>[m
+[32m+[m[32m                        </dd>[m
+[32m+[m[32m                      </div>[m
+[32m+[m[32m                    )}[m
+ [m
+[31m-            {/* Social links */}[m
+[31m-            {siteSettings &&[m
+[31m-              (siteSettings.facebook_url ||[m
+[31m-                siteSettings.instagram_url ||[m
+[31m-                siteSettings.twitter_url ||[m
+[31m-                siteSettings.linkedin_url ||[m
+[31m-                siteSettings.youtube_url) && ([m
+[31m-                <div className="flex flex-wrap gap-3">[m
+[31m-                  {siteSettings.facebook_url && ([m
+[31m-                    <a[m
+[31m-                      href={siteSettings.facebook_url}[m
+[31m-                      target="_blank"[m
+[31m-                      rel="noopener noreferrer"[m
+[31m-                      className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"[m
+[31m-                    >[m
+[31m-                      Facebook[m
+[31m-                    </a>[m
+[31m-                  )}[m
+[32m+[m[32m                    {company?.email && ([m
+[32m+[m[32m                      <div>[m
+[32m+[m[32m                        <dt className="text-xs font-bold uppercase tracking-widest text-gray-500">[m
+[32m+[m[32m                          Email[m
+[32m+[m[32m                        </dt>[m
+[32m+[m
+[32m+[m[32m                        <dd>[m
+[32m+[m[32m                          <a[m
+[32m+[m[32m                            href={`mailto:${company.email}`}[m
+[32m+[m[32m                            className="mt-1 block break-all font-semibold text-regime-blue hover:underline"[m
+[32m+[m[32m                          >[m
+[32m+[m[32m                            {company.email}[m
+[32m+[m[32m                          </a>[m
+[32m+[m[32m                        </dd>[m
+[32m+[m[32m                      </div>[m
+[32m+[m[32m                    )}[m
+ [m
+[31m-                  {siteSettings.instagram_url && ([m
+[31m-                    <a[m
+[31m-                      href={siteSettings.instagram_url}[m
+[31m-                      target="_blank"[m
+[31m-                      rel="noopener noreferrer"[m
+[31m-                      className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"[m
+[31m-                    >[m
+[31m-                      Instagram[m
+[31m-                    </a>[m
+[31m-                  )}[m
+[32m+[m[32m                    {company?.address && ([m
+[32m+[m[32m                      <div>[m
+[32m+[m[32m                        <dt className="text-xs font-bold uppercase tracking-widest text-gray-500">[m
+[32m+[m[32m                          Address[m
+[32m+[m[32m                        </dt>[m
+ [m
+[31m-                  {siteSettings.twitter_url && ([m
+[31m-                    <a[m
+[31m-                      href={siteSettings.twitter_url}[m
+[31m-                      target="_blank"[m
+[31m-                      rel="noopener noreferrer"[m
+[31m-                      className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"[m
+[31m-                    >[m
+[31m-                      X / Twitter[m
+[31m-                    </a>[m
+[31m-                  )}[m
+[32m+[m[32m                        <dd className="mt-1 font-semibold leading-6 text-gray-900">[m
+[32m+[m[32m                          {company.address}[m
+[32m+[m[32m                        </dd>[m
+[32m+[m[32m                      </div>[m
+[32m+[m[32m                    )}[m
+[32m+[m[32m                  </dl>[m
+[32m+[m[32m                </div>[m
+ [m
+[31m-                  {siteSettings.linkedin_url && ([m
+[31m-                    <a[m
+[31m-                      href={siteSettings.linkedin_url}[m
+[31m-                      target="_blank"[m
+[31m-                      rel="noopener noreferrer"[m
+[31m-                      className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"[m
+[31m-                    >[m
+[31m-                      LinkedIn[m
+[31m-                    </a>[m
+[31m-                  )}[m
+[32m+[m[32m                {/* WhatsApp enquiry panel */}[m
+[32m+[m[32m                <div className="rounded-2xl bg-regime-blue-dark p-8 text-white md:p-10">[m
+[32m+[m[32m                  <h3 className="text-2xl font-bold">Need gas today?</h3>[m
+ [m
+[31m-                  {siteSettings.youtube_url && ([m
+[31m-                    <a[m
+[31m-                      href={siteSettings.youtube_url}[m
+[31m-                      target="_blank"[m
+[31m-                      rel="noopener noreferrer"[m
+[31m-                      className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-800"[m
+[31m-                    >[m
+[31m-                      YouTube[m
+[31m-                    </a>[m
+[31m-                  )}[m
+[32m+[m[32m                  <p className="mt-4 leading-7 text-blue-100">[m
+[32m+[m[32m                    Tell us your location and cylinder size on WhatsApp and[m
+[32m+[m[32m                    we will arrange your refill or delivery.[m
+[32m+[m[32m                  </p>[m
+[32m+[m
+[32m+[m[32m                  <div className="mt-8 flex flex-col gap-3 sm:flex-row">[m
+[32m+[m[32m                    {orderHref && ([m
+[32m+[m[32m                      <TrackedLink[m
+[32m+[m[32m                        href={orderHref}[m
+[32m+[m[32m                        event="whatsapp_click"[m
+[32m+[m[32m                        label="contact_whatsapp_enquiry"[m
+[32m+[m[32m                        className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-bold text-white transition hover:bg-green-700"[m
+[32m+[m[32m                      >[m
+[32m+[m[32m                        Chat on WhatsApp[m
+[32m+[m[32m                      </TrackedLink>[m
+[32m+[m[32m                    )}[m
+[32m+[m
+[32m+[m[32m                    {callHref && ([m
+[32m+[m[32m                      <TrackedLink[m
+[32m+[m[32m                        href={callHref}[m
+[32m+[m[32m                        event="phone_click"[m
+[32m+[m[32m                        label="contact_call"[m
+[32m+[m[32m                        target=""[m
+[32m+[m[32m                        className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-white px-6 py-3 font-bold text-regime-blue-dark transition hover:bg-blue-50"[m
+[32m+[m[32m                      >[m
+[32m+[m[32m                        Call {phoneDisplay}[m
+[32m+[m[32m                      </TrackedLink>[m
+[32m+[m[32m                    )}[m
+[32m+[m[32m                  </div>[m
+                 </div>[m
+[31m-              )}[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            </div>[m
+           </div>[m
+[32m+[m[32m        </section>[m
+[32m+[m[32m      </main>[m
+ [m
+[31m-          <p className="mt-8 border-t border-gray-800 pt-6 text-sm text-gray-500">[m
+[31m-            © {new Date().getFullYear()} Regime Energy Services.[m
+[31m-            All rights reserved.[m
+[31m-          </p>[m
+[31m-        </div>[m
+[31m-      </footer>[m
+[31m-    </main>[m
+[32m+[m[32m      <SiteFooter />[m
+[32m+[m[32m    </div>[m
+   );[m
+[31m-}[m
+\ No newline at end of file[m
+[32m+[m[32m}[m
+[1mdiff --git a/src/app/products/[slug]/page.tsx b/src/app/products/[slug]/page.tsx[m
+[1mindex 129272a..e7e1b40 100644[m
+[1m--- a/src/app/products/[slug]/page.tsx[m
+[1m+++ b/src/app/products/[slug]/page.tsx[m
+[36m@@ -6,6 +6,8 @@[m [mimport { createClient } from "@/lib/supabase/server";[m
+ import TrackedView from "@/components/analytics/tracked-view";[m
+ import TrackedLink from "@/components/analytics/tracked-link";[m
+ import { buildMetadata } from "@/lib/seo";[m
+[32m+[m[32mimport SiteHeader from "@/components/site-header";[m
+[32m+[m[32mimport SiteFooter from "@/components/site-footer";[m
+ [m
+ type ProductPageProps = {[m
+   params: Promise<{[m
+[36m@@ -174,29 +176,13 @@[m [mexport default async function ProductDetailsPage({[m
+   }[m
+ [m
+   return ([m
+[31m-    <main className="min-h-screen bg-white">[m
+[32m+[m[32m    <div className="flex min-h-screen flex-col bg-white">[m
+[32m+[m[32m      <SiteHeader currentPath="/products" />[m
+[32m+[m
+[32m+[m[32m      <main className="flex-1">[m
+       {/* Analytics: record this product view */}[m
+       <TrackedView event="product_view" label={product.name} />[m
+ [m
+[31m-      {/* Header */}[m
+[31m-      <section className="border-b border-gray-200 bg-white">[m
+[31m-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">[m
+[31m-          <Link[m
+[31m-            href="/"[m
+[31m-            className="text-xl font-bold text-blue-700"[m
+[31m-          >[m
+[31m-            Regime Energy Services[m
+[31m-          </Link>[m
+[31m-[m
+[31m-          <Link[m
+[31m-            href="/products"[m
+[31m-            className="text-sm font-medium text-gray-700 transition hover:text-blue-700"[m
+[31m-          >[m
+[31m-            ← Back to Products[m
+[31m-          </Link>[m
+[31m-        </div>[m
+[31m-      </section>[m
+[31m-[m
+       {/* Product */}[m
+       <section className="mx-auto max-w-7xl px-6 py-12 md:py-20">[m
+         <div className="grid gap-10 md:grid-cols-2 md:items-start">[m
+[36m@@ -398,6 +384,9 @@[m [mexport default async function ProductDetailsPage({[m
+           </div>[m
+         </div>[m
+       </section>[m
+[31m-    </main>[m
+[32m+[m[32m      </main>[m
+[32m+[m
+[32m+[m[32m      <SiteFooter />[m
+[32m+[m[32m    </div>[m
+   );[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/src/app/products/page.tsx b/src/app/products/page.tsx[m
+[1mindex 7135063..97a9eba 100644[m
+[1m--- a/src/app/products/page.tsx[m
+[1m+++ b/src/app/products/page.tsx[m
+[36m@@ -3,6 +3,8 @@[m [mimport Link from "next/link";[m
+ import { createClient } from "@/lib/supabase/server";[m
+ import { buildMetadata } from "@/lib/seo";[m
+ import QuickActions from "@/components/whatsapp-actions";[m
+[32m+[m[32mimport SiteHeader from "@/components/site-header";[m
+[32m+[m[32mimport SiteFooter from "@/components/site-footer";[m
+ [m
+ export const metadata = buildMetadata({[m
+   title: "Our Products — Cylinders, Regulators & LPG Accessories",[m
+[36m@@ -87,46 +89,12 @@[m [mexport default async function ProductsListPage({[m
+   }[m
+ [m
+   return ([m
+[31m-    <main className="min-h-screen bg-white">[m
+[31m-      {/* Header */}[m
+[31m-      <section className="border-b border-gray-200 bg-white">[m
+[31m-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">[m
+[31m-          <div className="flex min-w-0 items-center gap-3">[m
+[31m-            <Link[m
+[31m-              href="/"[m
+[31m-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-700 text-xs font-extrabold tracking-tight text-white"[m
+[31m-              aria-label="Regime Energy Services home"[m
+[31m-            >[m
+[31m-              RG[m
+[31m-            </Link>[m
+[31m-            <Link[m
+[31m-              href="/"[m
+[31m-              className="truncate text-base font-bold text-blue-900 sm:text-xl"[m
+[31m-            >[m
+[31m-              Regime Energy Services[m
+[31m-            </Link>[m
+[31m-          </div>[m
+[31m-[m
+[31m-          <div className="flex flex-wrap items-center gap-2 sm:gap-5">[m
+[31m-            <nav aria-label="Site navigation" className="hidden items-center gap-5 md:flex">[m
+[31m-              <Link href="/products" className="text-sm font-semibold text-blue-700 underline decoration-2 underline-offset-4">Products</Link>[m
+[31m-              <Link href="/services" className="text-sm font-medium text-gray-600 hover:text-blue-700">Services</Link>[m
+[31m-              <Link href="/branches" className="text-sm font-medium text-gray-600 hover:text-blue-700">Branches</Link>[m
+[31m-              <Link href="/company-history" className="text-sm font-medium text-gray-600 hover:text-blue-700">Our History</Link>[m
+[31m-            </nav>[m
+[31m-[m
+[31m-            <Link[m
+[31m-              href="/"[m
+[31m-              className="inline-flex min-h-[44px] shrink-0 items-center self-start rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:self-auto"[m
+[31m-            >[m
+[31m-              ← Back to Home[m
+[31m-            </Link>[m
+[31m-          </div>[m
+[31m-        </div>[m
+[31m-      </section>[m
+[32m+[m[32m    <div className="flex min-h-screen flex-col bg-white">[m
+[32m+[m[32m      <SiteHeader currentPath="/products" />[m
+ [m
+[32m+[m[32m      <main className="flex-1">[m
+       {/* Page Intro */}[m
+[31m-      <section className="mx-auto max-w-7xl px-6 pb-6 pt-12 text-center">[m
+[32m+[m[32m      <section className="mx-auto max-w-7xl px-6 pb-6 pt-12 text-center md:pt-16">[m
+         <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">[m
+           Regime Energy Services[m
+         </p>[m
+[36m@@ -303,6 +271,9 @@[m [mexport default async function ProductsListPage({[m
+           </div>[m
+         )}[m
+       </section>[m
+[31m-    </main>[m
+[32m+[m[32m      </main>[m
+[32m+[m
+[32m+[m[32m      <SiteFooter />[m
+[32m+[m[32m    </div>[m
+   );[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/src/app/services/[slug]/page.tsx b/src/app/services/[slug]/page.tsx[m
+[1mindex bb8dcdc..464fcd9 100644[m
+[1m--- a/src/app/services/[slug]/page.tsx[m
+[1m+++ b/src/app/services/[slug]/page.tsx[m
+[36m@@ -6,6 +6,8 @@[m [mimport { createClient } from "@/lib/supabase/server";[m
+ import TrackedView from "@/components/analytics/tracked-view";[m
+ import TrackedLink from "@/components/analytics/tracked-link";[m
+ import { buildMetadata } from "@/lib/seo";[m
+[32m+[m[32mimport SiteHeader from "@/components/site-header";[m
+[32m+[m[32mimport SiteFooter from "@/components/site-footer";[m
+ [m
+ type ServicePageProps = {[m
+   params: Promise<{[m
+[36m@@ -93,29 +95,13 @@[m [mexport default async function ServiceDetailsPage({[m
+   }[m
+ [m
+   return ([m
+[31m-    <main className="min-h-screen bg-white">[m
+[32m+[m[32m    <div className="flex min-h-screen flex-col bg-white">[m
+[32m+[m[32m      <SiteHeader currentPath="/services" />[m
+[32m+[m
+[32m+[m[32m      <main className="flex-1">[m
+       {/* Analytics: record this service view */}[m
+       <TrackedView event="service_view" label={service.name} />[m
+ [m
+[31m-      {/* Header */}[m
+[31m-      <section className="border-b border-gray-200 bg-white">[m
+[31m-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">[m
+[31m-          <Link[m
+[31m-            href="/"[m
+[31m-            className="text-xl font-bold text-blue-700"[m
+[31m-          >[m
+[31m-            Regime Energy Services[m
+[31m-          </Link>[m
+[31m-[m
+[31m-          <Link[m
+[31m-            href="/#services"[m
+[31m-            className="text-sm font-medium text-gray-700 transition hover:text-blue-700"[m
+[31m-          >[m
+[31m-            ← Back to Services[m
+[31m-          </Link>[m
+[31m-        </div>[m
+[31m-      </section>[m
+[31m-[m
+       {/* Service Details */}[m
+       <section className="mx-auto max-w-7xl px-6 py-12 md:py-20">[m
+         <div className="grid gap-10 md:grid-cols-2 md:items-start">[m
+[36m@@ -230,6 +216,9 @@[m [mexport default async function ServiceDetailsPage({[m
+           </div>[m
+         </div>[m
+       </section>[m
+[31m-    </main>[m
+[32m+[m[32m      </main>[m
+[32m+[m
+[32m+[m[32m      <SiteFooter />[m
+[32m+[m[32m    </div>[m
+   );[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/src/app/services/page.tsx b/src/app/services/page.tsx[m
+[1mindex 1d9f85d..0caf8c9 100644[m
+[1m--- a/src/app/services/page.tsx[m
+[1m+++ b/src/app/services/page.tsx[m
+[36m@@ -2,6 +2,8 @@[m [mimport Link from "next/link";[m
+ import Image from "next/image";[m
+ import { createClient } from "@/lib/supabase/server";[m
+ import { buildMetadata } from "@/lib/seo";[m
+[32m+[m[32mimport SiteHeader from "@/components/site-header";[m
+[32m+[m[32mimport SiteFooter from "@/components/site-footer";[m
+ import QuickActions from "@/components/whatsapp-actions";[m
+ [m
+ export const metadata = buildMetadata({[m
+[36m@@ -53,46 +55,12 @@[m [mexport default async function ServicesListPage({[m
+   const serviceList = services ?? [];[m
+ [m
+   return ([m
+[31m-    <main className="min-h-screen bg-white">[m
+[31m-      {/* Header */}[m
+[31m-      <section className="border-b border-gray-200 bg-white">[m
+[31m-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">[m
+[31m-          <div className="flex min-w-0 items-center gap-3">[m
+[31m-            <Link[m
+[31m-              href="/"[m
+[31m-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-700 text-xs font-extrabold tracking-tight text-white"[m
+[31m-              aria-label="Regime Energy Services home"[m
+[31m-            >[m
+[31m-              RG[m
+[31m-            </Link>[m
+[31m-            <Link[m
+[31m-              href="/"[m
+[31m-              className="truncate text-base font-bold text-blue-900 sm:text-xl"[m
+[31m-            >[m
+[31m-              Regime Energy Services[m
+[31m-            </Link>[m
+[31m-          </div>[m
+[31m-[m
+[31m-          <div className="flex flex-wrap items-center gap-2 sm:gap-5">[m
+[31m-            <nav aria-label="Site navigation" className="hidden items-center gap-5 md:flex">[m
+[31m-              <Link href="/products" className="text-sm font-medium text-gray-600 hover:text-blue-700">Products</Link>[m
+[31m-              <Link href="/services" className="text-sm font-semibold text-blue-700 underline decoration-2 underline-offset-4">Services</Link>[m
+[31m-              <Link href="/branches" className="text-sm font-medium text-gray-600 hover:text-blue-700">Branches</Link>[m
+[31m-              <Link href="/company-history" className="text-sm font-medium text-gray-600 hover:text-blue-700">Our History</Link>[m
+[31m-            </nav>[m
+[32m+[m[32m    <div className="flex min-h-screen flex-col bg-white">[m
+[32m+[m[32m      <SiteHeader currentPath="/services" />[m
+ [m
+[31m-            <Link[m
+[31m-              href="/"[m
+[31m-              className="inline-flex min-h-[44px] shrink-0 items-center self-start rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:self-auto"[m
+[31m-            >[m
+[31m-              ← Back to Home[m
+[31m-            </Link>[m
+[31m-          </div>[m
+[31m-        </div>[m
+[31m-      </section>[m
+[31m-[m
+[31m-      {/* Page Intro */}[m
+[31m-      <section className="mx-auto max-w-7xl px-6 pb-6 pt-12 text-center">[m
+[32m+[m[32m      <main className="flex-1">[m
+[32m+[m[32m        {/* Page Intro */}[m
+[32m+[m[32m        <section className="mx-auto max-w-7xl px-6 pb-6 pt-12 text-center md:pt-16">[m
+         <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">[m
+           Regime Energy Services[m
+         </p>[m
+[36m@@ -250,6 +218,9 @@[m [mexport default async function ServicesListPage({[m
+           </div>[m
+         )}[m
+       </section>[m
+[31m-    </main>[m
+[32m+[m[32m      </main>[m
+[32m+[m
+[32m+[m[32m      <SiteFooter />[m
+[32m+[m[32m    </div>[m
+   );[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/src/components/company-slideshow.tsx b/src/components/company-slideshow.tsx[m
+[1mindex 5a8bec1..54de8c9 100644[m
+[1m--- a/src/components/company-slideshow.tsx[m
+[1m+++ b/src/components/company-slideshow.tsx[m
+[36m@@ -15,8 +15,11 @@[m [mtype CompanyMedia = {[m
+ [m
+ export default function CompanySlideshow({[m
+   media,[m
+[32m+[m[32m  children,[m
+ }: {[m
+   media: CompanyMedia[];[m
+[32m+[m[32m  /** Optional content rendered over the slides (e.g. hero copy + CTAs). */[m
+[32m+[m[32m  children?: React.ReactNode;[m
+ }) {[m
+   const [currentIndex, setCurrentIndex] = useState(0);[m
+ [m
+[36m@@ -79,8 +82,15 @@[m [mexport default function CompanySlideshow({[m
+           className="object-cover"[m
+         />[m
+ [m
+[31m-        {/* Dark overlay */}[m
+[31m-        <div className="absolute inset-0 bg-black/30" />[m
+[32m+[m[32m        {/* Dark overlay for text readability */}[m
+[32m+[m[32m        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-900/55 to-slate-900/20" />[m
+[32m+[m
+[32m+[m[32m        {/* Hero overlay content (homepage headline + actions) */}[m
+[32m+[m[32m        {children && ([m
+[32m+[m[32m          <div className="absolute inset-0 flex items-center">[m
+[32m+[m[32m            <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">{children}</div>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        )}[m
+ [m
+         {/* Previous Button */}[m
+         {activeMedia.length > 1 && ([m
