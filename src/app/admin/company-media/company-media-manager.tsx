@@ -139,8 +139,7 @@ export default function CompanyMediaManager({
       setSelectedFiles([]);
 
       setSuccess(
-        `${result.uploaded} image${
-          result.uploaded === 1 ? "" : "s"
+        `${result.uploaded} image${result.uploaded === 1 ? "" : "s"
         } uploaded successfully.`
       );
 
@@ -460,9 +459,8 @@ export default function CompanyMediaManager({
             >
               {uploading
                 ? "Uploading..."
-                : `Upload ${selectedFiles.length} Image${
-                    selectedFiles.length === 1 ? "" : "s"
-                  }`}
+                : `Upload ${selectedFiles.length} Image${selectedFiles.length === 1 ? "" : "s"
+                }`}
             </button>
           </div>
         )}
@@ -531,11 +529,10 @@ export default function CompanyMediaManager({
                     </span>
 
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${
-                        item.is_active
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${item.is_active
                           ? "bg-green-100 text-green-700"
                           : "bg-gray-100 text-gray-600"
-                      }`}
+                        }`}
                     >
                       {item.is_active ? "Active" : "Inactive"}
                     </span>

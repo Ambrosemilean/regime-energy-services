@@ -57,6 +57,7 @@ export default async function SiteHeader({
 
   // The homepage uses plain section anchors; other pages link back to the
   // homepage section through /#section.
+  const isHome = currentPath === "/";
 
   return (
     <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-md">
@@ -99,11 +100,10 @@ export default async function SiteHeader({
                 ? false
                 : currentPath.startsWith(item.match);
 
-            const className = `nav-link relative rounded text-sm font-medium tracking-wide ${
-              active
+            const className = `nav-link relative rounded text-sm font-medium tracking-wide ${active
                 ? "text-blue-800"
                 : "text-slate-600 hover:text-blue-800"
-            }`;
+              }`;
 
             return (
               <Link key={item.href} href={item.href} className={className}>
