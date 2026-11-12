@@ -55,10 +55,6 @@ export default async function SiteHeader({
     // Header still renders with defaults when the database is unreachable.
   }
 
-  // The homepage uses plain section anchors; other pages link back to the
-  // homepage section through /#section.
-  const isHome = currentPath === "/";
-
   return (
     <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:gap-4 sm:px-6 sm:py-4">

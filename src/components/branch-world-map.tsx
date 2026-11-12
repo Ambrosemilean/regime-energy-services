@@ -21,6 +21,15 @@ type LeafletMarker = {
       className?: string;
     }
   ): LeafletMarker;
+  bindTooltip(
+    content: string,
+    options?: {
+      permanent?: boolean;
+      direction?: string;
+      offset?: [number, number];
+      className?: string;
+    }
+  ): LeafletMarker;
 };
 
 type LeafletMap = {
@@ -63,15 +72,7 @@ type LeafletNamespace = {
       icon?: unknown;
     }
   ): LeafletMarker;
-  tooltip(
-    content: string,
-    options?: {
-      permanent?: boolean;
-      direction?: string;
-      offset?: [number, number];
-      className?: string;
-    }
-  ): { addTo(target: LeafletMarker): void };
+
   divIcon(options: {
     className: string;
     html: string;
@@ -267,12 +268,12 @@ export default function BranchWorldMap({
 
         // Permanent name label beside each pin — every branch location is
         // directly readable on the map without clicking.
-        L.tooltip(`<strong>${branch.name}</strong>`, {
+        marker.bindTooltip(`<strong>${branch.name}</strong>`, {
           permanent: true,
           direction: "right",
           offset: [12, 0],
           className: "regime-branch-tooltip",
-        }).addTo(marker);
+        });
 
         marker.addTo(createdMap);
         leafletMarkers[branch.id] = marker;
