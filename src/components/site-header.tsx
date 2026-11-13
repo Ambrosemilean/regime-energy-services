@@ -77,11 +77,8 @@ export default async function SiteHeader({
           )}
 
           <span className="min-w-0">
-            <span className="block truncate text-base font-bold tracking-tight text-blue-900 sm:text-lg">
+            <span className="block truncate text-sm font-bold tracking-tight text-blue-900 sm:text-lg">
               {companyName}
-            </span>
-            <span className="hidden text-xs font-medium uppercase tracking-widest text-gray-500 sm:block">
-              Downstream LPG · Since 2013
             </span>
           </span>
         </Link>

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import ChatWidget from "@/components/chat/chat-widget";
@@ -12,6 +12,15 @@ import {
   organizationJsonLd,
 } from "@/lib/seo";
 import "./globals.css";
+
+// Mobile device optimization: safe-area aware on notched/rounded phones
+// (iPhone notch, Android display cutouts, Samsung punch-hole cameras).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#0756a6",
+};
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

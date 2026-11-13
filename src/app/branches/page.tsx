@@ -44,7 +44,10 @@ export default async function BranchesPage() {
     console.error("Branches loading error:", error);
   }
 
-  const branchList = branches ?? [];
+  const branchList = (branches ?? []).filter(
+    (branch, index, all) =>
+      all.findIndex((other) => other.slug === branch.slug) === index
+  );
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -120,14 +123,6 @@ export default async function BranchesPage() {
               const phoneNumber = branch.phone
                 ? branch.phone.replace(/\s+/g, "")
                 : "";
-
-              const hasCoordinates =
-                branch.latitude !== null &&
-                branch.longitude !== null;
-
-              const mapUrl = hasCoordinates
-                ? `https://www.google.com/maps?q=${branch.latitude},${branch.longitude}&z=15&output=embed`
-                : null;
 
               const branchHref =
                 branch.slug || branch.id
@@ -271,28 +266,8 @@ export default async function BranchesPage() {
                       )}
                     </div>
 
-                    {/* Google Map */}
-                    {mapUrl && (
-                      <div className="relative z-20 mt-6 overflow-hidden rounded-xl border border-gray-200">
-                        <iframe
-                          title={`${branch.name} location map`}
-                          src={mapUrl}
-                          width="100%"
-                          height="280"
-                          loading="lazy"
-                          referrerPolicy="no-referrer-when-downgrade"
-                          className="block w-full border-0"
-                        />
-                      </div>
-                    )}
-
-                    {/* Missing coordinates notice */}
-                    {!mapUrl && (
-                      <div className="mt-6 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-                        Map location is not currently available for this
-                        branch.
-                      </div>
-                    )}
+                    {/* Per-branch map embeds removed — the single branch
+                        locator map above is the one map experience. */}
 
                     {branchHref && (
                       <span className="mt-6 inline-block text-sm font-semibold text-blue-700 group-hover:underline">

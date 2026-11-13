@@ -96,7 +96,14 @@ export default async function ProductViewPage({
             </p>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
+
+            <Link
+              href={`/admin/products/${product.id}/edit`}
+              className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              Edit Product
+            </Link>
 
             <Link
               href={`/products/${product.slug}`}

@@ -67,12 +67,21 @@ export default async function ServicePage({
           </p>
         </div>
 
-        <Link
-          href="/admin/services"
-          className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          ← Back to Services
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href={`/admin/services/${service.id}/edit`}
+            className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+          >
+            Edit Service
+          </Link>
+
+          <Link
+            href="/admin/services"
+            className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            ← Back to Services
+          </Link>
+        </div>
       </div>
 
       {/* Service information */}

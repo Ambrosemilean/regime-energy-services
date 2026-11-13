@@ -60,28 +60,6 @@ type BranchRow = {
   display_order: number | null;
 };
 
-/** Presentation-only service commitments (approved homepage copy). */
-const TRUST_COMMITMENTS = [
-  {
-    title: "Accurate Dispensing",
-    text: "Every refill is measured with calibrated equipment — 1kg is always 1kg.",
-  },
-  {
-    title: "Safe Handling",
-    text: "Trained staff, certified cylinders and disciplined LPG handling, storage and transport.",
-  },
-  {
-    title: "Home and Business Delivery",
-    text: "Swift delivery to homes and businesses across Egbu, Owerri Municipal and Owerri North.",
-  },
-] as const;
-
-const CUSTOMER_CATEGORIES = [
-  { label: "Residential", text: "Household refills and cylinder accessories." },
-  { label: "Commercial", text: "Restaurants, hotels, bakeries and schools." },
-  { label: "Industrial", text: "Bulk supply for factories and industry." },
-] as const;
-
 /**
  * Mission / vision cards. Admin-written copy is preferred when present.
  */
@@ -153,7 +131,10 @@ export default async function Home() {
 
   const serviceList = (services ?? []) as ServiceRow[];
   const productList = (products ?? []) as ProductRow[];
-  const branchList = (branches ?? []) as BranchRow[];
+  const branchList = ((branches ?? []) as BranchRow[]).filter(
+    (branch, index, all) =>
+      all.findIndex((other) => other.slug === branch.slug) === index
+  );
 
   // The interactive branch map can be switched off from the admin
   // dashboard (Site Settings → "Show the branch map on the homepage").
@@ -189,22 +170,23 @@ export default async function Home() {
         {/* ---------------------------------------------------------- */}
         {heroMedia.length > 0 ? (
           <CompanySlideshow media={heroMedia}>
-            <div className="max-w-3xl py-16 md:py-24">
+            <div className="max-w-3xl py-14 md:py-20">
               <span className="regime-accent-chip bg-white/95">
-                Since 2013 · Owerri, Imo State
+                Since 2015 · Owerri, Imo State
               </span>
 
-              <h1 className="mt-5 text-4xl font-bold leading-tight text-white sm:text-5xl md:text-6xl">
+              <h1 className="mt-5 text-3xl font-bold leading-tight text-white sm:text-5xl md:text-6xl">
                 Powering Everyday Life With Dependable LPG
               </h1>
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-200 sm:text-lg">
-                Regime Energy Services is a downstream energy company
-                supplying LPG to homes, businesses and industries, with safe
-                handling and accurate dispensing every time.
+                Regime Energy Services is a trusted player in Nigeria&apos;s LPG
+                downstream sector — supplying LPG to homes, businesses and
+                industries with safe handling and accurate dispensing every
+                time.
               </p>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Link
                   href="#about"
                   className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-regime-blue px-7 py-3 font-bold text-white transition hover:bg-regime-blue-dark"
@@ -229,20 +211,21 @@ export default async function Home() {
           <section className="bg-regime-blue-dark px-4 py-20 text-white sm:px-6 md:py-28">
             <div className="mx-auto max-w-7xl">
               <span className="regime-accent-chip bg-white/95">
-                Since 2013 · Owerri, Imo State
+                Since 2015 · Owerri, Imo State
               </span>
 
-              <h1 className="mt-5 max-w-4xl text-4xl font-bold leading-tight sm:text-5xl md:text-6xl">
+              <h1 className="mt-5 max-w-4xl text-3xl font-bold leading-tight sm:text-5xl md:text-6xl">
                 Powering Everyday Life With Dependable LPG
               </h1>
 
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-blue-100">
-                Regime Energy Services is a downstream energy company
-                supplying LPG to homes, businesses and industries, with safe
-                handling and accurate dispensing every time.
+              <p className="mt-5 max-w-2xl text-base leading-8 text-blue-100 sm:text-lg">
+                Regime Energy Services is a trusted player in Nigeria&apos;s LPG
+                downstream sector — supplying LPG to homes, businesses and
+                industries with safe handling and accurate dispensing every
+                time.
               </p>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Link
                   href="#about"
                   className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-white px-7 py-3 font-bold text-regime-blue-dark transition hover:bg-blue-50"
@@ -265,77 +248,7 @@ export default async function Home() {
           </section>
         )}
 
-        {/* ---------------------------------------------------------- */}
-        {/* Trust indicators — marquee ticker + customer categories */}
-        <section className="border-b border-gray-100 bg-white px-0 py-10 sm:py-12">
-          {/* Marquee ticker of service commitments (duplicated for a seamless
-              loop; hidden from screen readers as a duplicate) */}
-          <div className="regime-marquee" aria-label="Our service commitments">
-            <div className="regime-marquee-track">
-              {[0, 1].map((copy) => (
-                <div
-                  key={copy}
-                  aria-hidden={copy === 1}
-                  className="flex shrink-0 items-center gap-10 pr-10"
-                >
-                  {TRUST_COMMITMENTS.map((item) => (
-                    <span
-                      key={item.title}
-                      className="flex items-center gap-2.5 whitespace-nowrap text-sm font-semibold text-gray-800"
-                    >
-                      <span
-                        aria-hidden="true"
-                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-regime-green/15 text-xs font-bold text-regime-green-dark"
-                      >
-                        ✓
-                      </span>
 
-                      <span className="font-bold text-gray-900">
-                        {item.title}
-                      </span>
-
-                      <span className="hidden text-gray-500 md:inline">
-                        — {item.text}
-                      </span>
-
-                      <span
-                        aria-hidden="true"
-                        className="ml-6 h-1.5 w-1.5 rounded-full bg-regime-red"
-                      />
-                    </span>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-
-            <div className="mx-auto max-w-7xl">
-              <div className="border-t border-gray-100 pt-10">
-                <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-                <h2 className="max-w-md text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-                  Trusted by homes, businesses and industries across Owerri.
-                </h2>
-
-                <div className="grid gap-4 sm:grid-cols-3">
-                  {CUSTOMER_CATEGORIES.map((category) => (
-                    <div
-                      key={category.label}
-                      className="rounded-xl border border-gray-200 bg-gray-50 px-5 py-4"
-                    >
-                      <p className="text-sm font-bold text-regime-blue">
-                        {category.label}
-                      </p>
-
-                      <p className="mt-1 text-xs leading-5 text-gray-600">
-                        {category.text}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* ---------------------------------------------------------- */}
         {/* Location + statistics                                       */}
@@ -347,14 +260,14 @@ export default async function Home() {
                 <p className="regime-eyebrow">Where We Operate</p>
 
                 <h2 className="regime-heading text-3xl sm:text-4xl">
-                  We Serve Owerri And Beyond
+                  We Serve Imo And Beyond
                 </h2>
 
                 <p className="regime-lead mt-4 max-w-xl [text-align:justify]">
-                <strong>Two branches</strong> keep LPG close to you: our Main
-                Branch at <strong>Egbeada Junction, Irete</strong>, and our
-                Egbu Branch on Egbu Road, with delivery across Egbu, Owerri
-                Municipal and Owerri North.
+                <strong>Three branches</strong> keep LPG close to you: our
+                Main Branch at <strong>Egbeada Junction, Irete</strong>, our
+                Orogwe Branch, and our Egbu Branch on Egbu Road, with
+                delivery across Egbu, Owerri Municipal and Owerri North.
               </p>
 
                 <div className="mt-8 flex flex-wrap gap-3">
@@ -380,42 +293,31 @@ export default async function Home() {
 
               {/* Statistics — branch count is live; the rest is approved
                   company copy (no stats table exists in the database). */}
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="regime-card p-6">
-                  <p className="regime-stat-number">13+</p>
+                  <p className="regime-stat-number">11+</p>
 
                   <p className="mt-2 text-sm font-semibold text-gray-900">
                     Years of Experience
                   </p>
 
                   <p className="mt-1 text-xs text-gray-500">
-                    Serving since 2013
+                    Serving since 2015
                   </p>
                 </div>
 
                 <div className="regime-card p-6">
-                  <p className="regime-stat-number">{branchList.length || 2}</p>
+                  <p className="regime-stat-number">{branchList.length || 3}</p>
 
                   <p className="mt-2 text-sm font-semibold text-gray-900">
                     Branches in Owerri
                   </p>
 
                   <p className="mt-1 text-xs text-gray-500">
-                    Egbeada Junction &amp; Egbu Road
+                    Egbeada, Orogwe &amp; Egbu Road
                   </p>
                 </div>
 
-                <div className="regime-card p-6">
-                  <p className="regime-stat-number">4</p>
-
-                  <p className="mt-2 text-sm font-semibold text-gray-900">
-                    Refill Sizes
-                  </p>
-
-                  <p className="mt-1 text-xs text-gray-500">
-                    3kg, 6kg, 12.5kg and 50kg
-                  </p>
-                </div>
               </div>
             </div>
           </div>
@@ -463,7 +365,7 @@ export default async function Home() {
                 </h2>
 
                 <p className="regime-lead mt-4 [text-align:justify]">
-                  <strong>Since 2013</strong>, Regime Energy Services Limited
+                  <strong>Since 2015</strong>, Regime Energy Services Limited
                   has made LPG more accessible through dependable distribution
                   and supply — serving households, commercial establishments
                   and industry with <strong>reliability, transparency,
@@ -576,12 +478,18 @@ export default async function Home() {
               <p className="regime-eyebrow">What We Do</p>
 
               <h2 className="regime-heading text-3xl sm:text-4xl">
-                Energy and Support Services
+                Powering Lives. Delivering Energy. Driving Progress.
               </h2>
 
               <p className="regime-lead mt-4">
-                From a single household refill to bulk supply for industry —
-                everything you need to cook, trade and operate on LPG.
+                Regime Energy Services is a trusted player in Nigeria&apos;s
+                LPG downstream sector, committed to delivering reliable, safe
+                and efficient energy solutions. From LPG distribution and
+                cylinder refilling to bulk supply, haulage and doorstep
+                delivery, we connect homes, businesses and industries to the
+                energy they need to thrive. Through operational excellence,
+                safety and customer-focused service, we make access to clean
+                energy simpler, smarter and more dependable.
               </p>
             </div>
 

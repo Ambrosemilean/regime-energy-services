@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/server";
  */
 
 const FOOTER_DESCRIPTION =
-  "A trusted downstream LPG company serving homes, businesses and industries with reliable gas supply, distribution, delivery and related energy services. Since 2013, committed to safety, integrity, quality service and customer satisfaction.";
+  "A trusted downstream LPG company serving homes, businesses and industries with reliable gas supply, distribution, delivery and related energy services. Since 2015, committed to safety, integrity, quality service and customer satisfaction.";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
