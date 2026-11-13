@@ -68,7 +68,7 @@ export default function CompanySlideshow({
   return (
     <section className="relative w-full overflow-hidden bg-gray-900">
       {/* Main Image */}
-      <div className="relative h-[55vh] min-h-[400px] w-full md:h-[650px]">
+      <div className="relative h-[min(60vh,max(22rem,26rem))] w-full md:h-[min(650px,75vh)]">
         <Image
           key={currentImage.id}
           src={currentImage.image_url}

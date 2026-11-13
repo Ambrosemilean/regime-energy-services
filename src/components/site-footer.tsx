@@ -114,7 +114,7 @@ export default async function SiteFooter() {
   }
 
   return (
-    <footer className="border-t border-gray-800 bg-gray-950 px-6 py-14 text-white">
+    <footer className="border-t border-gray-800 bg-gray-950 px-4 py-14 text-white sm:px-6 lg:px-10">
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}

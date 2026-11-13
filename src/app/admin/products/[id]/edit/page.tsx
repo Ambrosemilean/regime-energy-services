@@ -48,8 +48,8 @@ export default async function EditProductPage({
   }
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6">
-      <div className="mx-auto max-w-5xl">
+    <main className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-10">
+      <div className="mx-auto w-full max-w-5xl">
         <EditProductForm
           product={product}
           categories={categories ?? []}

@@ -151,6 +151,96 @@ button.fixed {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ------------------------------------------------------------------ */
+/* Fluid media — every image / video / embed scales with its container */
+/* ------------------------------------------------------------------ */
+img,
+video,
+iframe,
+embed,
+object,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Except absolutely-positioned Next.js images, which use fill + object-fit */
+.img-fluid-reset {
+  max-width: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Standard responsive breakpoints                                     */
+/*   mobile  ≤ 600px                                                   */
+/*   tablet  601–900px                                                 */
+/*   desktop 901–1199px                                                */
+/*   large   1200px+                                                   */
+/* ------------------------------------------------------------------ */
+
+/* MOBILE — max-width 600px */
+@media (max-width: 600px) {
+  html {
+    scroll-padding-top: 84px;
+  }
+
+  .regime-section {
+    padding-block: 3.25rem;
+  }
+
+  .regime-container {
+    width: min(100% - 1.5rem, 1280px);
+  }
+
+  .regime-lead {
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  .regime-mvp-card {
+    padding: 1.1rem 1.2rem;
+  }
+
+  /* Buttons become full-width, thumb-friendly tap targets */
+  .regime-button-primary,
+  .regime-button-secondary {
+    width: 100%;
+    max-width: 26rem;
+  }
+}
+
+/* TABLET — 601px to 900px */
+@media (min-width: 601px) and (max-width: 900px) {
+  .regime-section {
+    padding-block: 4.5rem;
+  }
+
+  .regime-container {
+    width: min(100% - 2.5rem, 1280px);
+  }
+}
+
+/* DESKTOP — 901px to 1199px */
+@media (min-width: 901px) and (max-width: 1199px) {
+  .regime-container {
+    width: min(100% - 3rem, 1280px);
+  }
+}
+
+/* LARGE DESKTOP — 1200px+ */
+@media (min-width: 1200px) {
+  .regime-container {
+    width: min(100% - 4rem, 1320px);
+  }
+
+  .regime-section {
+    padding-block: 8rem;
+  }
+
+  .regime-heading {
+    font-size: clamp(2.25rem, 3vw, 3.5rem);
+  }
+}
+
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 96px;
