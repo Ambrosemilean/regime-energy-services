@@ -66,9 +66,10 @@ export default function CompanySlideshow({
   }
 
   return (
-    <section className="relative w-full overflow-hidden bg-gray-900">
-      {/* Main Image */}
-      <div className="relative h-[min(60vh,max(22rem,26rem))] w-full md:h-[min(650px,75vh)]">
+    <section className="relative w-full overflow-hidden bg-gray-900 md:flex md:min-h-[min(650px,75vh)] md:items-center">
+      {/* Main Image — absolute background layer so the hero can grow with
+          its content on phones (buttons never get clipped on Androids). */}
+      <div className="absolute inset-0">
         <Image
           key={currentImage.id}
           src={currentImage.image_url}
@@ -84,57 +85,57 @@ export default function CompanySlideshow({
 
         {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-900/55 to-slate-900/20" />
-
-        {/* Hero overlay content (homepage headline + actions) */}
-        {children && (
-          <div className="absolute inset-0 flex items-center">
-            <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">{children}</div>
-          </div>
-        )}
-
-        {/* Previous Button */}
-        {activeMedia.length > 1 && (
-          <button
-            type="button"
-            onClick={goToPrevious}
-            aria-label="Previous image"
-            className="absolute left-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl text-gray-900 shadow-lg transition hover:bg-white md:left-8"
-          >
-            ‹
-          </button>
-        )}
-
-        {/* Next Button */}
-        {activeMedia.length > 1 && (
-          <button
-            type="button"
-            onClick={goToNext}
-            aria-label="Next image"
-            className="absolute right-4 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl text-gray-900 shadow-lg transition hover:bg-white md:right-8"
-          >
-            ›
-          </button>
-        )}
-
-        {/* Slide Indicators */}
-        {activeMedia.length > 1 && (
-          <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-2">
-            {activeMedia.map((item, index) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setCurrentIndex(index)}
-                aria-label={`Go to slide ${index + 1}`}
-                className={`h-2.5 rounded-full transition-all ${
-                  index === currentIndex
-                    ? "w-8 bg-white"
-                    : "w-2.5 bg-white/60 hover:bg-white"
-                }`}
-              />
-            ))}
-          </div>
-        )}
       </div>
+
+      {/* Hero overlay content (homepage headline + actions) */}
+      {children && (
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6">
+          {children}
+        </div>
+      )}
+
+      {/* Previous Button */}
+      {activeMedia.length > 1 && (
+        <button
+          type="button"
+          onClick={goToPrevious}
+          aria-label="Previous image"
+          className="absolute left-4 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl text-gray-900 shadow-lg transition hover:bg-white md:left-8"
+        >
+          ‹
+        </button>
+      )}
+
+      {/* Next Button */}
+      {activeMedia.length > 1 && (
+        <button
+          type="button"
+          onClick={goToNext}
+          aria-label="Next image"
+          className="absolute right-4 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl text-gray-900 shadow-lg transition hover:bg-white md:right-8"
+        >
+          ›
+        </button>
+      )}
+
+      {/* Slide Indicators */}
+      {activeMedia.length > 1 && (
+        <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-2">
+          {activeMedia.map((item, index) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setCurrentIndex(index)}
+              aria-label={`Go to slide ${index + 1}`}
+              className={`h-2.5 rounded-full transition-all ${
+                index === currentIndex
+                  ? "w-8 bg-white"
+                  : "w-2.5 bg-white/60 hover:bg-white"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

@@ -170,7 +170,7 @@ export default async function Home() {
         {/* ---------------------------------------------------------- */}
         {heroMedia.length > 0 ? (
           <CompanySlideshow media={heroMedia}>
-            <div className="max-w-3xl py-14 md:py-20">
+            <div className="max-w-3xl pb-16 pt-14 md:py-20">
               <span className="regime-accent-chip bg-white/95">
                 Since 2015 · Owerri, Imo State
               </span>
