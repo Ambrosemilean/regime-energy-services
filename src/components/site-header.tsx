@@ -1,9 +1,24 @@
 import Image from "next/image";
 import Link from "next/link";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import SiteMobileMenu from "@/components/site-mobile-menu";
 import TrackedLink from "@/components/analytics/tracked-link";
 import { getCompanyWhatsAppLink } from "@/components/whatsapp-actions";
+
+type CompanyProfileSummary = {
+  company_name: string | null;
+  tagline: string | null;
+  logo_url: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  whatsapp: string | null;
+  mission: string | null;
+  vision: string | null;
+  short_description: string | null;
+  description: string | null;
+};
 
 /**
  * Shared site header for every public page.
@@ -24,6 +39,32 @@ const NAV_ITEMS = [
   { href: "/#contact", label: "Contact", match: "/#contact" },
 ] as const;
 
+/**
+ * Cached per-request: the homepage renders SiteHeader, SiteFooter, and the
+ * page itself — together they used to fire the same company_profile query
+ * three times per render.
+ */
+export const getActiveCompanyProfile = cache(
+  async (): Promise<CompanyProfileSummary | null> => {
+    try {
+      const supabase = await createClient();
+
+      const { data: company } = await supabase
+        .from("company_profile")
+        .select(
+          "company_name, tagline, logo_url, phone, email, address, whatsapp, mission, vision, short_description, description"
+        )
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+
+      return (company as CompanyProfileSummary) ?? null;
+    } catch {
+      return null;
+    }
+  }
+);
+
 export default async function SiteHeader({
   currentPath = "/",
 }: {
@@ -34,19 +75,11 @@ export default async function SiteHeader({
   let orderHref: string | null = null;
 
   try {
-    const supabase = await createClient();
+    const company = await getActiveCompanyProfile();
 
-    const [{ data: company }, whatsappHref] = await Promise.all([
-      supabase
-        .from("company_profile")
-        .select("company_name, logo_url")
-        .eq("is_active", true)
-        .limit(1)
-        .maybeSingle(),
-      getCompanyWhatsAppLink(
-        "Hello Regime Energy Services, I would like to order gas."
-      ),
-    ]);
+    const whatsappHref = await getCompanyWhatsAppLink(
+      "Hello Regime Energy Services, I would like to order gas."
+    );
 
     if (company?.company_name) companyName = company.company_name;
     logoUrl = company?.logo_url ?? null;

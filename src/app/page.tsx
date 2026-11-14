@@ -3,7 +3,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import CompanySlideshow from "@/components/company-slideshow";
 import BranchWorldMap from "@/components/branch-world-map";
-import SiteHeader from "@/components/site-header";
+import SiteHeader, {
+  getActiveCompanyProfile,
+} from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import TrackedLink from "@/components/analytics/tracked-link";
 import {
@@ -67,8 +69,11 @@ type BranchRow = {
 export default async function Home() {
   const supabase = await createClient();
 
+  // Cached per-request company profile (shared with SiteHeader/SiteFooter
+  // and the WhatsApp link builders) — one DB round-trip instead of four.
+  const cachedCompany = await getActiveCompanyProfile();
+
   const [
-    { data: company },
     { data: media },
     { data: services },
     { data: products },
@@ -77,12 +82,6 @@ export default async function Home() {
     orderHref,
     deliveryHref,
   ] = await Promise.all([
-    supabase
-      .from("company_profile")
-      .select("*")
-      .eq("is_active", true)
-      .limit(1)
-      .maybeSingle(),
     supabase
       .from("company_media")
       .select("*")
@@ -140,7 +139,7 @@ export default async function Home() {
   // dashboard (Site Settings → "Show the branch map on the homepage").
   const showBranchMap = settings?.show_branch_map !== false;
 
-  // The admin uploads a weighbridge photo via Company Media with a file
+  // The admin uploads a weighbridge photo via company Media with a file
   // name/title containing "weighbridge". It is shown in the featured
   // weighbridge section instead of the hero slideshow.
   const weighbridgeMedia =
@@ -156,9 +155,9 @@ export default async function Home() {
     ? media!.filter((item) => item.id !== weighbridgeMedia.id)
     : (media ?? []);
 
-  const phoneHref = company?.phone ? `tel:${company.phone}` : null;
-  const callHref = phoneHref ?? (company?.phone ? `tel:${company.phone}` : null);
-  const phoneDisplay = company?.phone || "08021295401";
+  const phoneHref = cachedCompany?.phone ? `tel:${cachedCompany.phone}` : null;
+  const callHref = phoneHref ?? (cachedCompany?.phone ? `tel:${cachedCompany.phone}` : null);
+  const phoneDisplay = cachedCompany?.phone || "08021295401";
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -292,7 +291,7 @@ export default async function Home() {
               </div>
 
               {/* Statistics — branch count is live; the rest is approved
-                  company copy (no stats table exists in the database). */}
+                  approved company copy (no stats table exists in the database). */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="regime-card p-6">
                   <p className="regime-stat-number">11+</p>
@@ -429,7 +428,7 @@ export default async function Home() {
                 {
                   title: "Our Mission",
                   text:
-                    company?.mission ||
+                    cachedCompany?.mission ||
                     "To deliver safe, reliable and accessible LPG solutions to homes, businesses and industries.",
                   accent: "border-l-regime-blue bg-regime-blue",
                   letter: "M",
@@ -437,7 +436,7 @@ export default async function Home() {
                 {
                   title: "Our Vision",
                   text:
-                    company?.vision ||
+                    cachedCompany?.vision ||
                     "To be a trusted name in Nigeria's downstream LPG industry.",
                   accent: "border-l-regime-red bg-regime-red",
                   letter: "V",
@@ -800,7 +799,7 @@ export default async function Home() {
                   </p>
 
                   <dl className="mt-8 space-y-5">
-                    {company?.phone && (
+                    {cachedCompany?.phone && (
                       <div>
                         <dt className="text-xs font-bold uppercase tracking-widest text-gray-500">
                           Phone
@@ -808,16 +807,16 @@ export default async function Home() {
 
                         <dd>
                           <a
-                            href={`tel:${company.phone}`}
+                            href={`tel:${cachedCompany.phone}`}
                             className="mt-1 block font-semibold text-regime-blue hover:underline"
                           >
-                            {company.phone}
+                            {cachedCompany.phone}
                           </a>
                         </dd>
                       </div>
                     )}
 
-                    {company?.email && (
+                    {cachedCompany?.email && (
                       <div>
                         <dt className="text-xs font-bold uppercase tracking-widest text-gray-500">
                           Email
@@ -825,23 +824,23 @@ export default async function Home() {
 
                         <dd>
                           <a
-                            href={`mailto:${company.email}`}
+                            href={`mailto:${cachedCompany.email}`}
                             className="mt-1 block break-all font-semibold text-regime-blue hover:underline"
                           >
-                            {company.email}
+                            {cachedCompany.email}
                           </a>
                         </dd>
                       </div>
                     )}
 
-                    {company?.address && (
+                    {cachedCompany?.address && (
                       <div>
                         <dt className="text-xs font-bold uppercase tracking-widest text-gray-500">
                           Address
                         </dt>
 
                         <dd className="mt-1 font-semibold leading-6 text-gray-900">
-                          {company.address}
+                          {cachedCompany.address}
                         </dd>
                       </div>
                     )}

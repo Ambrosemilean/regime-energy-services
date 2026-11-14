@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveCompanyProfile } from "@/components/site-header";
 
 /**
  * Shared corporate footer for every public page.
@@ -80,24 +81,25 @@ export default async function SiteFooter() {
   let socials: Partial<Record<string, string>> = {};
 
   try {
-    const supabase = await createClient();
+    const [company, settingsResult] = await Promise.all([
+      getActiveCompanyProfile(),
+      (async () => {
+        const supabase = await createClient();
 
-    const [{ data: company }, { data: settings }] = await Promise.all([
-      supabase
-        .from("company_profile")
-        .select("company_name, logo_url, phone, email, address")
-        .eq("is_active", true)
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from("site_settings")
-        .select(
-          "show_company_history_link, facebook_url, instagram_url, twitter_url, linkedin_url, youtube_url"
-        )
-        .eq("is_active", true)
-        .limit(1)
-        .maybeSingle(),
+        const { data } = await supabase
+          .from("site_settings")
+          .select(
+            "show_company_history_link, facebook_url, instagram_url, twitter_url, linkedin_url, youtube_url"
+          )
+          .eq("is_active", true)
+          .limit(1)
+          .maybeSingle();
+
+        return data;
+      })(),
     ]);
+
+    const settings = settingsResult;
 
     if (company?.company_name) companyName = company.company_name;
     logoUrl = company?.logo_url ?? null;

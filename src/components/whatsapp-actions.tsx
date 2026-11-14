@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import TrackedLink, { TrackedPageLink } from "@/components/analytics/tracked-link";
 
@@ -45,8 +46,12 @@ export function normalizeNigerianWhatsAppNumber(
  * buildWhatsAppLink instead of calling getCompanyWhatsAppLink repeatedly.
  *
  * Returns null when the company has no valid WhatsApp number configured.
+ *
+ * Cached per-request via React `cache`, so a page that renders the header,
+ * footer and several WhatsApp links performs ONE database lookup instead
+ * of one per call site.
  */
-async function getCompanyWhatsAppNumber(): Promise<string | null> {
+const getCompanyWhatsAppNumber = cache(async (): Promise<string | null> => {
   try {
     const supabase = await createClient();
 
@@ -61,7 +66,7 @@ async function getCompanyWhatsAppNumber(): Promise<string | null> {
   } catch {
     return null;
   }
-}
+});
 
 /**
  * Builds a wa.me URL from an already-normalized number, with an optional
@@ -83,6 +88,9 @@ function buildWhatsAppLink(
 export async function getCompanyWhatsAppLink(
   preFilledMessage?: string
 ): Promise<string | null> {
+  // getCompanyWhatsAppNumber is React-cache'd per request: every call site
+  // on a page (header, footer, floating button, hero CTAs) shares ONE
+  // database lookup for the WhatsApp number.
   const normalized = await getCompanyWhatsAppNumber();
   if (!normalized) return null;
 

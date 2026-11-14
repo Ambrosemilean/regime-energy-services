@@ -80,6 +80,9 @@ export default function CompanySlideshow({
           }
           fill
           sizes="100vw"
+          // LCP candidate: load the first hero slide with high priority;
+          // subsequent slides are swapped client-side by the same element.
+          priority={currentIndex === 0}
           className="object-cover"
         />
 
@@ -118,24 +121,8 @@ export default function CompanySlideshow({
         </button>
       )}
 
-      {/* Slide Indicators */}
-      {activeMedia.length > 1 && (
-        <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-2">
-          {activeMedia.map((item, index) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => setCurrentIndex(index)}
-              aria-label={`Go to slide ${index + 1}`}
-              className={`h-2.5 rounded-full transition-all ${
-                index === currentIndex
-                  ? "w-8 bg-white"
-                  : "w-2.5 bg-white/60 hover:bg-white"
-              }`}
-            />
-          ))}
-        </div>
-      )}
+      {/* Slide indicators are intentionally hidden (per requirements) —
+          automatic transitions and the prev/next arrows remain active. */}
     </section>
   );
 }

@@ -32,6 +32,21 @@ type EditableProduct = {
 const inputClass =
   "w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm outline-none focus:border-blue-600";
 
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+
+function validatePrimaryImage(file: File): string | null {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    return "Invalid image type. Please use JPG, PNG, or WEBP.";
+  }
+
+  if (file.size > MAX_IMAGE_SIZE) {
+    return "The selected image is larger than 5MB.";
+  }
+
+  return null;
+}
+
 export default function EditProductForm({
   product,
   categories,
@@ -56,6 +71,22 @@ export default function EditProductForm({
 
     const formData = new FormData(event.currentTarget);
 
+    // Client-side validation so obvious mistakes never reach the server.
+    const imageInput = formData.get("image_primary");
+
+    if (imageInput instanceof File && imageInput.size > 0) {
+      const imageError = validatePrimaryImage(imageInput);
+
+      if (imageError) {
+        setErrorMessage(imageError);
+        setLoading(false);
+        return;
+      }
+    }
+
+    const replacingImage =
+      imageInput instanceof File && imageInput.size > 0;
+
     const result = await updateProduct(formData);
 
     setLoading(false);
@@ -66,6 +97,13 @@ export default function EditProductForm({
     }
 
     setMessage(result.message);
+
+    if (replacingImage) {
+      // Clear the file input so a refresh/re-submit cannot re-upload the
+      // same file, and confirm the replacement to the admin.
+      event.currentTarget.reset();
+    }
+
     router.refresh();
   }
 

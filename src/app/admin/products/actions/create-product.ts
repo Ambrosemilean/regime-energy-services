@@ -492,8 +492,17 @@ export async function updateProduct(
     };
   }
 
+  // ------------------------------------------------------------------
   // Optional: replace the primary image if a new file was provided.
+  //
+  // The replacement is atomic-ish: the new file is uploaded FIRST and a
+  // new record is inserted BEFORE the old record/storage object is
+  // removed. That way a failed upload or insert never destroys the
+  // existing image — when no file is selected, the current image is
+  // left completely untouched.
+  // ------------------------------------------------------------------
   const primaryFile = formData.get("image_primary");
+  let imageReplaced = false;
 
   if (primaryFile instanceof File && primaryFile.size > 0) {
     if (!ALLOWED_IMAGE_TYPES.includes(primaryFile.type)) {
@@ -518,25 +527,7 @@ export async function updateProduct(
       .eq("is_primary", true)
       .maybeSingle();
 
-    // Delete the old primary image record and its storage object.
-    if (existingPrimary) {
-      const marker = "/product-images/";
-      const urlIndex = existingPrimary.image_url.indexOf(marker);
-
-      if (urlIndex !== -1) {
-        await supabase.storage
-          .from("product-images")
-          .remove([
-            existingPrimary.image_url.slice(urlIndex + marker.length),
-          ]);
-      }
-
-      await supabase
-        .from("product_images")
-        .delete()
-        .eq("id", existingPrimary.id);
-    }
-
+    // 1. Upload the new image to Supabase Storage first.
     const safeFileName = getSafeFileName(primaryFile.name);
     const storagePath = `${productId}/${crypto.randomUUID()}-${safeFileName}`;
     const fileBuffer = await primaryFile.arrayBuffer();
@@ -549,6 +540,8 @@ export async function updateProduct(
       });
 
     if (uploadError) {
+      console.error("Primary image upload error:", uploadError);
+
       return {
         success: false,
         message: `Primary image upload failed: ${uploadError.message}`,
@@ -559,7 +552,8 @@ export async function updateProduct(
       .from("product-images")
       .getPublicUrl(storagePath);
 
-    const { error: imageRecordError } = await supabase
+    // 2. Insert the new image record BEFORE removing anything old.
+    const { data: newImage, error: imageRecordError } = await supabase
       .from("product_images")
       .insert({
         product_id: productId,
@@ -568,19 +562,66 @@ export async function updateProduct(
         image_type: "primary",
         display_order: 0,
         is_primary: true,
-      });
+      })
+      .select("id")
+      .single();
 
-    if (imageRecordError) {
+    if (imageRecordError || !newImage) {
+      console.error(
+        "Primary image record error:",
+        imageRecordError
+      );
+
+      // Roll back the orphaned upload so storage does not fill up
+      // with unreachable files.
+      await supabase.storage
+        .from("product-images")
+        .remove([storagePath]);
+
       return {
         success: false,
-        message: `Primary image save failed: ${imageRecordError.message}`,
+        message: `Primary image save failed: ${
+          imageRecordError?.message ?? "unknown database error"
+        }`,
       };
     }
+
+    // 3. Only now remove the old record and its storage object.
+    if (existingPrimary) {
+      const marker = "/product-images/";
+      const urlIndex = existingPrimary.image_url.indexOf(marker);
+
+      if (urlIndex !== -1) {
+        const { error: removeError } = await supabase.storage
+          .from("product-images")
+          .remove([
+            existingPrimary.image_url.slice(urlIndex + marker.length),
+          ]);
+
+        if (removeError) {
+          // Non-fatal: the DB now points at the new image; log the
+          // orphaned object for a storage cleanup later.
+          console.error(
+            "Old primary image storage cleanup error:",
+            removeError
+          );
+        }
+      }
+
+      await supabase
+        .from("product_images")
+        .delete()
+        .eq("id", existingPrimary.id);
+    }
+
+    imageReplaced = true;
   }
 
   return {
     success: true,
-    message: "Product updated successfully.",
+    message: imageReplaced
+      ? "Product updated successfully. The new primary image has been saved."
+      : "Product updated successfully.",
   };
 }
 
