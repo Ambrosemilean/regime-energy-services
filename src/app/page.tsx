@@ -13,38 +13,16 @@ import {
 } from "@/components/whatsapp-actions";
 
 /**
- * Homepage — redesigned corporate layout for Regime Energy Services.
+ * Homepage — corporate layout for Regime Energy Services.
+ *
+ * Section order (fixed): Hero → About → Safety First → What We Do →
+ * Featured Services → Where We Operate → Why Choose Us → Our Operations →
+ * Contact → Footer.
  *
  * All company content remains dynamic from Supabase (company profile,
  * media, services, products, branches, site settings). Only presentation
  * is defined here; the approved brand copy below is static page content.
  */
-
-type ServiceRow = {
-  id: string;
-  name: string;
-  slug: string;
-  short_description: string | null;
-  description: string | null;
-  image_url: string | null;
-  service_category: string | null;
-  display_order: number | null;
-};
-
-type ProductRow = {
-  id: string;
-  name: string;
-  slug: string;
-  short_description: string | null;
-  description: string | null;
-  display_order: number | null;
-  product_images: {
-    image_url: string;
-    alt_text: string | null;
-    is_primary: boolean | null;
-    display_order: number | null;
-  }[];
-};
 
 type BranchRow = {
   id: string;
@@ -62,9 +40,15 @@ type BranchRow = {
   display_order: number | null;
 };
 
-/**
- * Mission / vision cards. Admin-written copy is preferred when present.
- */
+type MediaRow = {
+  id: string;
+  title: string | null;
+  alt_text: string | null;
+  image_url: string;
+  description: string | null;
+  display_order: number;
+  is_active: boolean;
+};
 
 export default async function Home() {
   const supabase = await createClient();
@@ -73,34 +57,11 @@ export default async function Home() {
   // and the WhatsApp link builders) — one DB round-trip instead of four.
   const cachedCompany = await getActiveCompanyProfile();
 
-  const [
-    { data: media },
-    { data: services },
-    { data: products },
-    { data: branches },
-    { data: settings },
-    orderHref,
-    deliveryHref,
-  ] = await Promise.all([
+  const [{ data: media }, { data: branches }, { data: settings }, orderHref] = await Promise.all([
     supabase
       .from("company_media")
-      .select("*")
-      .eq("is_active", true)
-      .order("display_order", { ascending: true })
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("services")
       .select(
-        "id, name, slug, short_description, description, image_url, service_category, is_active, display_order"
-      )
-      .eq("is_active", true)
-      .order("display_order", { ascending: true })
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("products")
-      .select(
-        `id, name, slug, short_description, description, is_active, display_order,
-        product_images (image_url, alt_text, is_primary, display_order)`
+        "id, title, alt_text, image_url, description, display_order, is_active"
       )
       .eq("is_active", true)
       .order("display_order", { ascending: true })
@@ -123,13 +84,8 @@ export default async function Home() {
     getCompanyWhatsAppLink(
       "Hello Regime Energy Services, I would like to order gas."
     ),
-    getCompanyWhatsAppLink(
-      "Hello Regime Energy Services, I would like to request a gas delivery.\n\nMy location:\nCylinder size:"
-    ),
   ]);
 
-  const serviceList = (services ?? []) as ServiceRow[];
-  const productList = (products ?? []) as ProductRow[];
   const branchList = ((branches ?? []) as BranchRow[]).filter(
     (branch, index, all) =>
       all.findIndex((other) => other.slug === branch.slug) === index
@@ -139,24 +95,26 @@ export default async function Home() {
   // dashboard (Site Settings → "Show the branch map on the homepage").
   const showBranchMap = settings?.show_branch_map !== false;
 
-  // The admin uploads a weighbridge photo via company Media with a file
-  // name/title containing "weighbridge". It is shown in the featured
-  // weighbridge section instead of the hero slideshow.
+  const mediaList = (media ?? []) as MediaRow[];
+
+  // Admin uploads a weighbridge photo via company Media (title/alt text
+  // contains "weighbridge"); it is reserved for the Featured Services band
+  // instead of the hero slideshow.
   const weighbridgeMedia =
-    media?.find((item) =>
+    mediaList.find((item) =>
       [item.title, item.alt_text]
         .filter(Boolean)
-        .some((value) =>
-          (value as string).toLowerCase().includes("weighbridge")
-        )
+        .some((value) => (value as string).toLowerCase().includes("weighbridge"))
     ) ?? null;
 
   const heroMedia = weighbridgeMedia
-    ? media!.filter((item) => item.id !== weighbridgeMedia.id)
-    : (media ?? []);
+    ? mediaList.filter((item) => item.id !== weighbridgeMedia.id)
+    : mediaList;
+
+  // Operations gallery strip (company media minus the weighbridge shot).
+  const galleryItems = heroMedia.slice(0, 6);
 
   const phoneHref = cachedCompany?.phone ? `tel:${cachedCompany.phone}` : null;
-  const callHref = phoneHref ?? (cachedCompany?.phone ? `tel:${cachedCompany.phone}` : null);
   const phoneDisplay = cachedCompany?.phone || "08021295401";
 
   return (
@@ -165,44 +123,40 @@ export default async function Home() {
 
       <main className="flex-1">
         {/* ---------------------------------------------------------- */}
-        {/* Hero — real company imagery with headline overlay          */}
+        {/* 1. HERO — real company imagery with headline overlay      */}
         {/* ---------------------------------------------------------- */}
         {heroMedia.length > 0 ? (
           <CompanySlideshow media={heroMedia}>
             <div className="max-w-3xl pb-16 pt-14 md:py-20">
               <span className="regime-accent-chip bg-white/95">
-                Since 2015 · Owerri, Imo State
+                Since 2013 · Owerri, Imo State
               </span>
 
               <h1 className="mt-5 text-3xl font-bold leading-tight text-white sm:text-5xl md:text-6xl">
-                Powering Everyday Life With Dependable LPG
+                Reliable Energy. Safe Operations. Dependable Service.
               </h1>
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-slate-200 sm:text-lg">
-                Regime Energy Services is a trusted player in Nigeria&apos;s LPG
-                downstream sector — supplying LPG to homes, businesses and
-                industries with safe handling and accurate dispensing every
-                time.
+                From LPG supply and distribution to gas delivery, equipment
+                support, logistics and industrial weighing services, Regime
+                Energy Services delivers dependable energy solutions across
+                Imo State.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Link
-                  href="#about"
+                  href="/#what-we-do"
                   className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-regime-blue px-7 py-3 font-bold text-white transition hover:bg-regime-blue-dark"
                 >
-                  Discover More
+                  Explore What We Do
                 </Link>
 
-                {deliveryHref && (
-                  <TrackedLink
-                    href={deliveryHref}
-                    event="whatsapp_click"
-                    label="hero_request_delivery"
-                    className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-lg bg-regime-red px-7 py-3 font-bold text-white transition hover:bg-red-700"
-                  >
-                    Request Delivery
-                  </TrackedLink>
-                )}
+                <Link
+                  href="/#where-we-operate"
+                  className="inline-flex min-h-[48px] items-center justify-center rounded-lg border border-white/40 bg-white/10 px-7 py-3 font-bold text-white backdrop-blur transition hover:bg-white/20"
+                >
+                  Find a Branch
+                </Link>
               </div>
             </div>
           </CompanySlideshow>
@@ -210,135 +164,55 @@ export default async function Home() {
           <section className="bg-regime-blue-dark px-4 py-20 text-white sm:px-6 md:py-28">
             <div className="mx-auto max-w-7xl">
               <span className="regime-accent-chip bg-white/95">
-                Since 2015 · Owerri, Imo State
+                Since 2013 · Owerri, Imo State
               </span>
 
               <h1 className="mt-5 max-w-4xl text-3xl font-bold leading-tight sm:text-5xl md:text-6xl">
-                Powering Everyday Life With Dependable LPG
+                Reliable Energy. Safe Operations. Dependable Service.
               </h1>
 
               <p className="mt-5 max-w-2xl text-base leading-8 text-blue-100 sm:text-lg">
-                Regime Energy Services is a trusted player in Nigeria&apos;s LPG
-                downstream sector — supplying LPG to homes, businesses and
-                industries with safe handling and accurate dispensing every
-                time.
+                From LPG supply and distribution to gas delivery, equipment
+                support, logistics and industrial weighing services, Regime
+                Energy Services delivers dependable energy solutions across
+                Imo State.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Link
-                  href="#about"
+                  href="/#what-we-do"
                   className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-white px-7 py-3 font-bold text-regime-blue-dark transition hover:bg-blue-50"
                 >
-                  Discover More
+                  Explore What We Do
                 </Link>
 
-                {deliveryHref && (
-                  <TrackedLink
-                    href={deliveryHref}
-                    event="whatsapp_click"
-                    label="hero_request_delivery"
-                    className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-regime-red px-7 py-3 font-bold text-white transition hover:bg-red-700"
-                  >
-                    Request Delivery
-                  </TrackedLink>
-                )}
+                <Link
+                  href="/#where-we-operate"
+                  className="inline-flex min-h-[48px] items-center justify-center rounded-lg border border-white/40 bg-white/10 px-7 py-3 font-bold text-white transition hover:bg-white/20"
+                >
+                  Find a Branch
+                </Link>
               </div>
             </div>
           </section>
         )}
 
-
-
         {/* ---------------------------------------------------------- */}
-        {/* Location + statistics                                       */}
+        {/* 2. ABOUT REGIME — immediately after the hero               */}
         {/* ---------------------------------------------------------- */}
-        <section className="px-4 py-12 sm:px-6 md:py-14">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid items-center gap-10 lg:grid-cols-2">
-              <div>
-                <p className="regime-eyebrow">Where We Operate</p>
-
-                <h2 className="regime-heading text-3xl sm:text-4xl">
-                  We Serve Imo And Beyond
-                </h2>
-
-                <p className="regime-lead mt-4 max-w-xl [text-align:justify]">
-                <strong>Three branches</strong> keep LPG close to you: our
-                Main Branch at <strong>Egbeada Junction, Irete</strong>, our
-                Orogwe Branch, and our Egbu Branch on Egbu Road, with
-                delivery across Egbu, Owerri Municipal and Owerri North.
-              </p>
-
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <Link
-                    href="/branches"
-                    className="regime-button-primary"
-                  >
-                    Find a Branch
-                  </Link>
-
-                  {orderHref && (
-                    <TrackedLink
-                      href={orderHref}
-                      event="whatsapp_click"
-                      label="locations_order_gas"
-                      className="regime-button-secondary"
-                    >
-                      Order Gas
-                    </TrackedLink>
-                  )}
-                </div>
-              </div>
-
-              {/* Statistics — branch count is live; the rest is approved
-                  approved company copy (no stats table exists in the database). */}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="regime-card p-6">
-                  <p className="regime-stat-number">11+</p>
-
-                  <p className="mt-2 text-sm font-semibold text-gray-900">
-                    Years of Experience
-                  </p>
-
-                  <p className="mt-1 text-xs text-gray-500">
-                    Serving since 2015
-                  </p>
-                </div>
-
-                <div className="regime-card p-6">
-                  <p className="regime-stat-number">{branchList.length || 3}</p>
-
-                  <p className="mt-2 text-sm font-semibold text-gray-900">
-                    Branches in Owerri
-                  </p>
-
-                  <p className="mt-1 text-xs text-gray-500">
-                    Egbeada, Orogwe &amp; Egbu Road
-                  </p>
-                </div>
-
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ---------------------------------------------------------- */}
-        {/* About                                                       */}
-        {/* ---------------------------------------------------------- */}
-        <section id="about" className="bg-gray-50 px-4 py-12 sm:px-6 md:py-14">
+        <section id="about" className="bg-gray-50 px-4 py-12 sm:px-6 md:py-16">
           <div className="mx-auto max-w-7xl">
             <div className="grid items-center gap-10 lg:grid-cols-2">
               <div className="regime-image overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
-                {media && media.length > 0 ? (
+                {mediaList.length > 0 ? (
                   <div className="relative aspect-[4/3] w-full">
                     <Image
                       src={
-                        weighbridgeMedia?.image_url ??
-                        media[0].image_url
+                        weighbridgeMedia?.image_url ?? mediaList[0].image_url
                       }
                       alt={
-                        media[0].alt_text ||
-                        media[0].title ||
+                        mediaList[0].alt_text ||
+                        mediaList[0].title ||
                         "Regime Energy Services operations"
                       }
                       fill
@@ -360,21 +234,23 @@ export default async function Home() {
                 <p className="regime-eyebrow">About Regime</p>
 
                 <h2 className="regime-heading text-3xl sm:text-4xl">
-                  Providing Affordable and Reliable Energy
+                  An Established Downstream LPG Business
                 </h2>
 
-                <p className="regime-lead mt-4 [text-align:justify]">
-                  <strong>Since 2015</strong>, Regime Energy Services Limited
-                  has made LPG more accessible through dependable distribution
-                  and supply — serving households, commercial establishments
-                  and industry with <strong>reliability, transparency,
-                  professionalism and safety</strong>.
+                <p className="regime-lead mt-4">
+                  Regime Energy Services Limited has been active in the gas
+                  downstream industry <strong>since 2013</strong>, making LPG
+                  more accessible through dependable distribution and supply —
+                  serving households, commercial establishments and industry
+                  with <strong>reliability, transparency, professionalism and
+                  safety</strong>.
                 </p>
 
                 <ul className="mt-7 space-y-4">
                   {[
                     "Accurately measured LPG refills",
                     "Safe handling, storage and transport",
+                    "Home and hotel delivery across Imo State",
                     "Easy ordering and delivery on WhatsApp",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3">
@@ -406,9 +282,12 @@ export default async function Home() {
         </section>
 
         {/* ---------------------------------------------------------- */}
-        {/* Safety / Mission / Vision                                   */}
+        {/* 3. SAFETY FIRST — immediately after About Regime           */}
         {/* ---------------------------------------------------------- */}
-        <section className="px-4 py-12 sm:px-6 md:py-14">
+        <section
+          id="safety-first"
+          className="scroll-mt-24 px-4 py-12 sm:px-6 md:py-16"
+        >
           <div className="mx-auto max-w-7xl">
             <div className="max-w-3xl">
               <p className="regime-eyebrow">Safety First</p>
@@ -417,37 +296,43 @@ export default async function Home() {
                 Safe, Dependable Energy for Every Home and Business
               </h2>
 
-              <p className="regime-lead mt-4 text-justify">
-                Responsible LPG handling, storage, transport and accurate
-                dispensing — every kilogram we sell is measured honestly.
+              <p className="regime-lead mt-4">
+                Gas safety starts with awareness. We educate every customer on
+                responsible LPG handling, storage, transportation, installation
+                and usage — because safe gas is dependable gas. Our team and
+                safety assistant are always available to answer your questions.
               </p>
             </div>
 
             <div className="mt-8 grid gap-4 md:grid-cols-2">
               {[
                 {
-                  title: "Our Mission",
+                  title: "Safe Gas Handling",
                   text:
-                    cachedCompany?.mission ||
-                    "To deliver safe, reliable and accessible LPG solutions to homes, businesses and industries.",
-                  accent: "border-l-regime-blue bg-regime-blue",
-                  letter: "M",
+                    "Trained personnel follow strict procedures when filling, decanting and dispensing LPG, so every cylinder leaves our plants safely.",
                 },
                 {
-                  title: "Our Vision",
+                  title: "Proper Storage",
                   text:
-                    cachedCompany?.vision ||
-                    "To be a trusted name in Nigeria's downstream LPG industry.",
-                  accent: "border-l-regime-red bg-regime-red",
-                  letter: "V",
+                    "Cylinders should be stored upright, in a well-ventilated space, away from heat and direct sunlight. Our team can advise you on the safest setup.",
+                },
+                {
+                  title: "Careful Transportation",
+                  text:
+                    "Our delivery crews secure cylinders properly and handle every unit with care from branch to doorstep.",
+                },
+                {
+                  title: "Correct Installation & Usage",
+                  text:
+                    "Regulators, hoses and clips should be fitted correctly and checked regularly. Ask us — we guide you before and after every installation.",
                 },
               ].map((card) => (
                 <div key={card.title} className="regime-mvp-card">
                   <span
                     aria-hidden="true"
-                    className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${card.accent}`}
+                    className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-regime-red text-sm font-bold text-white"
                   >
-                    {card.letter}
+                    🛡
                   </span>
 
                   <div className="min-w-0">
@@ -455,10 +340,108 @@ export default async function Home() {
                       {card.title}
                     </h3>
 
-                    <p className="mt-1.5 text-sm font-semibold leading-7 text-gray-700 text-justify">
+                    <p className="mt-1.5 text-sm font-semibold leading-7 text-gray-700">
                       {card.text}
                     </p>
                   </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/#contact" className="regime-button-primary">
+                Talk to Our Safety Team
+              </Link>
+
+              <Link href="/chat" className="regime-button-secondary">
+                Ask the Safety Assistant
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------------- */}
+        {/* 4. WHAT WE DO — four unified category cards                */}
+        {/* ---------------------------------------------------------- */}
+        <section
+          id="what-we-do"
+          className="scroll-mt-24 bg-gray-50 px-4 py-16 sm:px-6 md:py-20"
+        >
+          <div className="mx-auto max-w-7xl">
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="regime-eyebrow justify-center">What We Do</p>
+
+              <h2 className="regime-heading text-3xl sm:text-4xl">
+                Powering Lives. Delivering Energy. Driving Progress.
+              </h2>
+
+              <p className="regime-lead mt-4">
+                Everything Regime Energy Services offers, in one place. Choose
+                a category below to explore our products, services, maintenance
+                and repairs, or consultation options.
+              </p>
+            </div>
+
+            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                {
+                  title: "Products",
+                  icon: "🛒",
+                  text:
+                    "Cylinders, regulators, valves, burners, cookers, hoses and quality LPG fittings from our branches in Owerri.",
+                  href: "/products",
+                  cta: "Learn More",
+                },
+                {
+                  title: "Services",
+                  icon: "🚚",
+                  text:
+                    "LPG supply, bulk distribution, home and hotel delivery, haulage and dependable customer support across Imo State.",
+                  href: "/services",
+                  cta: "Learn More",
+                },
+                {
+                  title: "Maintenance & Repairs",
+                  icon: "🔧",
+                  text:
+                    "Gas cooker repairs, burner repairs and equipment servicing that keep your LPG installations safe and working.",
+                  href: "/services",
+                  cta: "Learn More",
+                },
+                {
+                  title: "Consultations",
+                  icon: "💬",
+                  text:
+                    "Expert guidance on LPG installations, safety, cylinder sizing and energy planning for homes and businesses.",
+                  href: "/#contact",
+                  cta: "Learn More",
+                },
+              ].map((card) => (
+                <div
+                  key={card.title}
+                  className="regime-card flex flex-col p-7 text-center"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-regime-blue/10 text-2xl"
+                  >
+                    {card.icon}
+                  </span>
+
+                  <h3 className="mt-5 text-lg font-extrabold tracking-tight text-gray-900">
+                    {card.title}
+                  </h3>
+
+                  <p className="mt-3 flex-1 text-sm leading-6 text-gray-600">
+                    {card.text}
+                  </p>
+
+                  <Link
+                    href={card.href}
+                    className="mt-6 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-regime-blue px-6 py-2.5 text-sm font-bold text-white transition hover:bg-regime-blue-dark"
+                  >
+                    {card.cta}
+                  </Link>
                 </div>
               ))}
             </div>
@@ -466,312 +449,148 @@ export default async function Home() {
         </section>
 
         {/* ---------------------------------------------------------- */}
-        {/* Services                                                    */}
+        {/* 5. FEATURED SERVICES — Weighbridge Services ONLY            */}
         {/* ---------------------------------------------------------- */}
         <section
-          id="services"
-          className="bg-gray-50 px-4 py-16 sm:px-6 md:py-20"
+          id="featured-services"
+          className="scroll-mt-24 px-4 py-12 sm:px-6 md:py-16"
         >
           <div className="mx-auto max-w-7xl">
             <div className="max-w-2xl">
-              <p className="regime-eyebrow">What We Do</p>
+              <p className="regime-eyebrow">Featured Service</p>
 
               <h2 className="regime-heading text-3xl sm:text-4xl">
-                Powering Lives. Delivering Energy. Driving Progress.
+                Weighbridge Services
               </h2>
 
               <p className="regime-lead mt-4">
-                Regime Energy Services is a trusted player in Nigeria&apos;s
-                LPG downstream sector, committed to delivering reliable, safe
-                and efficient energy solutions. From LPG distribution and
-                cylinder refilling to bulk supply, haulage and doorstep
-                delivery, we connect homes, businesses and industries to the
-                energy they need to thrive. Through operational excellence,
-                safety and customer-focused service, we make access to clean
-                energy simpler, smarter and more dependable.
+                Accurate weighing for vehicles and loads, backed by the same
+                commitment to measurement that goes into every cylinder we
+                fill.
               </p>
             </div>
 
-            {serviceList.length > 0 ? (
-              <>
-                <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {serviceList.map((service) => (
+            <div className="mt-10 overflow-hidden rounded-2xl bg-regime-blue-dark text-white">
+              <div className="grid items-center gap-10 p-8 md:grid-cols-2 md:p-12">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-regime-green">
+                    Precise · Certified · Dependable
+                  </p>
+
+                  <h3 className="mt-3 text-2xl font-bold md:text-3xl">
+                    Industrial Weighbridge Operations
+                  </h3>
+
+                  <p className="mt-4 max-w-xl text-base leading-8 text-blue-100">
+                    Our weighbridge provides dependable weight verification
+                    for trucks, tankers and bulk loads — trusted by haulage
+                    operators and businesses across the region, and run to
+                    the same honest-measurement standard we apply to every
+                    kilogram of LPG we sell.
+                  </p>
+
+                  <ul className="mt-6 space-y-3">
+                    {[
+                      "Accurate vehicle and load weighing",
+                      "Dependable, honest measurement",
+                      "Open to hauliers, businesses and individuals",
+                    ].map((item) => (
+                      <li key={item} className="flex items-start gap-3">
+                        <span
+                          aria-hidden="true"
+                          className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold text-regime-green"
+                        >
+                          ✓
+                        </span>
+
+                        <span className="text-sm font-medium text-blue-50">
+                          {item}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                     <Link
-                      key={service.id}
-                      href={`/services/${service.slug}`}
-                      className="regime-card group flex flex-col overflow-hidden"
+                      href="/#contact"
+                      className="inline-flex min-h-[48px] items-center justify-center rounded-lg bg-regime-red px-7 py-3 font-bold text-white transition hover:bg-red-700"
                     >
-                      {service.image_url ? (
-                        <div className="relative h-48 w-full overflow-hidden bg-gray-100">
-                          <Image
-                            src={service.image_url}
-                            alt={service.name}
-                            fill
-                            quality={85}
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            className="object-cover transition duration-300 group-hover:scale-105"
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex h-48 w-full items-center justify-center bg-regime-blue/5">
-                          <span className="text-sm font-bold uppercase tracking-widest text-regime-blue">
-                            {service.service_category || "Service"}
-                          </span>
-                        </div>
-                      )}
+                      Contact Us About Weighbridge
+                    </Link>
+                  </div>
+                </div>
 
-                      <div className="flex flex-1 flex-col p-6">
-                        <h3 className="font-bold text-gray-900 group-hover:text-regime-blue">
-                          {service.name}
-                        </h3>
-
-                        <p className="mt-3 flex-1 text-sm leading-6 text-gray-600">
-                          {service.short_description ||
-                            service.description ||
-                            "Professional and dependable service from Regime Energy Services."}
+                <div className="overflow-hidden rounded-2xl border border-white/15">
+                  {weighbridgeMedia ? (
+                    <div className="relative aspect-[16/10] w-full">
+                      <Image
+                        src={weighbridgeMedia.image_url}
+                        alt={
+                          weighbridgeMedia.alt_text ||
+                          weighbridgeMedia.title ||
+                          "Regime weighbridge operations"
+                        }
+                        fill
+                        quality={85}
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex aspect-[16/10] w-full items-center justify-center bg-white/10 p-8 text-center">
+                      <div>
+                        <p className="text-5xl font-bold tracking-tight text-regime-green">
+                          1kg = 1kg
                         </p>
 
-                        <span className="mt-5 inline-block text-sm font-bold text-regime-blue group-hover:underline">
-                          Learn More →
-                        </span>
+                        <p className="mt-4 text-blue-100">
+                          Accurate dispensing and dependable measurement are
+                          part of every service commitment we make.
+                        </p>
                       </div>
-                    </Link>
-                  ))}
-                </div>
-
-                <div className="mt-10 text-center">
-                  <Link href="/services" className="regime-button-secondary">
-                    View All Services
-                  </Link>
-                </div>
-              </>
-            ) : (
-              <div className="mt-10 rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center">
-                <p className="text-gray-600">
-                  Our services will be displayed here.
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* ---------------------------------------------------------- */}
-        {/* Featured weighbridge                                        */}
-        {/* ---------------------------------------------------------- */}
-        <section className="bg-regime-blue-dark px-4 py-12 text-white sm:px-6 md:py-14">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid items-center gap-10 md:grid-cols-2">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-regime-green">
-                  Featured Service
-                </p>
-
-                <h2 className="mt-3 text-3xl font-bold md:text-4xl">
-                  Weighbridge Services
-                </h2>
-
-                <p className="mt-5 max-w-xl text-base leading-8 text-blue-100">
-                  Accurate weighing for vehicles and loads, backed by the
-                  same commitment to measurement that goes into every
-                  cylinder we fill.
-                </p>
-
-                <a
-                  href="#contact"
-                  className="mt-8 inline-flex min-h-[48px] items-center justify-center rounded-lg bg-regime-red px-7 py-3 font-bold text-white transition hover:bg-red-700"
-                >
-                  Enquire About Weighbridge
-                </a>
-              </div>
-
-              <div className="overflow-hidden rounded-2xl border border-white/15">
-                {weighbridgeMedia ? (
-                  <div className="relative aspect-[16/10] w-full">
-                    <Image
-                      src={weighbridgeMedia.image_url}
-                      alt={
-                        weighbridgeMedia.alt_text ||
-                        weighbridgeMedia.title ||
-                        "Regime weighbridge operations"
-                      }
-                      fill
-                      quality={85}
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      className="object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex aspect-[16/10] w-full items-center justify-center bg-white/10 p-8 text-center">
-                    <div>
-                      <p className="text-5xl font-bold tracking-tight text-regime-green">
-                        1kg = 1kg
-                      </p>
-
-                      <p className="mt-4 text-blue-100">
-                        Accurate dispensing and dependable measurement are
-                        part of every service commitment we make.
-                      </p>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         {/* ---------------------------------------------------------- */}
-        {/* Products                                                    */}
+        {/* 6. WHERE WE OPERATE — branches + Imo State coverage        */}
         {/* ---------------------------------------------------------- */}
-        <section id="products" className="px-4 py-12 sm:px-6 md:py-14">
-          <div className="mx-auto max-w-7xl">
-            <div className="text-center">
-              <p className="regime-eyebrow justify-center">Products</p>
-
-              <h2 className="regime-heading text-3xl sm:text-4xl">
-                LPG Products and Accessories
-              </h2>
-
-              <p className="regime-lead mx-auto mt-5 max-w-2xl">
-                Cylinders, regulators, valves, burners, cookers, hoses and
-                fittings — quality LPG equipment from our branches in
-                Owerri.
-              </p>
-            </div>
-
-            {productList.length > 0 ? (
-              <>
-                <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                  {productList.slice(0, 8).map((product) => {
-                    const productImages = Array.isArray(product.product_images)
-                      ? [...product.product_images].sort(
-                        (a, b) =>
-                          (a.display_order ?? 0) - (b.display_order ?? 0)
-                      )
-                      : [];
-
-                    const primaryProductImage =
-                      productImages.find((image) => image.is_primary === true) ??
-                      productImages[0];
-
-                    return (
-                      <Link
-                        key={product.id}
-                        href={`/products/${product.slug}`}
-                        className="regime-card group flex flex-col overflow-hidden"
-                      >
-                        {primaryProductImage ? (
-                          <div className="relative h-52 w-full overflow-hidden bg-gray-100">
-                            <Image
-                              src={primaryProductImage.image_url}
-                              alt={
-                                primaryProductImage.alt_text || product.name
-                              }
-                              fill
-                              quality={85}
-                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                              className="object-cover transition duration-300 group-hover:scale-105"
-                            />
-                          </div>
-                        ) : (
-                          <div className="flex h-52 w-full items-center justify-center bg-regime-blue/5">
-                            <span className="text-sm font-bold uppercase tracking-widest text-regime-blue">
-                              LPG
-                            </span>
-                          </div>
-                        )}
-
-                        <div className="flex flex-1 flex-col p-6">
-                          <h3 className="font-bold text-gray-900 group-hover:text-regime-blue">
-                            {product.name}
-                          </h3>
-
-                          <p className="mt-3 flex-1 text-sm leading-6 text-gray-600">
-                            {product.short_description ||
-                              product.description ||
-                              "Quality LPG product available from Regime Energy Services."}
-                          </p>
-
-                          <span className="mt-5 inline-block text-sm font-bold text-regime-blue group-hover:underline">
-                            View Product →
-                          </span>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-10 text-center">
-                  <Link href="/products" className="regime-button-primary">
-                    View All Products
-                  </Link>
-                </div>
-              </>
-            ) : (
-              <div className="mt-10 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-10 text-center">
-                <p className="text-gray-600">
-                  Our LPG products and accessories will be displayed here.
-                </p>
-
-                <Link
-                  href="/products"
-                  className="mt-5 inline-block font-semibold text-regime-blue hover:underline"
-                >
-                  Explore Products →
-                </Link>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* ---------------------------------------------------------- */}
-        {/* Branches                                                    */}
-        {/* ---------------------------------------------------------- */}
-        <section id="branches" className="bg-gray-50 py-12 md:py-14">
+        <section
+          id="where-we-operate"
+          className="scroll-mt-24 bg-gray-50 py-12 md:py-16"
+        >
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
             <div className="text-center">
-              <p className="regime-eyebrow justify-center">Our Locations</p>
+              <p className="regime-eyebrow justify-center">Where We Operate</p>
 
               <h2 className="regime-heading text-3xl sm:text-4xl">
-                Find a Regime Branch Near You
+                Our Locations Across Imo State
               </h2>
 
               <p className="regime-lead mx-auto mt-5 max-w-2xl">
-                Visit a branch for LPG products, refills, enquiries and
-                customer support.
+                Regime Energy Services delivers services across Imo State —
+                our branches are physical points of presence, but our supply,
+                delivery and support reach customers throughout the state.
               </p>
             </div>
 
-            {branchList.length > 0 ? (
-              showBranchMap ? (
-                <div className="mt-8 text-center">
-                  <Link
-                    href="/branches"
-                    className="regime-button-secondary"
-                  >
-                    View All Branches
-                  </Link>
-                </div>
-              ) : (
-                <div className="mt-8 text-center">
-                  <Link href="/branches" className="regime-button-primary">
-                    View All Branches
-                  </Link>
-                </div>
-              )
-            ) : (
-              <div className="mt-10 rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center">
-                <p className="text-gray-600">
-                  Our branch locations will be displayed here.
-                </p>
-              </div>
-            )}
+            {/* Branch names, addresses and contact details live on the
+                dedicated branches page — opened via "View All Branches".
+                The interactive map below is the only branch preview here. */}
+            <div className="mt-10 text-center">
+              <Link href="/branches" className="regime-button-primary">
+                View All Branches
+              </Link>
+            </div>
           </div>
 
           {/* Interactive world map — clicking a branch pin reveals that
-              branch's full details below. It renders outside the content
-              column so it stretches edge-to-edge across the full page
-              width. Can be hidden from Site Settings in the admin
-              dashboard. */}
+              branch's full details below. Renders edge-to-edge. Can be
+              hidden from Site Settings in the admin dashboard. */}
           {branchList.length > 0 && showBranchMap && (
             <div className="mt-10">
               <BranchWorldMap branches={branchList} />
@@ -780,9 +599,168 @@ export default async function Home() {
         </section>
 
         {/* ---------------------------------------------------------- */}
-        {/* Contact + WhatsApp enquiry                                  */}
+        {/* 7. WHY CHOOSE US                                           */}
         {/* ---------------------------------------------------------- */}
-        <section id="contact" className="px-4 py-12 sm:px-6 md:py-14">
+        <section
+          id="why-choose-us"
+          className="scroll-mt-24 px-4 py-12 sm:px-6 md:py-16"
+        >
+          <div className="mx-auto max-w-7xl">
+            <div className="text-center">
+              <p className="regime-eyebrow justify-center">Why Choose Us</p>
+
+              <h2 className="regime-heading text-3xl sm:text-4xl">
+                The Regime Difference
+              </h2>
+
+              <p className="regime-lead mx-auto mt-5 max-w-2xl">
+                Every cylinder, every delivery and every service call is
+                backed by experience, honest measurement and a safety culture
+                that never cuts corners.
+              </p>
+            </div>
+
+            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                {
+                  title: "Industry Experience",
+                  text:
+                    "Operating in the downstream LPG industry since 2013, with the know-how that comes from years of daily plant, delivery and customer work.",
+                  icon: "🏅",
+                },
+                {
+                  title: "Reliable Products & Services",
+                  text:
+                    "Quality LPG products and dependable services, backed by honest measurement — you pay for exactly what your cylinder receives.",
+                  icon: "⚖",
+                },
+                {
+                  title: "Commitment to Safety",
+                  text:
+                    "Trained personnel, proper storage, careful transport and customer safety education at every step of the LPG journey.",
+                  icon: "🛡",
+                },
+                {
+                  title: "Customer Support",
+                  text:
+                    "A responsive customer team reachable by phone, WhatsApp and our online safety assistant whenever you need help.",
+                  icon: "💬",
+                },
+                {
+                  title: "Home & Hotel Delivery",
+                  text:
+                    "Doorstep delivery solutions for households, hotels and businesses — scheduled, secure and handled with care.",
+                  icon: "🚚",
+                },
+                {
+                  title: "Professional Operations",
+                  text:
+                    "Own plants, haulage and weighing infrastructure operated to consistent professional standards.",
+                  icon: "🏭",
+                },
+                {
+                  title: "Customer Satisfaction",
+                  text:
+                    "We stand behind every refill, delivery and service call — our reputation is built on customers who come back.",
+                  icon: "🤝",
+                },
+                {
+                  title: "Coverage Across Imo State",
+                  text:
+                    "Branches in Owerri and service delivery reaching customers across Imo State, wherever you are.",
+                  icon: "📍",
+                },
+              ].map((item) => (
+                <div key={item.title} className="regime-card p-6">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-11 w-11 items-center justify-center rounded-xl bg-regime-blue/10 text-xl"
+                  >
+                    {item.icon}
+                  </span>
+
+                  <h3 className="mt-5 font-bold text-gray-900">
+                    {item.title}
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-gray-600">
+                    {item.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------------- */}
+        {/* 8. OUR OPERATIONS — real company imagery                   */}
+        {/* ---------------------------------------------------------- */}
+        <section
+          id="our-operations"
+          className="scroll-mt-24 bg-gray-50 px-4 py-12 sm:px-6 md:py-16"
+        >
+          <div className="mx-auto max-w-7xl">
+            <div className="text-center">
+              <p className="regime-eyebrow justify-center">Our Operations</p>
+
+              <h2 className="regime-heading text-3xl sm:text-4xl">
+                Inside Regime Energy Services
+              </h2>
+
+              <p className="regime-lead mx-auto mt-5 max-w-2xl">
+                Gas plant operations, filling, product handling, haulage and
+                delivery, and the customer service team at work across Imo
+                State.
+              </p>
+            </div>
+
+            {galleryItems.length > 0 ? (
+              <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {galleryItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="regime-image overflow-hidden rounded-2xl border border-gray-200 bg-gray-100"
+                  >
+                    <div className="relative aspect-[4/3] w-full">
+                      <Image
+                        src={item.image_url}
+                        alt={
+                          item.alt_text ||
+                          item.title ||
+                          "Regime Energy Services operations"
+                        }
+                        fill
+                        quality={80}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-10 rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center">
+                <p className="text-gray-600">
+                  Photos of our operations will be displayed here.
+                </p>
+              </div>
+            )}
+
+            <div className="mt-10 text-center">
+              <Link href="/gallery" className="regime-button-secondary">
+                View Full Gallery
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------------- */}
+        {/* 9. CONTACT REGIME — immediately before the footer          */}
+        {/* ---------------------------------------------------------- */}
+        <section
+          id="contact"
+          className="scroll-mt-24 px-4 py-12 sm:px-6 md:py-16"
+        >
           <div className="mx-auto max-w-7xl">
             <div className="regime-card p-8 md:p-12">
               <div className="grid gap-10 md:grid-cols-2">
@@ -868,9 +846,9 @@ export default async function Home() {
                       </TrackedLink>
                     )}
 
-                    {callHref && (
+                    {phoneHref && (
                       <TrackedLink
-                        href={callHref}
+                        href={phoneHref}
                         event="phone_click"
                         label="contact_call"
                         target=""

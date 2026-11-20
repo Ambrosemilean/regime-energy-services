@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { buildMetadata } from "@/lib/seo";
 import SiteHeader from "@/components/site-header";
@@ -26,7 +27,7 @@ export default async function CompanyHistoryPage() {
 
     supabase
       .from("company_history")
-      .select("id, year, title, description, display_order")
+      .select("id, year, title, description, image_url, alt_text, display_order")
       .eq("is_active", true)
       .order("display_order", { ascending: true })
       .order("year", { ascending: true }),
@@ -34,6 +35,17 @@ export default async function CompanyHistoryPage() {
 
   const companyName =
     company?.company_name || "Regime Energy Services";
+
+  type MilestoneRow = {
+    id: string;
+    year: string;
+    title: string;
+    description: string | null;
+    image_url: string | null;
+    alt_text: string | null;
+  };
+
+  const milestoneList = (milestones ?? []) as MilestoneRow[];
 
   return (
     <div className="flex min-h-screen flex-col bg-white text-gray-900">
@@ -132,7 +144,7 @@ export default async function CompanyHistoryPage() {
             </div>
           ) : (
             <ol className="relative space-y-8 border-l-2 border-blue-100 pl-6 sm:space-y-10 sm:pl-9">
-              {milestones.map((milestone, index) => (
+              {milestoneList.map((milestone, index) => (
                 <li key={milestone.id} className="relative">
                   {/* Timeline marker */}
                   <span className="absolute -left-[33px] top-6 h-4 w-4 rounded-full border-4 border-white bg-blue-700 ring-2 ring-blue-100 sm:-left-[46px] sm:h-5 sm:w-5">
@@ -141,28 +153,52 @@ export default async function CompanyHistoryPage() {
                     </span>
                   </span>
 
-                  {/* Milestone card */}
-                  <article className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-md sm:p-7">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <span className="rounded-full bg-blue-50 px-4 py-2 text-sm font-extrabold text-blue-800">
-                        {milestone.year}
-                      </span>
+                  {/* Milestone card — image on the left, description on
+                      the right, stacking vertically on small screens */}
+                  <article className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-md">
+                    <div className="flex flex-col md:flex-row">
+                      {/* Image — left side */}
+                      {milestone.image_url && (
+                        <div className="relative aspect-[4/3] w-full shrink-0 md:aspect-auto md:w-72 lg:w-80">
+                          <Image
+                            src={milestone.image_url}
+                            alt={
+                              milestone.alt_text ||
+                              milestone.title ||
+                              "Regime Energy Services milestone"
+                            }
+                            fill
+                            quality={85}
+                            sizes="(max-width: 768px) 100vw, 320px"
+                            className="object-cover"
+                          />
+                        </div>
+                      )}
 
-                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                        Milestone{" "}
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
+                      {/* Year, title and description — right side */}
+                      <div className="flex-1 p-5 sm:p-7">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="rounded-full bg-blue-50 px-4 py-2 text-sm font-extrabold text-blue-800">
+                            {milestone.year}
+                          </span>
+
+                          <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                            Milestone{" "}
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+                        </div>
+
+                        <h3 className="mt-4 text-xl font-bold leading-snug text-gray-950 sm:text-2xl">
+                          {milestone.title}
+                        </h3>
+
+                        {milestone.description && (
+                          <p className="mt-3 whitespace-pre-line text-sm leading-7 text-gray-600 sm:text-base">
+                            {milestone.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
-
-                    <h3 className="mt-4 text-xl font-bold leading-snug text-gray-950 sm:text-2xl">
-                      {milestone.title}
-                    </h3>
-
-                    {milestone.description && (
-                      <p className="mt-3 whitespace-pre-line text-sm leading-7 text-gray-600 sm:text-base">
-                        {milestone.description}
-                      </p>
-                    )}
                   </article>
                 </li>
               ))}
@@ -188,7 +224,7 @@ export default async function CompanyHistoryPage() {
           </p>
 
           <Link
-            href="/#contact"
+            href="/contact"
             className="mt-8 inline-flex items-center rounded-lg bg-white px-6 py-3 font-bold text-blue-900 transition hover:bg-blue-50"
           >
             Contact Our Team

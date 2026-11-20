@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Manrope, Inter } from "next/font/google";
 import { createClient } from "@/lib/supabase/server";
 import ChatWidget from "@/components/chat/chat-widget";
 import AnalyticsTracker from "@/components/analytics/analytics-tracker";
@@ -19,17 +19,20 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#0756a6",
+  themeColor: "#174b83",
 };
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Approved brand typography: Manrope for headings, Inter for body text.
+const manrope = Manrope({
+  variable: "--font-heading",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-body",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -121,9 +124,9 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${manrope.variable} ${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col pt-[104px]">
         {jsonLd && (
           <script
             type="application/ld+json"

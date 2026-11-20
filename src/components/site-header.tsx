@@ -3,8 +3,7 @@ import Link from "next/link";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import SiteMobileMenu from "@/components/site-mobile-menu";
-import TrackedLink from "@/components/analytics/tracked-link";
-import { getCompanyWhatsAppLink } from "@/components/whatsapp-actions";
+import NavIconMenu from "@/components/nav-icon-menu";
 
 type CompanyProfileSummary = {
   company_name: string | null;
@@ -23,23 +22,17 @@ type CompanyProfileSummary = {
 /**
  * Shared site header for every public page.
  *
- * Single server component that reads the active company profile for the
- * logo/name, renders the primary navigation with an active state for the
- * current route, and exposes the "Order Gas" WhatsApp conversion button.
- * Anchors (#about, #services...) only apply on the homepage; on interior
- * pages they point at the homepage section instead.
- */
-
-const NAV_ITEMS = [
-  { href: "/#about", label: "About", match: "/" },
-  { href: "/services", label: "Services", match: "/services" },
-  { href: "/products", label: "Products", match: "/products" },
-  { href: "/branches", label: "Branches", match: "/branches" },
-  { href: "/company-history", label: "Our History", match: "/company-history" },
-  { href: "/#contact", label: "Contact", match: "/#contact" },
-] as const;
-
-/**
+ * Two-tier corporate header:
+ *  - Utility bar (desktop): phone, email and location from the company
+ *    profile, with a slim brand accent stripe on top.
+ *  - Main bar: logo + company name on the left, primary navigation in the
+ *    centre-right with an animated active underline, and a prominent
+ *    "Contact Regime" CTA button on the right.
+ *
+ * Navigation mirrors the homepage section order; anchors ("#about",
+ * "#safety-first", ...) point at homepage sections, so on interior pages
+ * they still land on the right place.
+ *
  * Cached per-request: the homepage renders SiteHeader, SiteFooter, and the
  * page itself — together they used to fire the same company_profile query
  * three times per render.
@@ -72,34 +65,78 @@ export default async function SiteHeader({
 }) {
   let companyName = "Regime Energy Services";
   let logoUrl: string | null = null;
-  let orderHref: string | null = null;
+  let phone: string | null = null;
+  let email: string | null = null;
+  let address: string | null = null;
 
   try {
     const company = await getActiveCompanyProfile();
 
-    const whatsappHref = await getCompanyWhatsAppLink(
-      "Hello Regime Energy Services, I would like to order gas."
-    );
-
     if (company?.company_name) companyName = company.company_name;
     logoUrl = company?.logo_url ?? null;
-    orderHref = whatsappHref;
+    phone = company?.phone ?? null;
+    email = company?.email ?? null;
+    address = company?.address ?? null;
   } catch {
     // Header still renders with defaults when the database is unreachable.
   }
 
+  // Short location label for the utility bar (city / first segment only).
+  const locationLabel = address
+    ? address.split(",")[0].trim()
+    : "Owerri, Imo State";
+
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:gap-4 sm:px-6 sm:py-4">
-        <Link
-          href="/"
-          className="flex min-w-0 items-center gap-3"
-          aria-label={`${companyName} home`}
-        >
-          {logoUrl && (
-            <span className="relative block h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white sm:h-11 sm:w-11">
+    <header className="fixed inset-x-0 top-0 z-50">
+      {/* Brand accent stripe — thin, always visible */}
+      <div
+        aria-hidden="true"
+        className="h-1 w-full bg-gradient-to-r from-regime-blue via-regime-red to-regime-green"
+      />
+
+      {/* Utility bar — desktop only */}
+      <div className="hidden border-b border-slate-100 bg-slate-50 lg:block">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-1.5">
+          <div className="flex items-center gap-6 text-xs font-medium text-slate-600">
+            {phone && (
+              <a
+                href={`tel:${phone}`}
+                className="flex items-center gap-1.5 transition hover:text-regime-blue"
+              >
+                <span aria-hidden="true">📞</span>
+                {phone}
+              </a>
+            )}
+
+            {email && (
+              <a
+                href={`mailto:${email}`}
+                className="flex items-center gap-1.5 transition hover:text-regime-blue"
+              >
+                <span aria-hidden="true">✉</span>
+                {email}
+              </a>
+            )}
+          </div>
+
+          <p className="flex items-center gap-1.5 text-xs font-medium text-slate-500">
+            <span aria-hidden="true">📍</span>
+            Serving {locationLabel} &amp; across Imo State
+          </p>
+        </div>
+      </div>
+
+      {/* Main bar */}
+      <div className="border-b border-gray-100 bg-white/95 shadow-sm backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 sm:gap-4 sm:px-6 md:py-3">
+          <Link
+            href="/"
+            className="group flex min-w-0 items-center gap-3"
+            aria-label={`${companyName} home`}
+          >
+            <span className="relative block h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-white ring-1 ring-gray-200 transition group-hover:ring-regime-blue/40 sm:h-11 sm:w-11">
               <Image
-                src={logoUrl}
+                src={logoUrl ?? "/logo.svg"}
                 alt={`${companyName} logo`}
                 fill
                 sizes="44px"
@@ -107,51 +144,33 @@ export default async function SiteHeader({
                 className="object-contain"
               />
             </span>
-          )}
 
-          <span className="min-w-0">
-            <span className="block truncate text-sm font-bold tracking-tight text-blue-900 sm:text-lg">
-              {companyName}
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-extrabold tracking-tight text-blue-900 sm:text-lg">
+                {companyName}
+              </span>
             </span>
-          </span>
-        </Link>
+          </Link>
 
-        <nav
-          aria-label="Primary navigation"
-          className="hidden items-center gap-7 md:flex"
-        >
-          {NAV_ITEMS.map((item) => {
-            const active =
-              item.href === "/#about" || item.href === "/#contact"
-                ? false
-                : currentPath.startsWith(item.match);
+          {/* Desktop navigation — icon-only chips, label expands on
+              hover or tap (see nav-icon-menu / nav-icon-link) */}
+          <NavIconMenu currentPath={currentPath} />
 
-            const className = `nav-link relative rounded text-sm font-medium tracking-wide ${active
-                ? "text-blue-800"
-                : "text-slate-600 hover:text-blue-800"
-              }`;
-
-            return (
-              <Link key={item.href} href={item.href} className={className}>
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="flex shrink-0 items-center gap-2">
-          {orderHref && (
-            <TrackedLink
-              href={orderHref}
-              event="whatsapp_click"
-              label="header_order_gas"
-              className="hidden shrink-0 rounded-lg bg-green-600 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-green-700 md:inline-flex"
+          {/* Desktop CTA */}
+          <div className="hidden shrink-0 items-center gap-2 lg:flex">
+            <Link
+              href="/#contact"
+              className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl bg-regime-blue px-5 text-sm font-bold text-white shadow-sm transition hover:bg-regime-blue-dark hover:shadow"
             >
-              Order Gas
-            </TrackedLink>
-          )}
+              <span aria-hidden="true">💬</span>
+              Contact Regime
+            </Link>
+          </div>
 
-          <SiteMobileMenu whatsappHref={orderHref} />
+          {/* Mobile menu toggle (md and below) */}
+          <div className="flex shrink-0 items-center gap-2">
+            <SiteMobileMenu />
+          </div>
         </div>
       </div>
     </header>

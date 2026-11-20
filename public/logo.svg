@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Regime Energy Services logo">
+  <defs>
+    <linearGradient id="re-flame-red" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d81f26"/>
+      <stop offset="1" stop-color="#e63946"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Black badge background -->
+  <rect width="64" height="64" rx="12" fill="#111113"/>
+
+  <!-- Big cream "R" -->
+  <text x="10" y="54" font-family="Georgia, 'Times New Roman', serif" font-weight="700"
+        font-size="46" fill="#f5f0e6">R</text>
+
+  <!-- Yellow flame swoosh -->
+  <path d="M33 22c4-5 10-8 16-8-2 5-7 9-12 11-2 1-4 0-4-3Z" fill="#f7c11e"/>
+
+  <!-- Upper red flame swoosh -->
+  <path d="M30 30c3-6 9-11 17-12-1 6-6 11-12 14-3 1-5 1-5-2Z" fill="url(#re-flame-red)"/>
+
+  <!-- Lower red flame swoosh -->
+  <path d="M28 39c2-6 7-11 14-13 0 6-4 11-9 14-3 1-5 1-5-1Z" fill="url(#re-flame-red)"/>
+</svg>

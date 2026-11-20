@@ -208,11 +208,16 @@ export default async function ServiceDetailsPage({
             </div>
 
             <Link
-              href="/#services"
+              href="/what-we-do#our-services"
               className="mt-6 inline-block text-sm font-semibold text-blue-700 hover:underline"
             >
-              ← View all services
+              ← Back to What We Do
             </Link>
+
+            <p className="mt-6 text-sm leading-6 text-gray-500">
+              This service is provided across Imo State. Reach out to confirm
+              availability at your location.
+            </p>
           </div>
         </div>
       </section>

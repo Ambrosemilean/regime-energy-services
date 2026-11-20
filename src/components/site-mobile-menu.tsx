@@ -3,20 +3,23 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
+/**
+ * Mobile navigation mirrors the desktop navigation and the homepage
+ * section order. Anchor links ("/#about", "/#safety-first", ...) take
+ * the visitor to the corresponding homepage section.
+ */
 const NAV_ITEMS = [
-  { href: "/products", label: "Products", isLink: true },
-  { href: "/services", label: "Services", isLink: true },
-  { href: "/branches", label: "Branches", isLink: true },
-  { href: "/company-history", label: "Our History", isLink: true },
-  { href: "#about", label: "About" },
-  { href: "#contact", label: "Contact" },
+  { href: "/", label: "Home", isLink: true },
+  { href: "/#about", label: "About Regime", isLink: true },
+  { href: "/#safety-first", label: "Safety First", isLink: true },
+  { href: "/#what-we-do", label: "What We Do", isLink: true },
+  { href: "/#where-we-operate", label: "Where We Operate", isLink: true },
+  { href: "/#why-choose-us", label: "Why Choose Us", isLink: true },
+  { href: "/#our-operations", label: "Our Operations", isLink: true },
+  { href: "/#contact", label: "Contact Regime", isLink: true },
 ];
 
-export default function SiteMobileMenu({
-  whatsappHref,
-}: {
-  whatsappHref?: string | null;
-}) {
+export default function SiteMobileMenu() {
   const [open, setOpen] = useState(false);
 
   // Close the menu if the viewport grows to desktop size.
@@ -110,25 +113,13 @@ export default function SiteMobileMenu({
           </ul>
 
           <div className="border-t border-gray-100 px-4 py-4">
-            {whatsappHref ? (
-              <a
-                href={whatsappHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setOpen(false)}
-                className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-green-600 px-5 text-base font-bold text-white transition hover:bg-green-700"
-              >
-                Order Gas on WhatsApp
-              </a>
-            ) : (
-              <a
-                href="#contact"
-                onClick={() => setOpen(false)}
-                className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-blue-700 px-5 text-base font-bold text-white transition hover:bg-blue-800"
-              >
-                Contact Us
-              </a>
-            )}
+            <Link
+              href="/#contact"
+              onClick={() => setOpen(false)}
+              className="flex min-h-[44px] w-full items-center justify-center rounded-lg bg-regime-blue px-5 text-base font-bold text-white transition hover:bg-regime-blue-dark"
+            >
+              Contact Regime
+            </Link>
           </div>
         </nav>
       )}

@@ -8,6 +8,7 @@ import TrackedLink from "@/components/analytics/tracked-link";
 import TrackedBranchView from "@/components/analytics/tracked-branch-view";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
+import ScrollRow from "@/components/scroll-row";
 
 export const metadata = buildMetadata({
   title: "Our Branches — Gas Plants in Owerri",
@@ -114,7 +115,7 @@ export default async function BranchesPage() {
             </p>
           </div>
         ) : (
-          <div className="grid gap-8 md:grid-cols-2">
+          <ScrollRow ariaLabel="Our branches">
             {branchList.map((branch) => {
               const whatsappNumber = branch.whatsapp
                 ? branch.whatsapp.replace(/\D/g, "")
@@ -132,7 +133,7 @@ export default async function BranchesPage() {
               return (
                 <article
                   key={branch.id}
-                  className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:shadow-lg"
+                  className="group relative w-80 shrink-0 snap-start overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:shadow-lg sm:w-96"
                 >
                   {/* Image */}
                   {branch.image_url ? (
@@ -278,7 +279,7 @@ export default async function BranchesPage() {
                 </article>
               );
             })}
-          </div>
+          </ScrollRow>
         )}
       </section>
       </main>

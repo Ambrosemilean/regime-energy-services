@@ -4,11 +4,17 @@ import CompanyHistoryManager from "./company-history-manager";
 export default async function CompanyHistoryPage() {
   const supabase = await createClient();
 
-  const { data: milestones, error } = await supabase
+  // Selected with "*" so the image_url / alt_text columns are included
+  // once the supabase/company_history_images.sql migration is applied.
+  const { data: milestonesData, error } = await supabase
     .from("company_history")
     .select("*")
     .order("display_order", { ascending: true })
     .order("year", { ascending: true });
+
+  const milestones = (milestonesData ?? []) as Parameters<
+    typeof CompanyHistoryManager
+  >[0]["milestones"];
 
   return (
     <div className="space-y-6">
@@ -43,7 +49,7 @@ export default async function CompanyHistoryPage() {
         </div>
       )}
 
-      <CompanyHistoryManager milestones={milestones ?? []} />
+      <CompanyHistoryManager milestones={milestones} />
     </div>
   );
 }

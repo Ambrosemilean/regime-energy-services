@@ -47,11 +47,31 @@ const imageSlots: ImageSlot[] = [
   },
 ];
 
-export default function NewServiceForm() {
+type CategoryOption = { value: string; label: string };
+
+export default function NewServiceForm({
+  categories = [],
+}: {
+  categories?: string[];
+}) {
   const router = useRouter();
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  const CUSTOM_CATEGORY = "__custom__";
+
+  const categoryOptions: CategoryOption[] = [
+    ...categories.map((category) => ({
+      value: category,
+      label: category,
+    })),
+    { value: CUSTOM_CATEGORY, label: "Other (enter manually)…" },
+  ];
+
+  const [selectedCategory, setSelectedCategory] = useState(
+    categories.length > 0 ? categories[0] : CUSTOM_CATEGORY
+  );
 
   const [previews, setPreviews] = useState<
     Partial<Record<ImageKey, string>>
@@ -109,6 +129,21 @@ export default function NewServiceForm() {
       return;
     }
 
+    // If a custom category was typed, submit it as the real value.
+    if (selectedCategory === CUSTOM_CATEGORY) {
+      const custom = String(
+        formData.get("service_category_custom") || ""
+      ).trim();
+
+      if (!custom) {
+        setMessage("Please enter a service category.");
+        setLoading(false);
+        return;
+      }
+
+      formData.set("service_category", custom);
+    }
+
     const result = await createService(formData);
 
     setLoading(false);
@@ -157,13 +192,32 @@ export default function NewServiceForm() {
           Service Category
         </label>
 
-        <input
+        <select
           id="service_category"
           name="service_category"
-          type="text"
-          placeholder="e.g. LPG Services"
+          value={selectedCategory}
+          required
+          onChange={(event) => setSelectedCategory(event.target.value)}
           className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
-        />
+        >
+          {categoryOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+
+        {selectedCategory === CUSTOM_CATEGORY && (
+          <input
+            id="service_category_custom"
+            name="service_category_custom"
+            type="text"
+            required
+            autoFocus
+            placeholder="e.g. LPG Services"
+            className="mt-3 w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
+          />
+        )}
       </div>
 
       {/* Short Description */}

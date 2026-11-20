@@ -9,6 +9,7 @@ type CompanyMedia = {
   title: string | null;
   alt_text: string | null;
   description: string | null;
+  project: string | null;
   display_order: number;
   is_active: boolean;
 };
@@ -37,6 +38,13 @@ export default function CompanyMediaManager({
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletingError, setDeletingError] = useState("");
+
+  // Per-image project name edits (saved with PATCH) and the project name
+  // applied to new uploads in a batch.
+  const [projectEdits, setProjectEdits] = useState<Record<string, string>>({});
+  const [savingProjectId, setSavingProjectId] = useState<string | null>(null);
+  const [projectSaveError, setProjectSaveError] = useState("");
+  const [batchProject, setBatchProject] = useState("");
 
   // Weighbridge image — a dedicated single-image slot stored with the
   // title "Weighbridge" so the homepage featured section can find it.
@@ -125,6 +133,10 @@ export default function CompanyMediaManager({
         formData.append("files", file);
       });
 
+      if (batchProject.trim()) {
+        formData.append("project", batchProject.trim());
+      }
+
       const response = await fetch("/api/admin/company-media", {
         method: "POST",
         body: formData,
@@ -137,6 +149,7 @@ export default function CompanyMediaManager({
       }
 
       setSelectedFiles([]);
+      setBatchProject("");
 
       setSuccess(
         `${result.uploaded} image${result.uploaded === 1 ? "" : "s"
@@ -248,6 +261,40 @@ export default function CompanyMediaManager({
       );
     } finally {
       setWeighbridgeUploading(false);
+    }
+  }
+
+  /**
+   * Saves the project name for one image via PATCH. An empty value
+   * clears the project.
+   */
+  async function handleProjectSave(item: CompanyMedia) {
+    const value = projectEdits[item.id] ?? "";
+
+    if (value.trim() === (item.project ?? "").trim()) return;
+
+    setSavingProjectId(item.id);
+    setProjectSaveError("");
+
+    try {
+      const response = await fetch(`/api/admin/company-media/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ project: value.trim() }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to save the project.");
+      }
+
+      window.location.reload();
+    } catch (err) {
+      setProjectSaveError(
+        err instanceof Error ? err.message : "Something went wrong."
+      );
+      setSavingProjectId(null);
     }
   }
 
@@ -367,6 +414,29 @@ export default function CompanyMediaManager({
           Upload multiple images for the Regime Energy Services website
           slideshow.
         </p>
+
+        <div className="mt-6">
+          <label
+            htmlFor="batch-project"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Project (optional)
+          </label>
+
+          <input
+            id="batch-project"
+            type="text"
+            value={batchProject}
+            onChange={(event) => setBatchProject(event.target.value)}
+            placeholder="e.g. Orlu Gas Plant"
+            className="mt-2 block w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm"
+          />
+
+          <p className="mt-1 text-xs text-gray-500">
+            Applied to every image in this upload and shown as a chip on the
+            Projects &amp; Gallery page.
+          </p>
+        </div>
 
         <div className="mt-6">
           <label
@@ -498,6 +568,12 @@ export default function CompanyMediaManager({
           </div>
         )}
 
+        {projectSaveError && (
+          <div className="mt-5 rounded-lg bg-red-50 p-4 text-sm text-red-700">
+            {projectSaveError}
+          </div>
+        )}
+
         {media.length === 0 ? (
           <div className="mt-6 rounded-lg bg-gray-50 p-10 text-center">
             <p className="font-medium text-gray-700">
@@ -547,6 +623,44 @@ export default function CompanyMediaManager({
                       {item.description}
                     </p>
                   )}
+
+                  <div className="mt-3">
+                    <label
+                      htmlFor={`project-${item.id}`}
+                      className="block text-xs font-medium text-gray-600"
+                    >
+                      Project
+                    </label>
+
+                    <div className="mt-1 flex gap-2">
+                      <input
+                        id={`project-${item.id}`}
+                        type="text"
+                        value={projectEdits[item.id] ?? item.project ?? ""}
+                        onChange={(event) =>
+                          setProjectEdits((previous) => ({
+                            ...previous,
+                            [item.id]: event.target.value,
+                          }))
+                        }
+                        placeholder="e.g. Orlu Gas Plant"
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => handleProjectSave(item)}
+                        disabled={
+                          savingProjectId !== null ||
+                          (projectEdits[item.id] ?? "").trim() ===
+                            (item.project ?? "").trim()
+                        }
+                        className="shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {savingProjectId === item.id ? "Saving..." : "Save"}
+                      </button>
+                    </div>
+                  </div>
 
                   <button
                     type="button"

@@ -38,6 +38,8 @@ function errorResponse(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
 
+const HISTORY_IMAGE_BUCKET = "history-images";
+
 function validateMilestone(body: Record<string, unknown>) {
   const year = Number(body.year);
   const title = typeof body.title === "string" ? body.title.trim() : "";
@@ -82,16 +84,55 @@ function validateMilestone(body: Record<string, unknown>) {
     return { error: "Publication status must be true or false." };
   }
 
+  const imageUrl =
+    typeof body.image_url === "string" ? body.image_url.trim() || null : null;
+  const altText =
+    typeof body.alt_text === "string" ? body.alt_text.trim() || null : null;
+
+  if (imageUrl && imageUrl.length > 2048) {
+    return { error: "Image URL is too long." };
+  }
+
   return {
     value: {
       // Keep year as a string to match the existing API's storage behavior.
       year: String(year),
       title,
       description: description || null,
+      image_url: imageUrl,
+      alt_text: altText,
       display_order: displayOrder,
       is_active: body.is_active ?? true,
     },
   };
+}
+
+/**
+ * Removes the storage object behind a milestone image (derived from the
+ * stored public URL), so deleted milestones do not leave orphaned files
+ * in the history-images bucket. Failures are logged but non-fatal.
+ */
+async function removeHistoryImage(supabase: Awaited<ReturnType<typeof createClient>>, imageUrl: string | null) {
+  if (!imageUrl) return;
+
+  const marker = `/${HISTORY_IMAGE_BUCKET}/`;
+  const markerIndex = imageUrl.indexOf(marker);
+
+  if (markerIndex === -1) return;
+
+  const filePath = imageUrl
+    .slice(markerIndex + marker.length)
+    .split("?")[0];
+
+  if (!filePath) return;
+
+  const { error } = await supabase.storage
+    .from(HISTORY_IMAGE_BUCKET)
+    .remove([filePath]);
+
+  if (error) {
+    console.error("HISTORY IMAGE STORAGE REMOVE ERROR:", error);
+  }
 }
 
 // GET: Retrieve milestones for the admin manager.
@@ -239,7 +280,7 @@ export async function DELETE(request: Request) {
       .from("company_history")
       .delete()
       .eq("id", id)
-      .select("id")
+      .select("id, image_url")
       .maybeSingle();
 
     if (error) {
@@ -250,6 +291,9 @@ export async function DELETE(request: Request) {
     if (!data) {
       return errorResponse("Milestone not found.", 404);
     }
+
+    // Clean up the milestone's image from storage, if it had one.
+    await removeHistoryImage(supabase, data.image_url);
 
     return NextResponse.json({ success: true });
   } catch (error) {

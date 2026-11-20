@@ -2,14 +2,22 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #172033;
+  --background: #ffffff;
+  --foreground: #1d2939;
 
-  --regime-blue: #0756a6;
-  --regime-blue-dark: #063d78;
-  --regime-red: #d62828;
-  --regime-yellow: #d9a441;
+  /* Approved brand palette: corporate blue dominates, red is reserved for
+     key actions, smoky yellow is a sparing accent. Legacy green tokens are
+     kept only where existing components still reference them. */
+  --regime-blue: #174b83;
+  --regime-blue-dark: #0f3a67;
+  --regime-red: #c92f35;
+  --regime-yellow: #d8ad42;
   --regime-green: #a8c825;
   --regime-green-dark: #8aa81b;
+
+  --regime-text: #1d2939;
+  --regime-text-muted: #667085;
+  --regime-surface: #f4f6f8;
 
   --surface: #f7f9fc;
   --surface-dark: #eef3f8;
@@ -28,13 +36,17 @@
   --color-regime-green: var(--regime-green);
   --color-regime-green-dark: var(--regime-green-dark);
 
+  --color-regime-text: var(--regime-text);
+  --color-regime-muted: var(--regime-text-muted);
+  --color-regime-surface: var(--regime-surface);
+
   --color-surface: var(--surface);
   --color-surface-dark: var(--surface-dark);
   --color-border: var(--border);
   --color-muted: var(--muted);
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
 }
 
 * {
@@ -243,14 +255,16 @@ svg {
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 96px;
+  /* Fixed header offset (accent stripe + utility bar + main bar ≈ 104px):
+     anchored sections land fully below the header, nothing hidden. */
+  scroll-padding-top: 112px;
 }
 
 body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-body), "Inter", Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   font-feature-settings: "ss01", "cv11";
@@ -259,6 +273,7 @@ body {
 h1,
 h2,
 h3 {
+  font-family: var(--font-heading), "Manrope", Arial, Helvetica, sans-serif;
   letter-spacing: -0.02em;
   text-wrap: balance;
 }

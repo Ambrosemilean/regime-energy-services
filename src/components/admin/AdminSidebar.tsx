@@ -93,7 +93,12 @@ export default function AdminSidebar() {
           )}
         </button>
 
-        <span className="truncate text-sm font-semibold text-white">{companyName}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="relative block h-7 w-7 shrink-0 overflow-hidden rounded bg-white">
+            <Image src={logoUrl ?? "/logo.svg"} alt={`${companyName} logo`} fill sizes="28px" className="object-contain p-0.5" />
+          </span>
+          <span className="truncate text-sm font-semibold text-white">{companyName}</span>
+        </span>
       </div>
 
       {/* Backdrop for the mobile drawer */}
@@ -114,21 +119,15 @@ export default function AdminSidebar() {
       {/* Logo / Header */}
       <div className="border-b border-slate-800 p-5">
         <Link href="/admin" className="flex items-center gap-3">
-          {logoUrl ? (
             <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-white p-1">
               <Image
-                src={logoUrl}
+                src={logoUrl ?? "/logo.svg"}
                 alt={`${companyName} logo`}
                 fill
                 sizes="44px"
                 className="object-contain p-1"
               />
             </div>
-          ) : (
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 text-sm font-bold tracking-tight text-white shadow-inner">
-              RG
-            </div>
-          )}
 
           <div className="min-w-0">
             <h1 className="truncate text-[15px] font-semibold tracking-tight text-white">

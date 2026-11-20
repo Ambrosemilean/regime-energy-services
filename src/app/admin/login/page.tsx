@@ -4,6 +4,8 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { looksLikePhone } from "@/lib/phone";
+
+/* eslint-disable @next/next/no-img-element */
 export default function AdminLoginPage() {
   const router = useRouter();
 
@@ -91,6 +93,14 @@ export default function AdminLoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
         <div className="mb-8 text-center">
+          <img
+            src="/logo.svg"
+            alt="Regime Energy Services logo"
+            width={72}
+            height={72}
+            className="mx-auto mb-4"
+          />
+
           <h1 className="text-3xl font-bold text-gray-900">
             Regime Energy Services
           </h1>

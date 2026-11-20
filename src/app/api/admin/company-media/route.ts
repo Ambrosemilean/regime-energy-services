@@ -65,6 +65,16 @@ export async function POST(request: Request) {
     const customTitle =
       formData.get("title")?.toString().trim() || null;
 
+    // Optional gallery metadata applied to every image in the batch:
+    // alt text for accessibility, a public caption/description and the
+    // project name the image belongs to (shown on the Projects & Gallery
+    // page).
+    const customAlt = formData.get("alt_text")?.toString().trim() || null;
+    const customDescription =
+      formData.get("description")?.toString().trim() || null;
+    const customProject =
+      formData.get("project")?.toString().trim() || null;
+
     if (files.length === 0) {
       return NextResponse.json(
         {
@@ -156,7 +166,10 @@ export async function POST(request: Request) {
         .insert({
           image_url: imageUrl,
           title: customTitle || file.name.replace(/\.[^/.]+$/, ""),
-          alt_text: customTitle || "Regime Energy Services",
+          alt_text:
+            customAlt || customTitle || "Regime Energy Services",
+          description: customDescription,
+          project: customProject,
           display_order: nextOrder,
           is_active: true,
         });
