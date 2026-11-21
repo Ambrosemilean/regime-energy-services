@@ -31,6 +31,21 @@ type ServiceCard = {
   imageUrl: string | null;
 };
 
+// Coordinated pastel card rotations (adjacent cards never share a colour).
+const CATEGORY_CARD_ROTATION = [
+  "regime-card-blue",
+  "regime-card-gold",
+  "regime-card-sky",
+  "regime-card-grey",
+] as const;
+
+const SERVICE_CARD_ROTATION = [
+  "regime-card-gold",
+  "regime-card-sky",
+  "regime-card-grey",
+  "regime-card-blue",
+] as const;
+
 export default async function WhatWeDoPage() {
   const supabase = await createClient();
 
@@ -178,13 +193,13 @@ export default async function WhatWeDoPage() {
             {productCategories.length > 0 ? (
               <div className="mt-8">
                 <ScrollRow ariaLabel="Product categories">
-                  {productCategories.map((category) => (
+                  {productCategories.map((category, index) => (
                     <Link
                       key={category.id}
                       href={`/products/category/${category.slug}`}
-                      className="regime-card group w-64 shrink-0 snap-start overflow-hidden sm:w-72"
+                      className={`${CATEGORY_CARD_ROTATION[index % CATEGORY_CARD_ROTATION.length]} group w-64 shrink-0 snap-start overflow-hidden sm:w-72`}
                     >
-                      <div className="relative h-40 w-full overflow-hidden bg-gray-100">
+                      <div className="regime-card-image relative h-40 w-full rounded-none">
                         {category.imageUrl ? (
                           <Image
                             src={category.imageUrl}
@@ -192,11 +207,11 @@ export default async function WhatWeDoPage() {
                             fill
                             quality={85}
                             sizes="(max-width: 640px) 80vw, 288px"
-                            className="object-cover transition duration-300 group-hover:scale-105"
+                            className="object-cover"
                           />
                         ) : (
-                          <div className="flex h-full items-center justify-center bg-regime-blue/5">
-                            <span className="text-sm font-bold uppercase tracking-widest text-regime-blue">
+                          <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+                            <span className="text-sm font-bold uppercase tracking-widest text-regime-blue-dark">
                               {category.name}
                             </span>
                           </div>
@@ -204,7 +219,7 @@ export default async function WhatWeDoPage() {
                       </div>
 
                       <div className="p-5">
-                        <h3 className="font-bold text-gray-900 group-hover:text-regime-blue">
+                        <h3 className="font-bold text-regime-blue-dark group-hover:text-regime-blue">
                           {category.name}
                         </h3>
 
@@ -263,13 +278,13 @@ export default async function WhatWeDoPage() {
             {serviceCards.length > 0 ? (
               <div className="mt-8">
                 <ScrollRow ariaLabel="Our services">
-                  {serviceCards.map((service) => (
+                  {serviceCards.map((service, index) => (
                     <Link
                       key={service.slug}
                       href={`/services/${service.slug}`}
-                      className="regime-card group w-64 shrink-0 snap-start overflow-hidden sm:w-72"
+                      className={`${SERVICE_CARD_ROTATION[index % SERVICE_CARD_ROTATION.length]} group w-64 shrink-0 snap-start overflow-hidden sm:w-72`}
                     >
-                      <div className="relative h-40 w-full overflow-hidden bg-gray-100">
+                      <div className="regime-card-image relative h-40 w-full rounded-none">
                         {service.imageUrl ? (
                           <Image
                             src={service.imageUrl}
@@ -277,11 +292,11 @@ export default async function WhatWeDoPage() {
                             fill
                             quality={85}
                             sizes="(max-width: 640px) 80vw, 288px"
-                            className="object-cover transition duration-300 group-hover:scale-105"
+                            className="object-cover"
                           />
                         ) : (
-                          <div className="flex h-full items-center justify-center bg-regime-blue/5">
-                            <span className="text-sm font-bold uppercase tracking-widest text-regime-blue">
+                          <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+                            <span className="text-sm font-bold uppercase tracking-widest text-regime-blue-dark">
                               {service.category || "Service"}
                             </span>
                           </div>
@@ -289,7 +304,7 @@ export default async function WhatWeDoPage() {
                       </div>
 
                       <div className="p-5">
-                        <h3 className="font-bold text-gray-900 group-hover:text-regime-blue">
+                        <h3 className="font-bold text-regime-blue-dark group-hover:text-regime-blue">
                           {service.name}
                         </h3>
 

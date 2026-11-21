@@ -256,8 +256,15 @@ export default function ChatWidget() {
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
         ) : (
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 3C6.9 3 3 6.5 3 11c0 2.4 1.2 4.5 3.1 6-.1 1-.6 2.4-1.7 3.5 0 0 2.9-.2 5-1.9.8.2 1.7.4 2.6.4 5.1 0 9-3.5 9-8s-3.9-8-9-8zm-4 9a1.2 1.2 0 1 1 0-2.4A1.2 1.2 0 0 1 8 12zm4 0a1.2 1.2 0 1 1 0-2.4A1.2 1.2 0 0 1 12 12zm4 0a1.2 1.2 0 1 1 0-2.4A1.2 1.2 0 0 1 16 12z" />
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            {/* Customer-assistance bot icon: robot head with antenna */}
+            <rect x="5" y="8" width="14" height="11" rx="3.5" />
+            <path d="M12 5v3" />
+            <circle cx="12" cy="4" r="1.2" />
+            <circle cx="9" cy="13" r="1.3" fill="currentColor" stroke="none" />
+            <circle cx="15" cy="13" r="1.3" fill="currentColor" stroke="none" />
+            <path d="M9.5 16.5h5" />
+            <path d="M2.5 12.5v3M21.5 12.5v3" />
           </svg>
         )}
 

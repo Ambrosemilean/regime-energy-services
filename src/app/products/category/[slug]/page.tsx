@@ -98,6 +98,7 @@ export default async function ProductCategoryPage({
   // Filter to this category in memory (products were fetched once and
   // reused instead of issuing a dependent second query).
   const productList = ((products ?? []) as (ProductCard & {
+    primary: { image_url: string; alt_text: string | null } | null;
     category_id: string | null;
   })[])
     .filter((product) => product.category_id === category.id)
@@ -115,6 +116,14 @@ export default async function ProductCategoryPage({
         imageCount: images.length,
       };
     });
+
+  // Coordinated pastel card rotation for product cards.
+  const PRODUCT_CARD_ROTATION = [
+    "regime-card-sky",
+    "regime-card-grey",
+    "regime-card-blue",
+    "regime-card-gold",
+  ] as const;
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -152,11 +161,11 @@ export default async function ProductCategoryPage({
             </div>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {productList.map((product) => (
+              {productList.map((product, index) => (
                 <Link
                   key={product.id}
                   href={`/products/${product.slug}`}
-                  className="regime-card group flex flex-col overflow-hidden"
+                  className={`${PRODUCT_CARD_ROTATION[index % PRODUCT_CARD_ROTATION.length]} group flex flex-col overflow-hidden`}
                 >
                   <div className="relative aspect-square w-full overflow-hidden bg-gray-100">
                     {product.primary ? (

@@ -39,6 +39,13 @@ export default async function ContactPage() {
   const phoneDisplay = cachedCompany?.phone || "08021295401";
   const callHref = cachedCompany?.phone ? `tel:${cachedCompany.phone}` : "tel:08021295401";
 
+  // Alternating quick-contact card backgrounds (blue / sky / grey).
+  const BRANCH_QUICK_ROTATION = [
+    "bg-card-blue border-[#d4e4f7]",
+    "bg-card-sky border-[#cfeaf3]",
+    "bg-card-grey border-[#e4e9f0]",
+  ] as const;
+
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <SiteHeader currentPath="/contact" />
@@ -155,8 +162,11 @@ export default async function ContactPage() {
                     </h3>
 
                     <div className="mt-4 space-y-4">
-                      {branchList.map((branch) => (
-                        <div key={branch.id} className="regime-card p-4">
+                      {branchList.map((branch, index) => (
+                        <div
+                          key={branch.id}
+                          className={`${BRANCH_QUICK_ROTATION[index % BRANCH_QUICK_ROTATION.length]} rounded-xl border p-4`}
+                        >
                           <p className="font-bold text-gray-900">
                             {branch.name}
                           </p>

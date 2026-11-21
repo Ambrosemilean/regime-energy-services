@@ -50,6 +50,13 @@ export default async function BranchesPage() {
       all.findIndex((other) => other.slug === branch.slug) === index
   );
 
+  // Coordinated pastel rotation for branch/location cards.
+  const BRANCH_CARD_ROTATION = [
+    "regime-card-blue",
+    "regime-card-gold",
+    "regime-card-sky",
+  ] as const;
+
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <SiteHeader currentPath="/branches" />
@@ -116,7 +123,7 @@ export default async function BranchesPage() {
           </div>
         ) : (
           <ScrollRow ariaLabel="Our branches">
-            {branchList.map((branch) => {
+            {branchList.map((branch, index) => {
               const whatsappNumber = branch.whatsapp
                 ? branch.whatsapp.replace(/\D/g, "")
                 : "";
@@ -133,11 +140,11 @@ export default async function BranchesPage() {
               return (
                 <article
                   key={branch.id}
-                  className="group relative w-80 shrink-0 snap-start overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:shadow-lg sm:w-96"
+                  className={`${BRANCH_CARD_ROTATION[index % BRANCH_CARD_ROTATION.length]} group relative w-80 shrink-0 snap-start overflow-hidden sm:w-96`}
                 >
                   {/* Image */}
                   {branch.image_url ? (
-                    <div className="relative h-64 w-full bg-gray-100">
+                    <div className="regime-card-image relative h-64 w-full rounded-none">
                       <Image
                         src={branch.image_url}
                         alt={branch.name}
@@ -148,18 +155,20 @@ export default async function BranchesPage() {
                       />
                     </div>
                   ) : (
-                    <div className="flex h-64 items-center justify-center bg-gray-100 text-gray-400">
-                      No branch image available
+                    <div className="regime-card-image flex h-64 w-full items-center justify-center rounded-none bg-gradient-to-br from-blue-50 to-blue-100 text-regime-blue">
+                      <span className="text-sm font-bold uppercase tracking-widest">
+                        {branch.name}
+                      </span>
                     </div>
                   )}
 
                   {/* Content */}
                   <div className="p-6">
-                    <p className="text-sm font-semibold uppercase tracking-wider text-blue-700">
+                    <p className="text-sm font-semibold uppercase tracking-wider text-regime-red">
                       Regime Energy Services
                     </p>
 
-                    <h2 className="mt-2 text-2xl font-bold text-gray-900">
+                    <h2 className="mt-2 text-2xl font-bold text-regime-blue-dark">
                       {branchHref ? (
                         <Link
                           href={branchHref}
@@ -249,7 +258,7 @@ export default async function BranchesPage() {
                           event="phone_click"
                           label={branch.name}
                           target="_self"
-                          className="rounded-lg border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-800 transition hover:bg-gray-50"
+                          className="rounded-lg bg-regime-red px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700"
                         >
                           Call Branch
                         </TrackedLink>
@@ -260,7 +269,7 @@ export default async function BranchesPage() {
                           href={branch.google_maps_url}
                           event="maps_click"
                           label={branch.name}
-                          className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                          className="rounded-lg bg-regime-blue px-5 py-3 text-sm font-bold text-white transition hover:bg-regime-blue-dark"
                         >
                           Get Directions
                         </TrackedLink>

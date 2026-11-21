@@ -26,6 +26,17 @@ export type NavIconItem = {
   label: string;
   match: string;
   icon: IconDef;
+  /** Brand-tone accent for the icon (blue is default). */
+  tone?: "blue" | "red" | "gold" | "navy" | "teal";
+};
+
+/** Tailwind text colour per tone — blue stays the primary nav colour. */
+const TONE_TEXT: Record<NonNullable<NavIconItem["tone"]>, string> = {
+  blue: "text-regime-blue",
+  navy: "text-regime-blue-dark",
+  red: "text-regime-red",
+  gold: "text-[#c98d1f]",
+  teal: "text-regime-teal",
 };
 
 export default function NavIconLink({
@@ -42,6 +53,8 @@ export default function NavIconLink({
   const [hovered, setHovered] = useState(false);
 
   const open = isOpen || hovered;
+
+  const tone = item.tone ?? "blue";
 
   function handleClick() {
     // On touch devices there is no hover; first tap reveals the label.
@@ -63,14 +76,17 @@ export default function NavIconLink({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={handleClick}
-      className={`group/icon flex h-11 items-center gap-0 overflow-hidden rounded-xl border px-3 transition-all duration-300 ${
-        active
+      className={`group/icon flex h-11 items-center gap-0 overflow-hidden rounded-xl border px-3 transition-all duration-300 ${active
           ? "border-regime-blue/30 bg-regime-blue/10 text-blue-900"
           : "border-transparent text-slate-600 hover:border-blue-100 hover:bg-blue-50/70 hover:text-blue-900"
-      }`}
+        }`}
     >
-      {/* Icon — always visible */}
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center transition-transform duration-300 group-hover/icon:-translate-y-0.5">
+      {/* Icon — always visible, tinted with its assigned brand tone */}
+      <span
+        className={`flex h-9 w-9 shrink-0 items-center justify-center transition-all duration-300 group-hover/icon:-translate-y-0.5 ${
+          active ? "text-regime-blue-dark" : TONE_TEXT[tone]
+        }`}
+      >
         <svg
           width="20"
           height="20"
@@ -89,9 +105,8 @@ export default function NavIconLink({
       {/* Label — collapses/expands smoothly; also revealed via CSS on
           hover for devices that support it */}
       <span
-        className={`nav-icon-label max-w-0 overflow-hidden whitespace-nowrap text-[13px] font-semibold tracking-wide transition-all duration-300 ease-out group-hover/icon:max-w-[180px] group-hover/icon:opacity-100 group-hover/icon:pl-2 ${
-          open ? "max-w-[180px] pl-2 opacity-100" : "opacity-0"
-        }`}
+        className={`nav-icon-label max-w-0 overflow-hidden whitespace-nowrap text-[13px] font-semibold tracking-wide transition-all duration-300 ease-out group-hover/icon:max-w-[180px] group-hover/icon:opacity-100 group-hover/icon:pl-2 ${open ? "max-w-[180px] pl-2 opacity-100" : "opacity-0"
+          }`}
       >
         {item.label}
       </span>
@@ -99,9 +114,8 @@ export default function NavIconLink({
       {/* Active dot */}
       <span
         aria-hidden="true"
-        className={`absolute -bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-regime-red transition-opacity duration-300 ${
-          active ? "opacity-100" : "opacity-0"
-        }`}
+        className={`absolute -bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-regime-red transition-opacity duration-300 ${active ? "opacity-100" : "opacity-0"
+          }`}
       />
     </Link>
   );

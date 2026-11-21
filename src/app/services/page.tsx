@@ -54,6 +54,14 @@ export default async function ServicesListPage({
 
   const serviceList = services ?? [];
 
+  // Coordinated pastel card rotation — adjacent cards never share a colour.
+  const CARD_ROTATION = [
+    "regime-card-blue",
+    "regime-card-gold",
+    "regime-card-sky",
+    "regime-card-grey",
+  ] as const;
+
   return (
     <div className="flex min-h-screen flex-col bg-white">
       <SiteHeader currentPath="/services" />
@@ -167,13 +175,14 @@ export default async function ServicesListPage({
 
         {!error && serviceList.length > 0 && (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {serviceList.map((service) => (
+            {serviceList.map((service, index) => (
               <Link
                 key={service.id}
                 href={`/services/${service.slug}`}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                className={`${CARD_ROTATION[index % CARD_ROTATION.length]} group flex flex-col overflow-hidden`
+                }
               >
-                <div className="relative h-52 w-full overflow-hidden bg-gray-50">
+                <div className="regime-card-image relative h-52 w-full">
                   {service.image_url ? (
                     <Image
                       src={service.image_url}
@@ -181,12 +190,17 @@ export default async function ServicesListPage({
                       fill
                       quality={85}
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover transition duration-300 group-hover:scale-105"
+                      className="object-cover"
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center bg-blue-50">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-xl font-bold text-blue-700 shadow-sm">
-                        ✓
+                    <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm">
+                        <span
+                           aria-hidden="true"
+                           className="text-regime-blue"
+                        >
+                           ⚙
+                        </span>
                       </div>
                     </div>
                   )}
@@ -194,12 +208,12 @@ export default async function ServicesListPage({
 
                 <div className="flex flex-1 flex-col p-6">
                   {service.service_category && (
-                    <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-regime-red">
                       {service.service_category}
                     </p>
                   )}
 
-                  <h2 className="mt-2 text-lg font-semibold text-gray-900 group-hover:text-blue-700">
+                  <h2 className="mt-2 text-lg font-bold text-regime-blue-dark group-hover:text-regime-blue">
                     {service.name}
                   </h2>
 
@@ -209,7 +223,7 @@ export default async function ServicesListPage({
                       "Professional and dependable service from Regime Energy Services."}
                   </p>
 
-                  <span className="mt-4 inline-block text-sm font-semibold text-blue-700 group-hover:underline">
+                  <span className="mt-4 inline-block text-sm font-bold text-regime-blue group-hover:underline">
                     Learn more →
                   </span>
                 </div>

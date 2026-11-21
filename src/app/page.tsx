@@ -330,13 +330,13 @@ export default async function Home() {
                 <div key={card.title} className="regime-mvp-card">
                   <span
                     aria-hidden="true"
-                    className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-regime-red text-sm font-bold text-white"
+                    className="regime-icon-chip regime-icon-red mt-0.5 h-10 w-10 text-sm"
                   >
                     🛡
                   </span>
 
                   <div className="min-w-0">
-                    <h3 className="text-base font-extrabold tracking-tight text-gray-900">
+                    <h3 className="text-base font-extrabold tracking-tight text-regime-blue-dark">
                       {card.title}
                     </h3>
 
@@ -348,15 +348,7 @@ export default async function Home() {
               ))}
             </div>
 
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/#contact" className="regime-button-primary">
-                Talk to Our Safety Team
-              </Link>
 
-              <Link href="/chat" className="regime-button-secondary">
-                Ask the Safety Assistant
-              </Link>
-            </div>
           </div>
         </section>
 
@@ -387,6 +379,8 @@ export default async function Home() {
                 {
                   title: "Products",
                   icon: "🛒",
+                  chip: "regime-icon-blue",
+                  surface: "regime-card-blue",
                   text:
                     "Cylinders, regulators, valves, burners, cookers, hoses and quality LPG fittings from our branches in Owerri.",
                   href: "/products",
@@ -395,6 +389,8 @@ export default async function Home() {
                 {
                   title: "Services",
                   icon: "🚚",
+                  chip: "regime-icon-gold",
+                  surface: "regime-card-gold",
                   text:
                     "LPG supply, bulk distribution, home and hotel delivery, haulage and dependable customer support across Imo State.",
                   href: "/services",
@@ -403,6 +399,8 @@ export default async function Home() {
                 {
                   title: "Maintenance & Repairs",
                   icon: "🔧",
+                  chip: "regime-icon-red",
+                  surface: "regime-card-red",
                   text:
                     "Gas cooker repairs, burner repairs and equipment servicing that keep your LPG installations safe and working.",
                   href: "/services",
@@ -411,6 +409,8 @@ export default async function Home() {
                 {
                   title: "Consultations",
                   icon: "💬",
+                  chip: "regime-icon-navy",
+                  surface: "regime-card-navy",
                   text:
                     "Expert guidance on LPG installations, safety, cylinder sizing and energy planning for homes and businesses.",
                   href: "/#contact",
@@ -419,16 +419,16 @@ export default async function Home() {
               ].map((card) => (
                 <div
                   key={card.title}
-                  className="regime-card flex flex-col p-7 text-center"
+                  className={`${card.surface} flex flex-col p-7 text-center`}
                 >
                   <span
                     aria-hidden="true"
-                    className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-regime-blue/10 text-2xl"
+                    className={`regime-icon-chip mx-auto h-14 w-14 text-2xl ${card.chip}`}
                   >
                     {card.icon}
                   </span>
 
-                  <h3 className="mt-5 text-lg font-extrabold tracking-tight text-gray-900">
+                  <h3 className="mt-5 text-lg font-extrabold tracking-tight text-regime-blue-dark">
                     {card.title}
                   </h3>
 
@@ -627,59 +627,75 @@ export default async function Home() {
                   text:
                     "Operating in the downstream LPG industry since 2013, with the know-how that comes from years of daily plant, delivery and customer work.",
                   icon: "🏅",
+                  chip: "regime-icon-navy",
+                  surface: "regime-card-navy",
                 },
                 {
                   title: "Reliable Products & Services",
                   text:
                     "Quality LPG products and dependable services, backed by honest measurement — you pay for exactly what your cylinder receives.",
                   icon: "⚖",
+                  chip: "regime-icon-green",
+                  surface: "regime-card-sky",
                 },
                 {
                   title: "Commitment to Safety",
                   text:
                     "Trained personnel, proper storage, careful transport and customer safety education at every step of the LPG journey.",
                   icon: "🛡",
+                  chip: "regime-icon-navy",
+                  surface: "regime-card-navy",
                 },
                 {
                   title: "Customer Support",
                   text:
                     "A responsive customer team reachable by phone, WhatsApp and our online safety assistant whenever you need help.",
                   icon: "💬",
+                  chip: "regime-icon-red",
+                  surface: "regime-card-red",
                 },
                 {
                   title: "Home & Hotel Delivery",
                   text:
                     "Doorstep delivery solutions for households, hotels and businesses — scheduled, secure and handled with care.",
                   icon: "🚚",
+                  chip: "regime-icon-gold",
+                  surface: "regime-card-gold",
                 },
                 {
                   title: "Professional Operations",
                   text:
                     "Own plants, haulage and weighing infrastructure operated to consistent professional standards.",
                   icon: "🏭",
+                  chip: "regime-icon-blue",
+                  surface: "regime-card-sky",
                 },
                 {
                   title: "Customer Satisfaction",
                   text:
                     "We stand behind every refill, delivery and service call — our reputation is built on customers who come back.",
                   icon: "🤝",
+                  chip: "regime-icon-teal",
+                  surface: "regime-card-grey",
                 },
                 {
                   title: "Coverage Across Imo State",
                   text:
                     "Branches in Owerri and service delivery reaching customers across Imo State, wherever you are.",
                   icon: "📍",
+                  chip: "regime-icon-blue",
+                  surface: "regime-card-sky",
                 },
               ].map((item) => (
-                <div key={item.title} className="regime-card p-6">
+                <div key={item.title} className={`${item.surface} p-6`}>
                   <span
                     aria-hidden="true"
-                    className="flex h-11 w-11 items-center justify-center rounded-xl bg-regime-blue/10 text-xl"
+                    className={`regime-icon-chip h-11 w-11 text-xl ${item.chip}`}
                   >
                     {item.icon}
                   </span>
 
-                  <h3 className="mt-5 font-bold text-gray-900">
+                  <h3 className="mt-5 font-bold text-regime-blue-dark">
                     {item.title}
                   </h3>
 
@@ -762,7 +778,7 @@ export default async function Home() {
           className="scroll-mt-24 px-4 py-12 sm:px-6 md:py-16"
         >
           <div className="mx-auto max-w-7xl">
-            <div className="regime-card p-8 md:p-12">
+            <div className="regime-card-blue p-8 md:p-12">
               <div className="grid gap-10 md:grid-cols-2">
                 <div>
                   <p className="regime-eyebrow">Contact Regime</p>

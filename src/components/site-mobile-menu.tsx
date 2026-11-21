@@ -8,16 +8,24 @@ import Link from "next/link";
  * section order. Anchor links ("/#about", "/#safety-first", ...) take
  * the visitor to the corresponding homepage section.
  */
+/** Mobile nav mirrors the desktop menu, with the same brand-tone accents. */
 const NAV_ITEMS = [
-  { href: "/", label: "Home", isLink: true },
-  { href: "/#about", label: "About Regime", isLink: true },
-  { href: "/#safety-first", label: "Safety First", isLink: true },
-  { href: "/#what-we-do", label: "What We Do", isLink: true },
-  { href: "/#where-we-operate", label: "Where We Operate", isLink: true },
-  { href: "/#why-choose-us", label: "Why Choose Us", isLink: true },
-  { href: "/#our-operations", label: "Our Operations", isLink: true },
-  { href: "/#contact", label: "Contact Regime", isLink: true },
-];
+  { href: "/", label: "Home", isLink: true, tone: "blue" },
+  { href: "/#about", label: "About Regime", isLink: true, tone: "navy" },
+  { href: "/#safety-first", label: "Safety First", isLink: true, tone: "red" },
+  { href: "/#what-we-do", label: "What We Do", isLink: true, tone: "blue" },
+  { href: "/#where-we-operate", label: "Where We Operate", isLink: true, tone: "navy" },
+  { href: "/#why-choose-us", label: "Why Choose Us", isLink: true, tone: "gold" },
+  { href: "/#our-operations", label: "Our Operations", isLink: true, tone: "blue" },
+  { href: "/#contact", label: "Contact Regime", isLink: true, tone: "blue" },
+] as const;
+
+const TONE_DOT: Record<string, string> = {
+  blue: "bg-regime-blue",
+  navy: "bg-regime-blue-dark",
+  red: "bg-regime-red",
+  gold: "bg-regime-yellow",
+};
 
 export default function SiteMobileMenu() {
   const [open, setOpen] = useState(false);
@@ -95,8 +103,12 @@ export default function SiteMobileMenu() {
                   <Link
                     href={item.href}
                     onClick={() => setOpen(false)}
-                    className="flex min-h-[44px] items-center rounded-lg px-3 text-base font-medium text-gray-800 transition hover:bg-blue-50 hover:text-blue-800"
+                    className="flex min-h-[44px] items-center gap-3 rounded-lg px-3 text-base font-medium text-gray-800 transition hover:bg-blue-50 hover:text-blue-800"
                   >
+                    <span
+                      aria-hidden="true"
+                      className={`h-2 w-2 shrink-0 rounded-full ${TONE_DOT[item.tone]}`}
+                    />
                     {item.label}
                   </Link>
                 ) : (

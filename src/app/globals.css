@@ -5,15 +5,41 @@
   --background: #ffffff;
   --foreground: #1d2939;
 
-  /* Approved brand palette: corporate blue dominates, red is reserved for
-     key actions, smoky yellow is a sparing accent. Legacy green tokens are
+  /* Approved brand palette: navy blue dominates, brand red is reserved for
+     key actions, smoky gold is a sparing accent. Legacy green tokens are
      kept only where existing components still reference them. */
-  --regime-blue: #174b83;
-  --regime-blue-dark: #0f3a67;
-  --regime-red: #c92f35;
-  --regime-yellow: #d8ad42;
+  --regime-blue: #1d5ca8;
+  --regime-blue-dark: #12366a;
+  --regime-red: #d93636;
+  --regime-yellow: #e5ad43;
   --regime-green: #a8c825;
   --regime-green-dark: #8aa81b;
+
+  /* Additional coordinated accent hues for icon backgrounds and cards */
+  --regime-teal: #0f766e;
+  --regime-gold: #e5ad43;
+
+  /* Shared card design tokens — pastel brand card palette */
+  --card-blue: #eaf3ff;        /* light blue */
+  --card-red: #fff0ef;         /* light red */
+  --card-gold: #fff8e5;        /* smoky yellow */
+  --card-sky: #eaf8fc;         /* light sky blue */
+  --card-grey: #f3f5f8;        /* light grey */
+  --card-white: #ffffff;
+  --card-navy: #102a43;        /* navy — dark surfaces */
+
+  --card-border-blue: #d4e4f7;
+  --card-border-red: #f6d9d6;
+  --card-border-gold: #f3e4bd;
+  --card-border-sky: #cfeaf3;
+  --card-border-grey: #e4e9f0;
+
+  --regime-card-border: #e4e9f0;
+  --regime-card-radius: 1rem;
+  --regime-card-shadow: 0 1px 2px rgba(18, 54, 106, 0.04),
+    0 10px 30px rgba(18, 54, 106, 0.06);
+  --regime-card-shadow-hover: 0 4px 8px rgba(18, 54, 106, 0.06),
+    0 18px 40px rgba(18, 54, 106, 0.1);
 
   --regime-text: #1d2939;
   --regime-text-muted: #667085;
@@ -35,6 +61,16 @@
   --color-regime-yellow: var(--regime-yellow);
   --color-regime-green: var(--regime-green);
   --color-regime-green-dark: var(--regime-green-dark);
+  --color-regime-teal: var(--regime-teal);
+  --color-regime-gold: var(--regime-gold);
+
+  /* Pastel card palette — usable as Tailwind bg- and border- utilities */
+  --color-card-blue: var(--card-blue);
+  --color-card-red: var(--card-red);
+  --color-card-gold: var(--card-gold);
+  --color-card-sky: var(--card-sky);
+  --color-card-grey: var(--card-grey);
+  --color-card-navy: var(--card-navy);
 
   --color-regime-text: var(--regime-text);
   --color-regime-muted: var(--regime-text-muted);
@@ -413,14 +449,12 @@ a {
   }
 }
 
-/* Modern card */
+/* Modern card — unified card standard across the site */
 .regime-card {
-  border: 1px solid var(--border);
-  border-radius: 1rem;
+  border: 1px solid var(--regime-card-border);
+  border-radius: var(--regime-card-radius);
   background: #ffffff;
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.03),
-    0 10px 30px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--regime-card-shadow);
   transition:
     transform 220ms ease,
     box-shadow 220ms ease,
@@ -428,11 +462,159 @@ a {
 }
 
 .regime-card:hover {
-  transform: translateY(-3px);
-  border-color: #cbd5e1;
-  box-shadow:
-    0 4px 8px rgba(15, 23, 42, 0.04),
-    0 18px 40px rgba(15, 23, 42, 0.08);
+  transform: translateY(-4px);
+  border-color: var(--regime-blue);
+  box-shadow: var(--regime-card-shadow-hover);
+}
+
+/* Light-blue card surface — used for variety in card grids */
+.regime-card-tint {
+  background: var(--card-grey);
+  border: 1px solid var(--card-border-grey);
+  border-radius: var(--regime-card-radius);
+  box-shadow: var(--regime-card-shadow);
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease;
+}
+
+.regime-card-tint:hover {
+  transform: translateY(-4px);
+  border-color: var(--regime-blue);
+  box-shadow: var(--regime-card-shadow-hover);
+}
+
+/* Pastel brand card surfaces — coordinated colour variety across all grids.
+   Tokens come from the centralized palette in :root above. */
+.regime-card-blue {
+  background: var(--card-blue);
+  border-color: var(--card-border-blue);
+}
+
+.regime-card-red {
+  background: var(--card-red);
+  border-color: var(--card-border-red);
+}
+
+.regime-card-gold {
+  background: var(--card-gold);
+  border-color: var(--card-border-gold);
+}
+
+.regime-card-sky {
+  background: var(--card-sky);
+  border-color: var(--card-border-sky);
+}
+
+.regime-card-grey {
+  background: var(--card-grey);
+  border-color: var(--card-border-grey);
+}
+
+.regime-card-navy {
+  background: var(--card-navy);
+  border-color: var(--card-navy);
+  color: #ffffff;
+}
+
+.regime-card-navy .regime-card-muted {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Shared structural styling for every pastel surface variant */
+.regime-card-blue,
+.regime-card-red,
+.regime-card-gold,
+.regime-card-sky,
+.regime-card-grey {
+  border: 1px solid var(--card-border-grey);
+  border-radius: var(--regime-card-radius);
+  box-shadow: var(--regime-card-shadow);
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease;
+}
+
+.regime-card-blue:hover,
+.regime-card-red:hover,
+.regime-card-gold:hover,
+.regime-card-sky:hover,
+.regime-card-grey:hover {
+  transform: translateY(-4px);
+  border-color: var(--regime-blue);
+  box-shadow: var(--regime-card-shadow-hover);
+}
+
+.regime-card-navy {
+  border: 1px solid var(--card-navy);
+  border-radius: var(--regime-card-radius);
+  box-shadow: var(--regime-card-shadow);
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.regime-card-navy:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--regime-card-shadow-hover);
+}
+
+/* Card illustrative image band — consistent ratio, rounded corners */
+.regime-card-image {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.85rem;
+  background: #eef3f9;
+}
+
+.regime-card-image img {
+  transition: transform 400ms ease;
+}
+
+.group:hover .regime-card-image img,
+.regime-card:hover .regime-card-image img {
+  transform: scale(1.05);
+}
+
+/* Coordinated icon chip treatments (Why Choose Us, safety cards, stats) */
+.regime-icon-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.85rem;
+  flex-shrink: 0;
+}
+
+.regime-icon-navy {
+  background: rgba(18, 54, 106, 0.1);
+  color: var(--regime-blue-dark);
+}
+
+.regime-icon-blue {
+  background: rgba(29, 92, 168, 0.12);
+  color: var(--regime-blue);
+}
+
+.regime-icon-red {
+  background: rgba(217, 54, 54, 0.1);
+  color: var(--regime-red);
+}
+
+.regime-icon-gold {
+  background: rgba(229, 173, 67, 0.16);
+  color: #a8781a;
+}
+
+.regime-icon-green {
+  background: rgba(22, 128, 78, 0.12);
+  color: #15803d;
+}
+
+.regime-icon-teal {
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--regime-teal);
 }
 
 /* Primary button */

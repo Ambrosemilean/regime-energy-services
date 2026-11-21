@@ -74,6 +74,14 @@ export default async function ProductsListPage({
 
   const productList: ProductCard[] = (products ?? []) as ProductCard[];
 
+  // Coordinated pastel card rotation for product cards.
+  const PRODUCT_CARD_ROTATION = [
+    "regime-card-sky",
+    "regime-card-grey",
+    "regime-card-blue",
+    "regime-card-gold",
+  ] as const;
+
   function primaryImage(product: ProductCard) {
     const images = Array.isArray(product.product_images)
       ? [...product.product_images].sort(
@@ -201,16 +209,16 @@ export default async function ProductsListPage({
 
         {!error && productList.length > 0 && (
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {productList.map((product) => {
+            {productList.map((product, index) => {
               const image = primaryImage(product);
 
               return (
                 <Link
                   key={product.id}
                   href={`/products/${product.slug}`}
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                  className={`${PRODUCT_CARD_ROTATION[index % PRODUCT_CARD_ROTATION.length]} group flex flex-col overflow-hidden`}
                 >
-                  <div className="relative aspect-square w-full overflow-hidden bg-gray-50">
+                  <div className="regime-card-image relative aspect-square w-full">
                     {image ? (
                       <Image
                         src={image.image_url}
@@ -221,7 +229,7 @@ export default async function ProductsListPage({
                         fill
                         quality={85}
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-contain p-6 transition group-hover:scale-105"
+                        className="object-contain p-6"
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center text-sm text-gray-400">
@@ -231,7 +239,7 @@ export default async function ProductsListPage({
                   </div>
 
                   <div className="flex flex-1 flex-col p-5">
-                    <h2 className="text-lg font-semibold text-gray-900 group-hover:text-blue-700">
+                    <h2 className="text-lg font-bold text-regime-blue-dark group-hover:text-regime-blue">
                       {product.name}
                     </h2>
 
@@ -243,24 +251,24 @@ export default async function ProductsListPage({
 
                     <div className="mt-4 flex items-center justify-between">
                       {product.availability === "available" && (
-                        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+                        <span className="rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
                           Available
                         </span>
                       )}
 
                       {product.availability === "on_request" && (
-                        <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700">
+                        <span className="rounded-full border border-yellow-200 bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-700">
                           On Request
                         </span>
                       )}
 
                       {product.availability === "unavailable" && (
-                        <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
+                        <span className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
                           Unavailable
                         </span>
                       )}
 
-                      <span className="text-sm font-semibold text-blue-700 group-hover:underline">
+                      <span className="text-sm font-bold text-regime-blue group-hover:underline">
                         View details →
                       </span>
                     </div>
