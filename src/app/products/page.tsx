@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { buildMetadata } from "@/lib/seo";
-import QuickActions from "@/components/whatsapp-actions";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 
@@ -116,9 +115,6 @@ export default async function ProductsListPage({
           hoses and other LPG accessories available from Regime.
         </p>
 
-        <div className="mt-8">
-          <QuickActions current="products" />
-        </div>
       </section>
 
       {/* Product Search */}

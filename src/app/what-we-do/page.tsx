@@ -5,7 +5,6 @@ import { buildMetadata } from "@/lib/seo";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import ScrollRow from "@/components/scroll-row";
-import QuickActions from "@/components/whatsapp-actions";
 import { getActiveCompanyProfile } from "@/components/site-header";
 
 export const metadata = buildMetadata({
@@ -162,10 +161,6 @@ export default async function WhatWeDoPage() {
             </Link>
           </div>
         </section>
-
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <QuickActions />
-        </div>
 
         {/* Our Products */}
         <section

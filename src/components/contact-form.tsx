@@ -26,9 +26,9 @@ const REASONS = [
 ] as const;
 
 const inputClass =
-  "w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none transition focus:border-regime-blue";
+  "w-full rounded-lg border border-gray-600 bg-gray-900 px-4 py-2.5 text-sm text-white placeholder-gray-400 outline-none transition focus:border-regime-blue focus:ring-1 focus:ring-regime-blue";
 
-const labelClass = "mb-1.5 block text-sm font-medium text-gray-300";
+const labelClass = "mb-1.5 block text-sm font-semibold text-white";
 
 export default function ContactForm() {
   const [loading, setLoading] = useState(false);

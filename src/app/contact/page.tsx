@@ -54,7 +54,9 @@ export default async function ContactPage() {
         {/* Page heading */}
         <section className="bg-regime-blue-dark px-4 py-14 text-white sm:px-6 md:py-20">
           <div className="mx-auto max-w-7xl">
-            <span className="regime-accent-chip bg-white/95">Contact Us</span>
+            <span className="inline-flex items-center rounded-full bg-white/15 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-white ring-1 ring-white/20">
+              Contact Us
+            </span>
 
             <h1 className="mt-5 text-3xl font-bold sm:text-5xl">
               Let&apos;s Talk About Your Energy Needs
@@ -198,7 +200,7 @@ export default async function ContactPage() {
 
                             <Link
                               href={`/branches/${branch.slug}`}
-                              className="font-semibold text-gray-500 hover:underline"
+                              className="font-semibold text-regime-blue hover:underline"
                             >
                               Branch details →
                             </Link>

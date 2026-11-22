@@ -416,34 +416,53 @@ export default async function Home() {
                   href: "/#contact",
                   cta: "Learn More",
                 },
-              ].map((card) => (
-                <div
-                  key={card.title}
-                  className={`${card.surface} flex flex-col p-7 text-center`}
-                >
-                  <span
-                    aria-hidden="true"
-                    className={`regime-icon-chip mx-auto h-14 w-14 text-2xl ${card.chip}`}
+              ].map((card) => {
+                const isDark = card.surface.includes("navy");
+                return (
+                  <div
+                    key={card.title}
+                    className={`${card.surface} flex flex-col p-7 text-center`}
                   >
-                    {card.icon}
-                  </span>
+                    <span
+                      aria-hidden="true"
+                      className={`regime-icon-chip mx-auto h-14 w-14 text-2xl ${
+                        isDark
+                          ? "bg-white/15 text-white ring-1 ring-white/20"
+                          : card.chip
+                      }`}
+                    >
+                      {card.icon}
+                    </span>
 
-                  <h3 className="mt-5 text-lg font-extrabold tracking-tight text-regime-blue-dark">
-                    {card.title}
-                  </h3>
+                    <h3
+                      className={`mt-5 text-lg font-extrabold tracking-tight ${
+                        isDark ? "text-white" : "text-regime-blue-dark"
+                      }`}
+                    >
+                      {card.title}
+                    </h3>
 
-                  <p className="mt-3 flex-1 text-sm leading-6 text-gray-600">
-                    {card.text}
-                  </p>
+                    <p
+                      className={`mt-3 flex-1 text-sm leading-6 ${
+                        isDark ? "text-slate-100" : "text-gray-600"
+                      }`}
+                    >
+                      {card.text}
+                    </p>
 
-                  <Link
-                    href={card.href}
-                    className="mt-6 inline-flex min-h-[44px] items-center justify-center rounded-lg bg-regime-blue px-6 py-2.5 text-sm font-bold text-white transition hover:bg-regime-blue-dark"
-                  >
-                    {card.cta}
-                  </Link>
-                </div>
-              ))}
+                    <Link
+                      href={card.href}
+                      className={`mt-6 inline-flex min-h-[44px] items-center justify-center rounded-lg px-6 py-2.5 text-sm font-bold shadow-sm transition ${
+                        isDark
+                          ? "bg-white !text-gray-950 hover:bg-gray-100"
+                          : "bg-regime-blue text-white hover:bg-regime-blue-dark"
+                      }`}
+                    >
+                      {card.cta}
+                    </Link>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -686,24 +705,39 @@ export default async function Home() {
                   chip: "regime-icon-blue",
                   surface: "regime-card-sky",
                 },
-              ].map((item) => (
-                <div key={item.title} className={`${item.surface} p-6`}>
-                  <span
-                    aria-hidden="true"
-                    className={`regime-icon-chip h-11 w-11 text-xl ${item.chip}`}
-                  >
-                    {item.icon}
-                  </span>
+              ].map((item) => {
+                const isDark = item.surface.includes("navy");
+                return (
+                  <div key={item.title} className={`${item.surface} p-6`}>
+                    <span
+                      aria-hidden="true"
+                      className={`regime-icon-chip h-11 w-11 text-xl ${
+                        isDark
+                          ? "bg-white/15 text-white ring-1 ring-white/20"
+                          : item.chip
+                      }`}
+                    >
+                      {item.icon}
+                    </span>
 
-                  <h3 className="mt-5 font-bold text-regime-blue-dark">
-                    {item.title}
-                  </h3>
+                    <h3
+                      className={`mt-5 font-bold ${
+                        isDark ? "text-white" : "text-regime-blue-dark"
+                      }`}
+                    >
+                      {item.title}
+                    </h3>
 
-                  <p className="mt-2 text-sm leading-6 text-gray-600">
-                    {item.text}
-                  </p>
-                </div>
-              ))}
+                    <p
+                      className={`mt-2 text-sm leading-6 ${
+                        isDark ? "text-slate-100" : "text-gray-600"
+                      }`}
+                    >
+                      {item.text}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </section>

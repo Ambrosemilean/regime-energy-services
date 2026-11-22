@@ -180,7 +180,7 @@ export default async function SiteFooter() {
                 href="/company-history"
                 className="mt-3 inline-block text-sm font-semibold text-gray-300 hover:text-white"
               >
-                Our History â†’
+                Our History →
               </Link>
             )}
 

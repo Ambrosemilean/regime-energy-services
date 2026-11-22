@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { buildMetadata } from "@/lib/seo";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
-import QuickActions from "@/components/whatsapp-actions";
 
 export const metadata = buildMetadata({
   title: "Our Services — LPG Supply, Delivery & Repairs",
@@ -82,9 +81,6 @@ export default async function ServicesListPage({
           Energy Services.
         </p>
 
-        <div className="mt-8">
-          <QuickActions />
-        </div>
       </section>
 
       {/* Service Search */}
