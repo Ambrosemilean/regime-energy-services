@@ -38,8 +38,6 @@ function errorResponse(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
 
-const HISTORY_IMAGE_BUCKET = "history-images";
-
 function validateMilestone(body: Record<string, unknown>) {
   const year = Number(body.year);
   const title = typeof body.title === "string" ? body.title.trim() : "";
@@ -115,19 +113,30 @@ function validateMilestone(body: Record<string, unknown>) {
 async function removeHistoryImage(supabase: Awaited<ReturnType<typeof createClient>>, imageUrl: string | null) {
   if (!imageUrl) return;
 
-  const marker = `/${HISTORY_IMAGE_BUCKET}/`;
-  const markerIndex = imageUrl.indexOf(marker);
+  const markers = ["/company-history/", "/history-images/"];
+  let matchedMarker: string | null = null;
+  let markerIndex = -1;
 
-  if (markerIndex === -1) return;
+  for (const m of markers) {
+    const idx = imageUrl.indexOf(m);
+    if (idx !== -1) {
+      matchedMarker = m;
+      markerIndex = idx;
+      break;
+    }
+  }
 
+  if (!matchedMarker || markerIndex === -1) return;
+
+  const bucketName = matchedMarker.replace(/\//g, "");
   const filePath = imageUrl
-    .slice(markerIndex + marker.length)
+    .slice(markerIndex + matchedMarker.length)
     .split("?")[0];
 
   if (!filePath) return;
 
   const { error } = await supabase.storage
-    .from(HISTORY_IMAGE_BUCKET)
+    .from(bucketName)
     .remove([filePath]);
 
   if (error) {

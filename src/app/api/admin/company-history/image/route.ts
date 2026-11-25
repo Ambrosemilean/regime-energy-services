@@ -8,7 +8,8 @@ const ADMIN_ROLES = [
 ];
 
 // Bucket that holds company history milestone photos.
-const HISTORY_IMAGE_BUCKET = "history-images";
+// Uses "company-history", with fallback to "history-images" if configured.
+const HISTORY_IMAGE_BUCKET = "company-history";
 
 const ALLOWED_TYPES = [
   "image/jpeg",
@@ -85,17 +86,28 @@ export async function POST(request: Request) {
     // When replacing an image, delete the old storage object first so the
     // bucket does not fill with orphaned files.
     if (replaceUrl) {
-      const marker = `/${HISTORY_IMAGE_BUCKET}/`;
-      const markerIndex = replaceUrl.indexOf(marker);
+      const markers = ["/company-history/", "/history-images/"];
+      let matchedMarker: string | null = null;
+      let markerIndex = -1;
 
-      if (markerIndex !== -1) {
+      for (const m of markers) {
+        const idx = replaceUrl.indexOf(m);
+        if (idx !== -1) {
+          matchedMarker = m;
+          markerIndex = idx;
+          break;
+        }
+      }
+
+      if (matchedMarker && markerIndex !== -1) {
+        const bucketName = matchedMarker.replace(/\//g, "");
         const oldPath = replaceUrl
-          .slice(markerIndex + marker.length)
+          .slice(markerIndex + matchedMarker.length)
           .split("?")[0];
 
         if (oldPath) {
           const { error: removeError } = await supabase.storage
-            .from(HISTORY_IMAGE_BUCKET)
+            .from(bucketName)
             .remove([oldPath]);
 
           if (removeError) {

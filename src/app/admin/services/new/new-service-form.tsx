@@ -5,13 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createService } from "../actions/create-service";
 
-type ImageKey =
-  | "primary"
-  | "front"
-  | "side"
-  | "back"
-  | "top"
-  | "detail";
+type ImageKey = "primary" | "secondary";
 
 type ImageSlot = {
   key: ImageKey;
@@ -26,24 +20,8 @@ const imageSlots: ImageSlot[] = [
     required: true,
   },
   {
-    key: "front",
-    label: "Front View",
-  },
-  {
-    key: "side",
-    label: "Side View",
-  },
-  {
-    key: "back",
-    label: "Back View",
-  },
-  {
-    key: "top",
-    label: "Top / Up View",
-  },
-  {
-    key: "detail",
-    label: "Detail / Close-up",
+    key: "secondary",
+    label: "Secondary Image (optional)",
   },
 ];
 
@@ -264,7 +242,7 @@ export default function NewServiceForm({
           </h2>
 
           <p className="mt-1 text-sm text-gray-500">
-            Upload JPG, PNG, or WEBP images. Maximum 5MB per image.
+            Upload up to two images (a primary image and an optional secondary image). JPG, PNG, or WEBP, up to 5MB each.
           </p>
         </div>
 

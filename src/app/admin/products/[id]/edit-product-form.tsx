@@ -73,6 +73,7 @@ export default function EditProductForm({
 
     // Client-side validation so obvious mistakes never reach the server.
     const imageInput = formData.get("image_primary");
+    const secondaryInput = formData.get("image_secondary");
 
     if (imageInput instanceof File && imageInput.size > 0) {
       const imageError = validatePrimaryImage(imageInput);
@@ -84,8 +85,19 @@ export default function EditProductForm({
       }
     }
 
+    if (secondaryInput instanceof File && secondaryInput.size > 0) {
+      const secondaryError = validatePrimaryImage(secondaryInput);
+
+      if (secondaryError) {
+        setErrorMessage(`Secondary image: ${secondaryError}`);
+        setLoading(false);
+        return;
+      }
+    }
+
     const replacingImage =
-      imageInput instanceof File && imageInput.size > 0;
+      (imageInput instanceof File && imageInput.size > 0) ||
+      (secondaryInput instanceof File && secondaryInput.size > 0);
 
     const result = await updateProduct(formData);
 
@@ -360,24 +372,45 @@ export default function EditProductForm({
           </div>
         </div>
 
-        {/* Replace primary image (optional) */}
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Replace Primary Image (optional)
-          </h2>
+        {/* Replace images (optional) */}
+        <div className="grid gap-6 rounded-2xl bg-white p-6 shadow-sm md:grid-cols-2">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">
+              Replace Primary Image (optional)
+            </h2>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Leave empty to keep the current primary image. JPG, PNG,
-            or WEBP, up to 5MB.
-          </p>
+            <p className="mt-1 text-xs text-gray-500">
+              Leave empty to keep the current primary image. JPG, PNG,
+              or WEBP, up to 5MB.
+            </p>
 
-          <input
-            id="image_primary"
-            name="image_primary"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="mt-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-blue-700"
-          />
+            <input
+              id="image_primary"
+              name="image_primary"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-blue-700"
+            />
+          </div>
+
+          <div>
+            <h2 className="text-base font-semibold text-gray-900">
+              Replace Secondary Image (optional)
+            </h2>
+
+            <p className="mt-1 text-xs text-gray-500">
+              Leave empty to keep the current secondary image. JPG, PNG,
+              or WEBP, up to 5MB.
+            </p>
+
+            <input
+              id="image_secondary"
+              name="image_secondary"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-blue-700"
+            />
+          </div>
         </div>
 
         {/* Hidden id + Actions */}

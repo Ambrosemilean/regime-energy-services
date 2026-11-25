@@ -16,14 +16,7 @@ const ALLOWED_IMAGE_TYPES = [
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
-const IMAGE_KEYS = [
-  "primary",
-  "front",
-  "side",
-  "back",
-  "top",
-  "detail",
-] as const;
+const IMAGE_KEYS = ["primary", "secondary"] as const;
 
 type ImageKey = (typeof IMAGE_KEYS)[number];
 
@@ -170,11 +163,11 @@ export async function createProduct(
     };
   }
 
-  // 7. Require at least 4 images
-  if (uploadedImages.length < 4) {
+  // 7. Max 2 images allowed, primary image is required
+  if (uploadedImages.length > 2) {
     return {
       success: false,
-      message: "Please upload at least 4 product images.",
+      message: "Please upload a maximum of 2 product images.",
     };
   }
 
@@ -493,134 +486,114 @@ export async function updateProduct(
   }
 
   // ------------------------------------------------------------------
-  // Optional: replace the primary image if a new file was provided.
-  //
-  // The replacement is atomic-ish: the new file is uploaded FIRST and a
-  // new record is inserted BEFORE the old record/storage object is
-  // removed. That way a failed upload or insert never destroys the
-  // existing image — when no file is selected, the current image is
-  // left completely untouched.
+  // Optional: replace or update the primary and/or secondary image.
   // ------------------------------------------------------------------
   const primaryFile = formData.get("image_primary");
-  let imageReplaced = false;
+  const secondaryFile = formData.get("image_secondary");
+  let imagesModified = false;
 
-  if (primaryFile instanceof File && primaryFile.size > 0) {
-    if (!ALLOWED_IMAGE_TYPES.includes(primaryFile.type)) {
-      return {
-        success: false,
-        message:
-          "Invalid image type for the primary image. Use JPG, PNG, or WEBP.",
-      };
-    }
+  const replaceTargets = [
+    { file: primaryFile, key: "primary" as const, displayOrder: 0, isPrimary: true, label: "primary" },
+    { file: secondaryFile, key: "secondary" as const, displayOrder: 1, isPrimary: false, label: "secondary" },
+  ];
 
-    if (primaryFile.size > MAX_IMAGE_SIZE) {
-      return {
-        success: false,
-        message: "The primary image is larger than 5MB.",
-      };
-    }
-
-    const { data: existingPrimary } = await supabase
-      .from("product_images")
-      .select("id, image_url")
-      .eq("product_id", productId)
-      .eq("is_primary", true)
-      .maybeSingle();
-
-    // 1. Upload the new image to Supabase Storage first.
-    const safeFileName = getSafeFileName(primaryFile.name);
-    const storagePath = `${productId}/${crypto.randomUUID()}-${safeFileName}`;
-    const fileBuffer = await primaryFile.arrayBuffer();
-
-    const { error: uploadError } = await supabase.storage
-      .from("product-images")
-      .upload(storagePath, fileBuffer, {
-        contentType: primaryFile.type,
-        upsert: false,
-      });
-
-    if (uploadError) {
-      console.error("Primary image upload error:", uploadError);
-
-      return {
-        success: false,
-        message: `Primary image upload failed: ${uploadError.message}`,
-      };
-    }
-
-    const { data: publicUrlData } = supabase.storage
-      .from("product-images")
-      .getPublicUrl(storagePath);
-
-    // 2. Insert the new image record BEFORE removing anything old.
-    const { data: newImage, error: imageRecordError } = await supabase
-      .from("product_images")
-      .insert({
-        product_id: productId,
-        image_url: publicUrlData.publicUrl,
-        alt_text: `${name} - primary image`,
-        image_type: "primary",
-        display_order: 0,
-        is_primary: true,
-      })
-      .select("id")
-      .single();
-
-    if (imageRecordError || !newImage) {
-      console.error(
-        "Primary image record error:",
-        imageRecordError
-      );
-
-      // Roll back the orphaned upload so storage does not fill up
-      // with unreachable files.
-      await supabase.storage
-        .from("product-images")
-        .remove([storagePath]);
-
-      return {
-        success: false,
-        message: `Primary image save failed: ${
-          imageRecordError?.message ?? "unknown database error"
-        }`,
-      };
-    }
-
-    // 3. Only now remove the old record and its storage object.
-    if (existingPrimary) {
-      const marker = "/product-images/";
-      const urlIndex = existingPrimary.image_url.indexOf(marker);
-
-      if (urlIndex !== -1) {
-        const { error: removeError } = await supabase.storage
-          .from("product-images")
-          .remove([
-            existingPrimary.image_url.slice(urlIndex + marker.length),
-          ]);
-
-        if (removeError) {
-          // Non-fatal: the DB now points at the new image; log the
-          // orphaned object for a storage cleanup later.
-          console.error(
-            "Old primary image storage cleanup error:",
-            removeError
-          );
-        }
+  for (const target of replaceTargets) {
+    if (target.file instanceof File && target.file.size > 0) {
+      if (!ALLOWED_IMAGE_TYPES.includes(target.file.type)) {
+        return {
+          success: false,
+          message: `Invalid image type for the ${target.label} image. Use JPG, PNG, or WEBP.`,
+        };
       }
 
-      await supabase
-        .from("product_images")
-        .delete()
-        .eq("id", existingPrimary.id);
-    }
+      if (target.file.size > MAX_IMAGE_SIZE) {
+        return {
+          success: false,
+          message: `The ${target.label} image is larger than 5MB.`,
+        };
+      }
 
-    imageReplaced = true;
+      // Look for an existing image of this type
+      const { data: existingImg } = await supabase
+        .from("product_images")
+        .select("id, image_url")
+        .eq("product_id", productId)
+        .eq(target.isPrimary ? "is_primary" : "image_type", target.isPrimary ? true : target.key)
+        .maybeSingle();
+
+      const safeFileName = getSafeFileName(target.file.name);
+      const storagePath = `${productId}/${crypto.randomUUID()}-${safeFileName}`;
+      const fileBuffer = await target.file.arrayBuffer();
+
+      const { error: uploadError } = await supabase.storage
+        .from("product-images")
+        .upload(storagePath, fileBuffer, {
+          contentType: target.file.type,
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error(`${target.label} image upload error:`, uploadError);
+        return {
+          success: false,
+          message: `${target.label} image upload failed: ${uploadError.message}`,
+        };
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from("product-images")
+        .getPublicUrl(storagePath);
+
+      const { data: newImage, error: imageRecordError } = await supabase
+        .from("product_images")
+        .insert({
+          product_id: productId,
+          image_url: publicUrlData.publicUrl,
+          alt_text: `${name} - ${target.label} image`,
+          image_type: target.key,
+          display_order: target.displayOrder,
+          is_primary: target.isPrimary,
+        })
+        .select("id")
+        .single();
+
+      if (imageRecordError || !newImage) {
+        console.error(`${target.label} image record error:`, imageRecordError);
+        await supabase.storage.from("product-images").remove([storagePath]);
+        return {
+          success: false,
+          message: `${target.label} image save failed: ${imageRecordError?.message ?? "unknown database error"}`,
+        };
+      }
+
+      if (existingImg) {
+        const marker = "/product-images/";
+        const urlIndex = existingImg.image_url.indexOf(marker);
+
+        if (urlIndex !== -1) {
+          const { error: removeError } = await supabase.storage
+            .from("product-images")
+            .remove([existingImg.image_url.slice(urlIndex + marker.length)]);
+
+          if (removeError) {
+            console.error(`Old ${target.label} image storage cleanup error:`, removeError);
+          }
+        }
+
+        await supabase
+          .from("product_images")
+          .delete()
+          .eq("id", existingImg.id);
+      }
+
+      imagesModified = true;
+    }
   }
 
   return {
     success: true,
-    message: imageReplaced
-      ? "Product updated successfully. The new primary image has been saved."
+    message: imagesModified
+      ? "Product updated successfully. The images have been saved."
       : "Product updated successfully.",
   };
 }

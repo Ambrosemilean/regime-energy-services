@@ -41,11 +41,7 @@ export default function NewProductForm({
 
   const imageFields = [
     { key: "primary", label: "Primary Image *", required: true },
-    { key: "front", label: "Front Image", required: false },
-    { key: "side", label: "Side Image", required: false },
-    { key: "back", label: "Back Image", required: false },
-    { key: "top", label: "Top Image", required: false },
-    { key: "detail", label: "Detail Image", required: false },
+    { key: "secondary", label: "Secondary Image (optional)", required: false },
   ];
 
   const inputClass =
@@ -247,11 +243,10 @@ export default function NewProductForm({
         </h2>
 
         <p className="mt-1 text-sm text-gray-500">
-          Upload a primary image plus at least 3 more images (4
-          total). JPG, PNG, or WEBP, up to 5MB each.
+          Upload up to two images (a primary image and an optional secondary image). JPG, PNG, or WEBP, up to 5MB each.
         </p>
 
-        <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-5 grid gap-5 sm:grid-cols-2">
           {imageFields.map((field) => (
             <div key={field.key}>
               <label

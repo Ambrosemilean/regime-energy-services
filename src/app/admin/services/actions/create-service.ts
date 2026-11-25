@@ -79,7 +79,7 @@ export async function createService(
     };
   }
 
-  // 5. Collect images
+  // 5. Collect images (up to 2: primary and secondary)
   const imageDefinitions = [
     {
       key: "primary",
@@ -88,33 +88,9 @@ export async function createService(
       isPrimary: true,
     },
     {
-      key: "front",
-      imageType: "front",
+      key: "secondary",
+      imageType: "secondary",
       displayOrder: 1,
-      isPrimary: false,
-    },
-    {
-      key: "side",
-      imageType: "side",
-      displayOrder: 2,
-      isPrimary: false,
-    },
-    {
-      key: "back",
-      imageType: "back",
-      displayOrder: 3,
-      isPrimary: false,
-    },
-    {
-      key: "top",
-      imageType: "top",
-      displayOrder: 4,
-      isPrimary: false,
-    },
-    {
-      key: "detail",
-      imageType: "detail",
-      displayOrder: 5,
       isPrimary: false,
     },
   ];
@@ -433,109 +409,122 @@ export async function updateService(
     };
   }
 
-  // Optional: replace the primary image if a new file was provided.
+  // Optional: replace or update the primary and/or secondary image if provided.
   const primaryFile = formData.get("image_primary");
+  const secondaryFile = formData.get("image_secondary");
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  let imagesModified = false;
 
-  if (primaryFile instanceof File && primaryFile.size > 0) {
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  const replaceTargets = [
+    { file: primaryFile, key: "primary" as const, displayOrder: 0, isPrimary: true, label: "primary" },
+    { file: secondaryFile, key: "secondary" as const, displayOrder: 1, isPrimary: false, label: "secondary" },
+  ];
 
-    if (!allowedTypes.includes(primaryFile.type)) {
-      return {
-        success: false,
-        message:
-          "Invalid image type for the primary image. Use JPG, PNG, or WEBP.",
-      };
-    }
-
-    if (primaryFile.size > 5 * 1024 * 1024) {
-      return {
-        success: false,
-        message: "The primary image is larger than 5MB.",
-      };
-    }
-
-    const { data: existingPrimary } = await supabase
-      .from("service_images")
-      .select("id, image_url")
-      .eq("service_id", serviceId)
-      .eq("is_primary", true)
-      .maybeSingle();
-
-    // Delete the old primary image record and its storage object.
-    if (existingPrimary) {
-      const marker = "/service-images/";
-      const urlIndex = existingPrimary.image_url.indexOf(marker);
-
-      if (urlIndex !== -1) {
-        await supabase.storage
-          .from("service-images")
-          .remove([
-            existingPrimary.image_url.slice(urlIndex + marker.length),
-          ]);
+  for (const target of replaceTargets) {
+    if (target.file instanceof File && target.file.size > 0) {
+      if (!allowedTypes.includes(target.file.type)) {
+        return {
+          success: false,
+          message: `Invalid image type for the ${target.label} image. Use JPG, PNG, or WEBP.`,
+        };
       }
 
-      await supabase
+      if (target.file.size > 5 * 1024 * 1024) {
+        return {
+          success: false,
+          message: `The ${target.label} image is larger than 5MB.`,
+        };
+      }
+
+      const { data: existingImg } = await supabase
         .from("service_images")
-        .delete()
-        .eq("id", existingPrimary.id);
-    }
+        .select("id, image_url")
+        .eq("service_id", serviceId)
+        .eq(target.isPrimary ? "is_primary" : "image_type", target.isPrimary ? true : target.key)
+        .maybeSingle();
 
-    const fileExtension =
-      primaryFile.name.split(".").pop()?.toLowerCase() || "jpg";
-    const filePath = `${serviceId}/primary-${crypto.randomUUID()}.${fileExtension}`;
+      // Delete the old image record and its storage object if replacing.
+      if (existingImg) {
+        const marker = "/service-images/";
+        const urlIndex = existingImg.image_url.indexOf(marker);
 
-    const { error: uploadError } = await supabase.storage
-      .from("service-images")
-      .upload(filePath, primaryFile, {
-        contentType: primaryFile.type,
-        upsert: false,
-      });
+        if (urlIndex !== -1) {
+          await supabase.storage
+            .from("service-images")
+            .remove([
+              existingImg.image_url.slice(urlIndex + marker.length),
+            ]);
+        }
 
-    if (uploadError) {
-      return {
-        success: false,
-        message: `Primary image upload failed: ${uploadError.message}`,
-      };
-    }
+        await supabase
+          .from("service_images")
+          .delete()
+          .eq("id", existingImg.id);
+      }
 
-    const {
-      data: { publicUrl },
-    } = supabase.storage
-      .from("service-images")
-      .getPublicUrl(filePath);
+      const fileExtension =
+        target.file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const filePath = `${serviceId}/${target.key}-${crypto.randomUUID()}.${fileExtension}`;
 
-    const { error: imageRecordError } = await supabase
-      .from("service_images")
-      .insert({
-        service_id: serviceId,
-        image_url: publicUrl,
-        alt_text: `${name} - primary`,
-        image_type: "primary",
-        display_order: 0,
-        is_primary: true,
-      });
+      const { error: uploadError } = await supabase.storage
+        .from("service-images")
+        .upload(filePath, target.file, {
+          contentType: target.file.type,
+          upsert: false,
+        });
 
-    if (imageRecordError) {
-      return {
-        success: false,
-        message: `Primary image save failed: ${imageRecordError.message}`,
-      };
-    }
+      if (uploadError) {
+        return {
+          success: false,
+          message: `${target.label} image upload failed: ${uploadError.message}`,
+        };
+      }
 
-    // Keep services.image_url in sync with the primary image.
-    const { error: syncError } = await supabase
-      .from("services")
-      .update({ image_url: publicUrl })
-      .eq("id", serviceId);
+      const {
+        data: { publicUrl },
+      } = supabase.storage
+        .from("service-images")
+        .getPublicUrl(filePath);
 
-    if (syncError) {
-      console.error("Service image sync error:", syncError);
+      const { error: imageRecordError } = await supabase
+        .from("service_images")
+        .insert({
+          service_id: serviceId,
+          image_url: publicUrl,
+          alt_text: `${name} - ${target.label}`,
+          image_type: target.key,
+          display_order: target.displayOrder,
+          is_primary: target.isPrimary,
+        });
+
+      if (imageRecordError) {
+        return {
+          success: false,
+          message: `${target.label} image save failed: ${imageRecordError.message}`,
+        };
+      }
+
+      if (target.isPrimary) {
+        // Keep services.image_url in sync with the primary image.
+        const { error: syncError } = await supabase
+          .from("services")
+          .update({ image_url: publicUrl })
+          .eq("id", serviceId);
+
+        if (syncError) {
+          console.error("Service image sync error:", syncError);
+        }
+      }
+
+      imagesModified = true;
     }
   }
 
   return {
     success: true,
-    message: "Service updated successfully.",
+    message: imagesModified
+      ? "Service updated successfully. The images have been saved."
+      : "Service updated successfully.",
   };
 }
 

@@ -44,6 +44,36 @@ export default function EditServiceForm({
 
     const formData = new FormData(event.currentTarget);
 
+    const primaryFile = formData.get("image_primary");
+    const secondaryFile = formData.get("image_secondary");
+    const allowed = ["image/jpeg", "image/png", "image/webp"];
+
+    if (primaryFile instanceof File && primaryFile.size > 0) {
+      if (!allowed.includes(primaryFile.type)) {
+        setErrorMessage("Primary image: only JPG, PNG, and WEBP are allowed.");
+        setLoading(false);
+        return;
+      }
+      if (primaryFile.size > 5 * 1024 * 1024) {
+        setErrorMessage("Primary image must be 5MB or smaller.");
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (secondaryFile instanceof File && secondaryFile.size > 0) {
+      if (!allowed.includes(secondaryFile.type)) {
+        setErrorMessage("Secondary image: only JPG, PNG, and WEBP are allowed.");
+        setLoading(false);
+        return;
+      }
+      if (secondaryFile.size > 5 * 1024 * 1024) {
+        setErrorMessage("Secondary image must be 5MB or smaller.");
+        setLoading(false);
+        return;
+      }
+    }
+
     const result = await updateService(formData);
 
     setLoading(false);
@@ -193,27 +223,49 @@ export default function EditServiceForm({
           />
         </div>
 
-        {/* Replace primary image (optional) */}
-        <div>
-          <label
-            htmlFor="image_primary"
-            className="mb-2 block text-sm font-semibold text-gray-700"
-          >
-            Replace Primary Image (optional)
-          </label>
+        {/* Replace images (optional) */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <label
+              htmlFor="image_primary"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              Replace Primary Image (optional)
+            </label>
 
-          <p className="mb-3 text-sm text-gray-500">
-            Leave empty to keep the current primary image. JPG, PNG,
-            or WEBP, up to 5MB.
-          </p>
+            <p className="mb-3 text-xs text-gray-500">
+              Leave empty to keep current primary image. Max 5MB.
+            </p>
 
-          <input
-            id="image_primary"
-            name="image_primary"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="block w-full cursor-pointer rounded-lg border border-gray-300 p-2 text-sm"
-          />
+            <input
+              id="image_primary"
+              name="image_primary"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="block w-full cursor-pointer rounded-lg border border-gray-300 p-2 text-sm"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="image_secondary"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              Replace Secondary Image (optional)
+            </label>
+
+            <p className="mb-3 text-xs text-gray-500">
+              Leave empty to keep current secondary image. Max 5MB.
+            </p>
+
+            <input
+              id="image_secondary"
+              name="image_secondary"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="block w-full cursor-pointer rounded-lg border border-gray-300 p-2 text-sm"
+            />
+          </div>
         </div>
 
         {/* Flags */}
