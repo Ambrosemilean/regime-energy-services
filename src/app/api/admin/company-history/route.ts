@@ -1,6 +1,7 @@
 
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const ADMIN_ROLES = [
   "super_admin",
@@ -113,7 +114,7 @@ function validateMilestone(body: Record<string, unknown>) {
 async function removeHistoryImage(supabase: Awaited<ReturnType<typeof createClient>>, imageUrl: string | null) {
   if (!imageUrl) return;
 
-  const markers = ["/company-history/", "/history-images/"];
+  const markers = ["/history-images/", "/company-history/"];
   let matchedMarker: string | null = null;
   let markerIndex = -1;
 
@@ -135,7 +136,14 @@ async function removeHistoryImage(supabase: Awaited<ReturnType<typeof createClie
 
   if (!filePath) return;
 
-  const { error } = await supabase.storage
+  let storageClient = supabase;
+  try {
+    storageClient = createAdminClient() as unknown as typeof supabase;
+  } catch {
+    // Fallback to authorized user client
+  }
+
+  const { error } = await storageClient.storage
     .from(bucketName)
     .remove([filePath]);
 

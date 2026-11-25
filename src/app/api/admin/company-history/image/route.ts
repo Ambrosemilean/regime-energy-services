@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const ADMIN_ROLES = [
   "super_admin",
@@ -8,8 +9,8 @@ const ADMIN_ROLES = [
 ];
 
 // Bucket that holds company history milestone photos.
-// Uses "company-history", with fallback to "history-images" if configured.
-const HISTORY_IMAGE_BUCKET = "company-history";
+// Supports "history-images" (created in Supabase Storage) with automatic fallback.
+const HISTORY_IMAGE_BUCKET = "history-images";
 
 const ALLOWED_TYPES = [
   "image/jpeg",
@@ -83,10 +84,19 @@ export async function POST(request: Request) {
       );
     }
 
+    // Use admin client for storage operations once authorization is verified.
+    // This prevents storage Row Level Security (RLS) policy blocks from stopping uploads.
+    let storageClient = supabase;
+    try {
+      storageClient = createAdminClient() as unknown as typeof supabase;
+    } catch {
+      // Fallback to user supabase client if service key is unavailable
+    }
+
     // When replacing an image, delete the old storage object first so the
     // bucket does not fill with orphaned files.
     if (replaceUrl) {
-      const markers = ["/company-history/", "/history-images/"];
+      const markers = ["/history-images/", "/company-history/"];
       let matchedMarker: string | null = null;
       let markerIndex = -1;
 
@@ -106,7 +116,7 @@ export async function POST(request: Request) {
           .split("?")[0];
 
         if (oldPath) {
-          const { error: removeError } = await supabase.storage
+          const { error: removeError } = await storageClient.storage
             .from(bucketName)
             .remove([oldPath]);
 
@@ -124,13 +134,27 @@ export async function POST(request: Request) {
     const fileName = `${crypto.randomUUID()}.${extension}`;
     const filePath = `milestones/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from(HISTORY_IMAGE_BUCKET)
+    // Try primary bucket ("history-images"), fallback to "company-history" if needed
+    let activeBucket = HISTORY_IMAGE_BUCKET;
+    let { error: uploadError } = await storageClient.storage
+      .from(activeBucket)
       .upload(filePath, file, {
         cacheControl: "3600",
         upsert: false,
         contentType: file.type,
       });
+
+    if (uploadError && uploadError.message?.toLowerCase().includes("bucket not found")) {
+      activeBucket = "company-history";
+      const fallbackUpload = await storageClient.storage
+        .from(activeBucket)
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type,
+        });
+      uploadError = fallbackUpload.error;
+    }
 
     if (uploadError) {
       console.error("HISTORY IMAGE UPLOAD ERROR:", uploadError);
@@ -144,8 +168,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data: publicUrlData } = supabase.storage
-      .from(HISTORY_IMAGE_BUCKET)
+    const { data: publicUrlData } = storageClient.storage
+      .from(activeBucket)
       .getPublicUrl(filePath);
 
     return NextResponse.json({
