@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type CreateProductResult = {
   success: boolean;
@@ -240,6 +241,15 @@ export async function createProduct(
 
   const uploadedStoragePaths: string[] = [];
 
+  // Use the admin client for storage operations once authorization is verified.
+  // This bypasses storage RLS policy restrictions on product-images.
+  let storageClient = supabase;
+  try {
+    storageClient = createAdminClient() as unknown as typeof supabase;
+  } catch {
+    // Fall back to authorized user client if secret key is unavailable
+  }
+
   try {
     // 11. Upload images to Supabase Storage
     for (let index = 0; index < uploadedImages.length; index++) {
@@ -257,7 +267,7 @@ export async function createProduct(
       const fileBuffer = await image.file.arrayBuffer();
 
       const { error: uploadError } =
-        await supabase.storage
+        await storageClient.storage
           .from("product-images")
           .upload(
             storagePath,
@@ -278,7 +288,7 @@ export async function createProduct(
 
       // 12. Get the public image URL
       const { data: publicUrlData } =
-        supabase.storage
+        storageClient.storage
           .from("product-images")
           .getPublicUrl(storagePath);
 
@@ -320,7 +330,7 @@ export async function createProduct(
     // 15. Remove uploaded storage files
     if (uploadedStoragePaths.length > 0) {
       const { error: cleanupError } =
-        await supabase.storage
+        await storageClient.storage
           .from("product-images")
           .remove(uploadedStoragePaths);
 
@@ -497,6 +507,13 @@ export async function updateProduct(
     { file: secondaryFile, key: "secondary" as const, displayOrder: 1, isPrimary: false, label: "secondary" },
   ];
 
+  let updateStorageClient = supabase;
+  try {
+    updateStorageClient = createAdminClient() as unknown as typeof supabase;
+  } catch {
+    // Fall back to authorized user client
+  }
+
   for (const target of replaceTargets) {
     if (target.file instanceof File && target.file.size > 0) {
       if (!ALLOWED_IMAGE_TYPES.includes(target.file.type)) {
@@ -525,7 +542,7 @@ export async function updateProduct(
       const storagePath = `${productId}/${crypto.randomUUID()}-${safeFileName}`;
       const fileBuffer = await target.file.arrayBuffer();
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await updateStorageClient.storage
         .from("product-images")
         .upload(storagePath, fileBuffer, {
           contentType: target.file.type,
@@ -540,7 +557,7 @@ export async function updateProduct(
         };
       }
 
-      const { data: publicUrlData } = supabase.storage
+      const { data: publicUrlData } = updateStorageClient.storage
         .from("product-images")
         .getPublicUrl(storagePath);
 
@@ -559,7 +576,7 @@ export async function updateProduct(
 
       if (imageRecordError || !newImage) {
         console.error(`${target.label} image record error:`, imageRecordError);
-        await supabase.storage.from("product-images").remove([storagePath]);
+        await updateStorageClient.storage.from("product-images").remove([storagePath]);
         return {
           success: false,
           message: `${target.label} image save failed: ${imageRecordError?.message ?? "unknown database error"}`,
@@ -571,7 +588,7 @@ export async function updateProduct(
         const urlIndex = existingImg.image_url.indexOf(marker);
 
         if (urlIndex !== -1) {
-          const { error: removeError } = await supabase.storage
+          const { error: removeError } = await updateStorageClient.storage
             .from("product-images")
             .remove([existingImg.image_url.slice(urlIndex + marker.length)]);
 
@@ -653,7 +670,13 @@ export async function deleteProduct(
       .filter((path): path is string => path !== null);
 
     if (paths.length > 0) {
-      await supabase.storage.from("product-images").remove(paths);
+      let storageClient = supabase;
+      try {
+        storageClient = createAdminClient() as unknown as typeof supabase;
+      } catch {
+        // Fall back to authorized user client
+      }
+      await storageClient.storage.from("product-images").remove(paths);
     }
   }
 

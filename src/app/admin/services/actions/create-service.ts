@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type CreateServiceResult = {
   success: boolean;
@@ -202,6 +203,13 @@ export async function createService(
 
   const uploadedPaths: string[] = [];
 
+  let storageClient = supabase;
+  try {
+    storageClient = createAdminClient() as unknown as typeof supabase;
+  } catch {
+    // Fall back to authorized user client
+  }
+
   try {
     // 10. Upload images
     for (const image of images) {
@@ -212,7 +220,7 @@ export async function createService(
       const filePath = `${service.id}/${image.key}-${crypto.randomUUID()}.${fileExtension}`;
 
       const { error: uploadError } =
-        await supabase.storage
+        await storageClient.storage
           .from("service-images")
           .upload(filePath, image.file, {
             contentType: image.file.type,
@@ -230,7 +238,7 @@ export async function createService(
       // 11. Get public URL
       const {
         data: { publicUrl },
-      } = supabase.storage
+      } = storageClient.storage
         .from("service-images")
         .getPublicUrl(filePath);
 
@@ -284,7 +292,7 @@ export async function createService(
 
     // 14. Clean up uploaded files
     if (uploadedPaths.length > 0) {
-      await supabase.storage
+      await storageClient.storage
         .from("service-images")
         .remove(uploadedPaths);
     }
@@ -420,6 +428,13 @@ export async function updateService(
     { file: secondaryFile, key: "secondary" as const, displayOrder: 1, isPrimary: false, label: "secondary" },
   ];
 
+  let updateStorageClient = supabase;
+  try {
+    updateStorageClient = createAdminClient() as unknown as typeof supabase;
+  } catch {
+    // Fall back to authorized user client
+  }
+
   for (const target of replaceTargets) {
     if (target.file instanceof File && target.file.size > 0) {
       if (!allowedTypes.includes(target.file.type)) {
@@ -449,7 +464,7 @@ export async function updateService(
         const urlIndex = existingImg.image_url.indexOf(marker);
 
         if (urlIndex !== -1) {
-          await supabase.storage
+          await updateStorageClient.storage
             .from("service-images")
             .remove([
               existingImg.image_url.slice(urlIndex + marker.length),
@@ -466,7 +481,7 @@ export async function updateService(
         target.file.name.split(".").pop()?.toLowerCase() || "jpg";
       const filePath = `${serviceId}/${target.key}-${crypto.randomUUID()}.${fileExtension}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await updateStorageClient.storage
         .from("service-images")
         .upload(filePath, target.file, {
           contentType: target.file.type,
@@ -482,7 +497,7 @@ export async function updateService(
 
       const {
         data: { publicUrl },
-      } = supabase.storage
+      } = updateStorageClient.storage
         .from("service-images")
         .getPublicUrl(filePath);
 
@@ -583,7 +598,13 @@ export async function deleteService(
       .filter((path): path is string => path !== null);
 
     if (paths.length > 0) {
-      await supabase.storage.from("service-images").remove(paths);
+      let deleteStorageClient = supabase;
+      try {
+        deleteStorageClient = createAdminClient() as unknown as typeof supabase;
+      } catch {
+        // Fall back to authorized user client
+      }
+      await deleteStorageClient.storage.from("service-images").remove(paths);
     }
   }
 
