@@ -81,6 +81,8 @@ export async function createService(
   }
 
   // 5. Collect images (up to 2: primary and secondary)
+  // Note: the database check constraint service_images_image_type_check allows
+  // 'primary', 'front', 'side', 'back', 'gallery', 'detail'.
   const imageDefinitions = [
     {
       key: "primary",
@@ -90,7 +92,7 @@ export async function createService(
     },
     {
       key: "secondary",
-      imageType: "secondary",
+      imageType: "gallery",
       displayOrder: 1,
       isPrimary: false,
     },
@@ -424,8 +426,8 @@ export async function updateService(
   let imagesModified = false;
 
   const replaceTargets = [
-    { file: primaryFile, key: "primary" as const, displayOrder: 0, isPrimary: true, label: "primary" },
-    { file: secondaryFile, key: "secondary" as const, displayOrder: 1, isPrimary: false, label: "secondary" },
+    { file: primaryFile, key: "primary" as const, imageType: "primary", displayOrder: 0, isPrimary: true, label: "primary" },
+    { file: secondaryFile, key: "secondary" as const, imageType: "gallery", displayOrder: 1, isPrimary: false, label: "secondary" },
   ];
 
   let updateStorageClient = supabase;
@@ -451,11 +453,12 @@ export async function updateService(
         };
       }
 
+      // Look for an existing image of this type
       const { data: existingImg } = await supabase
         .from("service_images")
         .select("id, image_url")
         .eq("service_id", serviceId)
-        .eq(target.isPrimary ? "is_primary" : "image_type", target.isPrimary ? true : target.key)
+        .eq(target.isPrimary ? "is_primary" : "image_type", target.isPrimary ? true : target.imageType)
         .maybeSingle();
 
       // Delete the old image record and its storage object if replacing.
@@ -507,7 +510,7 @@ export async function updateService(
           service_id: serviceId,
           image_url: publicUrl,
           alt_text: `${name} - ${target.label}`,
-          image_type: target.key,
+          image_type: target.imageType,
           display_order: target.displayOrder,
           is_primary: target.isPrimary,
         });

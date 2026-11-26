@@ -21,6 +21,14 @@ const IMAGE_KEYS = ["primary", "secondary"] as const;
 
 type ImageKey = (typeof IMAGE_KEYS)[number];
 
+// The product_images table check constraint allows:
+// 'primary', 'front', 'side', 'back'.
+// Map the form's secondary image input to 'side' (or front) in the database.
+const IMAGE_TYPE_MAP: Record<ImageKey, string> = {
+  primary: "primary",
+  secondary: "side",
+};
+
 function getSafeFileName(fileName: string) {
   const extension = fileName.includes(".")
     ? fileName.substring(fileName.lastIndexOf(".")).toLowerCase()
@@ -296,6 +304,7 @@ export async function createProduct(
         publicUrlData.publicUrl;
 
       // 13. Save image metadata
+      const imageType = IMAGE_TYPE_MAP[image.key] || image.key;
       const { error: imageRecordError } =
         await supabase
           .from("product_images")
@@ -303,7 +312,7 @@ export async function createProduct(
             product_id: product.id,
             image_url: imageUrl,
             alt_text: `${name} - ${image.key} image`,
-            image_type: image.key,
+            image_type: imageType,
             display_order: index,
             is_primary: image.key === "primary",
           });
@@ -503,8 +512,8 @@ export async function updateProduct(
   let imagesModified = false;
 
   const replaceTargets = [
-    { file: primaryFile, key: "primary" as const, displayOrder: 0, isPrimary: true, label: "primary" },
-    { file: secondaryFile, key: "secondary" as const, displayOrder: 1, isPrimary: false, label: "secondary" },
+    { file: primaryFile, key: "primary" as const, imageType: "primary", displayOrder: 0, isPrimary: true, label: "primary" },
+    { file: secondaryFile, key: "secondary" as const, imageType: "side", displayOrder: 1, isPrimary: false, label: "secondary" },
   ];
 
   let updateStorageClient = supabase;
@@ -535,7 +544,7 @@ export async function updateProduct(
         .from("product_images")
         .select("id, image_url")
         .eq("product_id", productId)
-        .eq(target.isPrimary ? "is_primary" : "image_type", target.isPrimary ? true : target.key)
+        .eq(target.isPrimary ? "is_primary" : "image_type", target.isPrimary ? true : target.imageType)
         .maybeSingle();
 
       const safeFileName = getSafeFileName(target.file.name);
@@ -567,7 +576,7 @@ export async function updateProduct(
           product_id: productId,
           image_url: publicUrlData.publicUrl,
           alt_text: `${name} - ${target.label} image`,
-          image_type: target.key,
+          image_type: target.imageType,
           display_order: target.displayOrder,
           is_primary: target.isPrimary,
         })
